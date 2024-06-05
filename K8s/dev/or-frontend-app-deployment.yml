@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: or-frontend-app
+  namespace: 'dev'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: or-frontend-app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: or-frontend-app
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+      containers:
+        - name: or-frontend-app
+          image: 'linearsquared.azurecr.io/or-frontend:latest'
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: 'or-frontend-config'
+          resources:
+            requests:
+              cpu: 512m
+              memory: 1Gi
+
+      nodeSelector:
+        agentpool: npapp

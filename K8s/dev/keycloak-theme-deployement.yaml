@@ -1,0 +1,36 @@
+# WE DO NOT NEED TO DEPLOY KEYCLOAK THEM TO KUBERNATES ENVIRONMENT JUST PULL THE IMAGE CREATED IN THE RELEVANT REPOSITORY
+# YOU CAN USE THIS TO VALIDATE YOUR IMAGE BY CREATING A POD
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: or-kc-theme
+  namespace: "dev"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: or-kc-theme
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: or-kc-theme
+    spec:
+      imagePullSecrets:
+      - name: acr-secret    
+      containers:
+        - name:  or-kc-theme
+          image: "linearsquared.azurecr.io/or-kc-theme:latest"
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+          resources:
+            requests:
+              cpu: 512m
+              memory: 1Gi
+          
+
+      

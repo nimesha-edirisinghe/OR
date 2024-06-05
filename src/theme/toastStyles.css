@@ -1,0 +1,47 @@
+.Toastify__toast--success .Toastify__toast-body {
+  border-left: 3px solid #75d785;
+  padding-right: 17px;
+  height: 24px;
+}
+
+.Toastify__toast--error .Toastify__toast-body {
+  border-left: 3px solid #f8705e;
+  padding-right: 17px;
+  height: auto;
+}
+
+.Toastify__toast--warning .Toastify__toast-body {
+  border-left: 3px solid #ffa914;
+  padding-right: 17px;
+  height: 24px;
+}
+
+.Toastify__toast--info .Toastify__toast-body {
+  border-left: 3px solid #0aa5ff;
+  padding-right: 17px;
+  height: 24px;
+}
+
+.Toastify__toast-body {
+  padding-left: 17px;
+  margin-right: 10px;
+}
+
+.Toastify__close-button {
+  color: #0aa5ff;
+  padding-top: 15px;
+  margin-right: 15px;
+}
+
+.Toastify__toast--success .Toastify__toast-body .Toastify__toast-icon svg {
+  fill: #75d785;
+}
+.Toastify__toast--error .Toastify__toast-body .Toastify__toast-icon svg {
+  fill: #f8705e;
+}
+.Toastify__toast--warning .Toastify__toast-body .Toastify__toast-icon svg {
+  fill: #ffa914;
+}
+.Toastify__toast--info .Toastify__toast-body .Toastify__toast-icon svg {
+  fill: #0aa5ff;
+}

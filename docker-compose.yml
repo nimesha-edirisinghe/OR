@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  app:
+    container_name: order-right-factory:1.0.0-prod
+    image: order-right-factory:1.0.0-prod
+    build:
+      context: .
+    ports:
+      - 80:80

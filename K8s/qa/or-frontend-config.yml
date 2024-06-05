@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: or-frontend-config
+  namespace: qa
+data:
+  PORT: '80'
+  REACT_APP_ENV_NAME: qa
+  REACT_APP_ADMIN_HOST: 'https://orderright-admin-qa.algonomy.com/'
+  REACT_APP_KC_AUTH_SERVER: 'https://orderright-auth-qa.algonomy.com/auth/'
+  REACT_APP_KC_REALM: 'EPS'
+  REACT_APP_KC_CLIENT_ID: 'eps-admin-client'
+  REACT_APP_WORKBENCH_BASE_URL: 'https://orderright-qa.algonomy.com'
+  REACT_APP_OR_ADMIN_BASE_URL: 'https://orderright-qa-new.algonomy.com/admin/api/v1'
+  REACT_APP_OR_API_BASE_URL: 'https://orderright-qa-new.algonomy.com/api/v1'
+  REACT_APP_OR_HIDE_LEFT_MENU: 'TRUE'
+  REACT_APP_OR_FILTER_RIGHT_PANEL_MAX_LENGTH: '1000'

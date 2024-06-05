@@ -1,0 +1,59 @@
+.rotate1 {
+  animation: rotate1 60s linear infinite;
+}
+
+.rotate2 {
+  animation: rotate2 150s linear infinite;
+}
+
+.rotate3 {
+  animation: rotate3 150s linear infinite;
+}
+
+@keyframes rotate1 {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(180deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes rotate2 {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(180deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  70% {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes rotate3 {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(180deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  65% {
+    transform: rotate(180deg);
+  }
+}

@@ -1,0 +1,52 @@
+keycloak:
+    extraInitContainers: |
+      - name: or-kc-theme
+        image: linearsquared.azurecr.io/or-kc-theme:latest
+        imagePullPolicy: Always
+        command:
+          - sh
+        args:
+          - -c
+          - |
+            echo "Copying theme..."
+            cp -R /or-kc-theme/* /theme
+        volumeMounts:
+          - name: theme
+            mountPath: /theme
+
+    extraVolumeMounts: |
+      - name: theme
+        mountPath: /opt/jboss/keycloak/themes/or-kc-theme
+
+    extraVolumes: |
+      - name: theme
+        emptyDir: {}
+
+    image:
+        tag: 9.0.2
+        pullSecrets: ["acr-secret"]
+
+
+    username: "admin"
+    password: "Linear2Admin"
+    nodeSelector:
+        agentpool: nodepool1
+
+    persistence:
+        dbVendor: "postgres"
+        dbName: "dev_keycloak"
+        dbHost: "orderright-base-dev.postgres.database.azure.com"
+        dbPort: "5432"
+        dbUser: "adminuser"
+        dbPassword: "cbjE78q3erDFy9Zq"
+        enabled: "true"
+
+    ingress.enabled: "true"
+
+    resources:
+      requests:
+        cpu:  "1000m"
+        memory: "2048Mi"
+      limits:
+        cpu: "2000m"
+        memory: "4096Mi"

@@ -1,0 +1,45 @@
+# Multi Stage Pipelines
+# Project : or-frontend
+
+# Pipeline Trigger
+trigger:
+  branches:
+    include:
+      - '*'
+
+variables:
+  # Define variables in Library section under pipelines
+  #- group: deep-frontend-variables
+
+  # name of the service connection
+  - name: dockerRegistryServiceConnection
+    value: 'linearsquared'
+
+  # container registry endpoint
+  - name: acrEndpoint
+    value: 'linearsquared.azurecr.io'
+
+# Build Stage
+stages:
+  - stage: Build
+    displayName: Build stage
+
+    # Build Stage Jobs
+    jobs:
+      - job: Build
+        displayName: Build job
+        pool:
+          vmImage: ubuntu-latest
+
+        steps:
+
+          # Build and push an image
+          - task: Docker@2
+            #condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+            displayName: Build and push an image to container registry
+            inputs:
+              command: buildAndPush
+              repository: or-frontend
+              dockerfile: '**/Dockerfile'
+              containerRegistry: $(dockerRegistryServiceConnection)
+              tags: $(tag)

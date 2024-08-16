@@ -1,5 +1,3 @@
-# Welcome to Order Right Factory UI.
-
 ## Available Scripts
 
 In the project directory, you can run:

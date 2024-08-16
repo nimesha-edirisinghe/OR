@@ -1,4 +1,4 @@
-import { Box, HStack } from '@chakra-ui/react';
+import { VStack } from '@chakra-ui/react';
 import InsightsPageLayout from 'layouts/PageLayouts/InsightsPageLayout';
 import { FC, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -13,6 +13,7 @@ import {
   IActivityLogSlice,
   activityLogSliceSelector,
   getActivityLogListRequest,
+  setAlgoExecutionSearchKey,
   updateLastUpdatedDateTime
 } from 'state/pages/operationAndMonitoring/activityLog/activityLogState';
 import FilterDateSelectionDrawer from './ActivityLogFilter/FilterDateSelectionDrawer/FilterDateSelectionDrawer';
@@ -37,6 +38,7 @@ const ActivityLogPage: FC<Props> = () => {
             pageNumber: 1
           })
         );
+        dispatch(setAlgoExecutionSearchKey(''));
         dispatch(updateLastUpdatedDateTime());
       }
       return () => {
@@ -49,20 +51,12 @@ const ActivityLogPage: FC<Props> = () => {
 
   const activityLogPageContent = useCallback(() => {
     return (
-      <Box w="full" px="24px" pt="24px">
-        <HStack>
-          <ActivityLogHeader />
-        </HStack>
-        <HStack mt="12px" h="20px" w="full">
-          <FilterSection />
-        </HStack>
-        <HStack mt="16px">
-          <TableSection />
-        </HStack>
-        <HStack mt="2px">
-          <FooterSection />
-        </HStack>
-      </Box>
+      <VStack spacing="16px" px="20px" w="full" pt="20px">
+        <ActivityLogHeader />
+        {/* <FilterSection /> */} {/* Layan requested to remove this functionality */}
+        <TableSection />
+        <FooterSection />
+      </VStack>
     );
   }, [selectedOrgKey]);
 

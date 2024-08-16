@@ -8,7 +8,10 @@ const initOptions = {
   realm: REACT_APP_KC_REALM,
   clientId: REACT_APP_KC_CLIENT_ID,
   enableLogging: true,
-  publicClient: true
+  publicClient: true,
+  checkLoginIframe: false,
+  silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+  tokenMinTimeToLive: 30
 };
 
 const keycloak = Keycloak(initOptions);

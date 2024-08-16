@@ -15,6 +15,7 @@ import { ocean_blue_50, ocean_blue_500_t95, ocean_blue_500_t97 } from 'theme/col
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import ChatWithMaya from 'layouts/SideBar/ChatWithMaya';
 import { Direction } from 'utils/enum';
+import { storeInLocal } from 'utils/localStorage';
 
 interface Props {
   leftMenu: LeftMenu;
@@ -45,13 +46,21 @@ const AppExpandedSideBarNavigation: FC<Props> = ({
 
   const onSubMenuSelect = (subMenu: MenuItem | null) => {
     dispatch(setActiveSubMenuItem({ subMenuItem: subMenu ? subMenu.path! : null }));
-    if (subMenu) navigate(subMenu.path!);
+    if (subMenu) {
+      navigate(subMenu.path!);
+      storeInLocal('activeSubMenuItem', subMenu.path!);
+    }
   };
 
   const createSubMenu = useCallback(() => {
     if (activeMenuItem) {
       const mainMenu = leftMenu[activeMenuItem];
       const subMenuList = leftMenu[activeMenuItem].subMenu!;
+
+      if (!subMenuList) {
+        dispatch(setActiveMenuItem({ menuItem: null }));
+        return null;
+      }
 
       return (
         <AppExpandedSideBarSubMenu
@@ -73,6 +82,7 @@ const AppExpandedSideBarNavigation: FC<Props> = ({
   const navigateToMaya = () => {
     dispatch(setActiveMenuItem({ menuItem: null }));
     dispatch(setActiveSubMenuItem({ subMenuItem: null }));
+    storeInLocal('activeSubMenuItem', '/app/maya');
     navigate('/app/maya');
   };
 

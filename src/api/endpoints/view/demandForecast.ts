@@ -1,7 +1,8 @@
 import { apiClient } from 'api/axiosInstances';
 import { AxiosProgressEvent } from 'axios';
+import { ForecastAlertType } from 'types/alertConfig';
 import { ApiResponse } from 'types/api';
-import { AlertReplenishmentI } from 'types/requests/alertConfigRequest';
+import { AlertReplenishmentI, ReplenishmentI } from 'types/requests/alertConfigRequest';
 import { GroupFilterI } from 'types/requests/groupConfigRequests';
 import {
   AlertGraphRequestBodyI,
@@ -11,6 +12,7 @@ import {
   DemandForecastChartRequestParamI,
   DemandForecastDataRequestQueryI,
   DownloadBulkEditQueryParamI,
+  DownloadBulkEditZipFileBodyI,
   DownloadEditResultRequestBodyI,
   GetUploadHistoryReqBodyI
 } from 'types/requests/viewRequests';
@@ -99,17 +101,12 @@ export const getDemandForecastSkuListRequest = async (
   }
 };
 export const bulkEditFileUploadRequest = async (
-  requestBody: BulkEditFileUploadBodyI,
   file: File,
   onUploadProgress?: (progressEvent: AxiosProgressEvent) => void
 ): Promise<FCApiResponse<any>> => {
   try {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append(
-      'groupDescDTO',
-      new Blob([JSON.stringify(requestBody)], { type: 'application/json' })
-    );
     const response: any = await apiClient.post('/forecast/edit/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -164,10 +161,9 @@ export const downloadBulkForecastEditResultRequest = async (
   }
 };
 
-
-
 export const alertGraphRequest = async (
-  requestBody: AlertGraphRequestBodyI): Promise<ApiResponse<GetGraphResponseI>> => {
+  requestBody: AlertGraphRequestBodyI
+): Promise<ApiResponse<GetGraphResponseI>> => {
   try {
     const response = await apiClient.post('alert/resolution/forecast/edit', requestBody);
     return response.data;
@@ -177,11 +173,37 @@ export const alertGraphRequest = async (
   }
 };
 
-
 export const alertReplenishmentRequest = async (
-  requestBody:AlertReplenishmentI ): Promise<ApiResponse<AlertReplenishmentResponseI>> => {
+  requestBody: AlertReplenishmentI
+): Promise<ApiResponse<AlertReplenishmentResponseI>> => {
   try {
     const response = await apiClient.post('alert/resolution/replenishment/edit', requestBody);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const downloadBulkEditForecastZipFileRequest = async (
+  requestBody: DownloadBulkEditZipFileBodyI
+): Promise<any> => {
+  try {
+    const response = await apiClient.post('/forecast/edit/download/zip', requestBody, {
+      responseType: 'blob'
+    });
+    return response;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const getAlertTypeRequest = async (
+  requestBody: ForecastAlertType
+): Promise<ApiResponse<GetGraphResponseI>> => {
+  try {
+    const response = await apiClient.post('alert/resolution/available/alerts/sku', requestBody);
     return response.data;
   } catch (error) {
     console.error(error);

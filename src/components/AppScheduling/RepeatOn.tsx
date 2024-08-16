@@ -15,46 +15,48 @@ import {
 import { Flex } from '@chakra-ui/react';
 
 interface RepeatOnProps {
-  selectedRepeatEveryOption: ScheduleType;
+  selectedRepeatEveryOption: string;
   selectedDay?: number;
   onChangeDay: (value: number) => void;
   status: boolean;
+  isDisabled?: boolean;
 }
 
 const RepeatOn: FC<RepeatOnProps> = ({
   selectedRepeatEveryOption,
   selectedDay = 1,
   onChangeDay,
-  status = false
+  status = false,
+  isDisabled = false
 }) => {
   const textColor = status ? '#fff' : black_800;
-  const cursorStyle = status ? 'pointer' : 'not-allowed';
+  const cursorStyle = !status || isDisabled ? 'not-allowed' : 'pointer';
   const renderRepeatOption = useCallback(() => {
     switch (selectedRepeatEveryOption) {
-      case 'MONTHLY':
+      case 'Months':
         return (
-          <HStack spacing="20px">
+          <HStack spacing="20px" cursor={cursorStyle}>
             <AppSkipper
               onValueChange={(value) => onChangeDay(value)}
               value={selectedDay}
               w="80px"
               minNumber={1}
               maxNumber={31}
-              isDisabled={!status}
+              isDisabled={!status || isDisabled}
               bg={ocean_blue_600}
             />
             <AppText
               fontSize="13px"
               fontWeight={400}
               lineHeight="19.5px"
-              color={status ? neutral_100 : neutral_400}
+              color={!status || isDisabled ? neutral_400 : neutral_100}
               mr="5px"
             >
               day of the month
             </AppText>
           </HStack>
         );
-      case 'WEEKLY':
+      case 'Weeks':
         return (
           <HStack spacing="14px">
             {weekDays.map((day) => (
@@ -65,7 +67,7 @@ const RepeatOn: FC<RepeatOnProps> = ({
                 w="38px"
                 bg={selectedDay === day.id ? blue_500 : ocean_blue_500}
                 p="8px"
-                onClick={() => status && onChangeDay(day.id)}
+                onClick={() => status && !isDisabled && onChangeDay(day.id)}
                 cursor={cursorStyle}
                 transition="all 0.3s ease"
               >
@@ -82,10 +84,10 @@ const RepeatOn: FC<RepeatOnProps> = ({
             ))}
           </HStack>
         );
-      case 'DAILY':
+      case 'Days':
         return <HStack spacing="20px"></HStack>;
     }
-  }, [selectedRepeatEveryOption, selectedDay, status]);
+  }, [selectedRepeatEveryOption, selectedDay, status, isDisabled]);
 
   return (
     <HStack h="40px" w="full">

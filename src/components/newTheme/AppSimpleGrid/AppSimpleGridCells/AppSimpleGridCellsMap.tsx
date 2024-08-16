@@ -6,6 +6,9 @@ import ActionIconCell from './CellTypes/ActionIconCell';
 import EditableCell from './CellTypes/EditableCell';
 import { CellTextAlignmentT } from '../AppSimpleGrid';
 import { iconName } from 'components/AppIcon/svgIcons';
+import OperationCell from 'pages/OperationsMonitoring/ActivityLog/TableSection/DataCells/OperationCell';
+import AppOperationCell from './CellTypes/AppOperationCell';
+import { TableHeader } from 'types/responses/viewResponses';
 
 interface Props {
   rowColorBg: string;
@@ -22,13 +25,15 @@ interface Props {
   textAlign?: CellTextAlignmentT;
   actionIcons?: iconName[];
   onEditActionHandler?: (
-    ref:any,
+    ref: any,
     id: number | string,
     index: number,
     value: number | string,
     metaInfo?: string,
     icon?: iconName
   ) => any;
+  jobGroupId?: number;
+  cellWidth?: number;
 }
 
 const AppSimpleGridCellsMap: FC<Props> = ({
@@ -46,13 +51,15 @@ const AppSimpleGridCellsMap: FC<Props> = ({
   index = 0,
   textAlign,
   onEditActionHandler = (
-    ref:any,
+    ref: any,
     id: number | string,
     index: number,
     value: number | string,
     metaInfo?: string,
     icon?: iconName
-  ) => {}
+  ) => {},
+  jobGroupId = 0,
+  cellWidth = 0
 }) => {
   switch (cellType) {
     case 'generalCell':
@@ -62,6 +69,7 @@ const AppSimpleGridCellsMap: FC<Props> = ({
           rowColorBg={rowColorBg}
           tableRoot={tableRoot}
           textAlign={textAlign}
+          cellWidth={cellWidth}
         />
       );
     case 'indicatorCell':
@@ -91,6 +99,17 @@ const AppSimpleGridCellsMap: FC<Props> = ({
           onEditActionHandler={onEditActionHandler}
         />
       );
+    case 'operationCell':
+      return (
+        <AppOperationCell
+          key={id}
+          jobGroupId={jobGroupId}
+          displayValue={displayValue}
+          actionIcons={actionIcons}
+          cellCallback={cellCallback}
+          index={index}
+        />
+      );
     default:
       return (
         <GeneralCell
@@ -98,6 +117,7 @@ const AppSimpleGridCellsMap: FC<Props> = ({
           rowColorBg={rowColorBg}
           tableRoot={tableRoot}
           textAlign={textAlign}
+          cellWidth={cellWidth}
         />
       );
   }

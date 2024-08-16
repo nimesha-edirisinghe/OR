@@ -1,6 +1,5 @@
 import {
   Box,
-  Divider,
   Drawer,
   DrawerBody,
   DrawerCloseButton,
@@ -13,14 +12,15 @@ import {
 } from '@chakra-ui/react';
 import AppButton from 'components/newTheme/AppButton/AppButton';
 import AppText from 'components/AppText/AppText';
-import { FC, useCallback } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import TrainingTab from './Tabs/TrainingTab';
 import ForecastingTab from './Tabs/ForecastingTab';
 import {
   closeDrawer,
   fcConfigPageSliceSelector,
-  getTableDataRequest
+  getTableDataRequest,
+  setFcConfigCurrentPage
 } from 'state/pages/advancedConfiguration/forecastConfigurationPage/pageState';
 import { JobScheduleTypes } from 'types/requests/jobScheduleRequest';
 import {
@@ -36,19 +36,30 @@ import {
   validateSchedulingData,
   validateSchedulingAllField
 } from 'state/helpers/jobSchedulingHelper';
-import { blue_500, neutral_100, ocean_blue_100, ocean_blue_600 } from 'theme/colors';
-import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
+import { blue_500, neutral_100, ocean_blue_600, yellow_500 } from 'theme/colors';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppTab from 'components/newTheme/AppTab/AppTab';
+import AppPopup from 'components/newTheme/AppPopup/AppPopup';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface Props {
   isOpen: boolean;
 }
 
+// interface TabContent{
+//  label:string;
+//  content:any;
+
+// }
+
 const JobScheduleDrawer: FC<Props> = ({ isOpen }) => {
+  const [isSaveDisabled, setIsSaveDisabled] = useState<boolean>(true);
   const pageState = useSelector(fcConfigPageSliceSelector);
   const jobScheduleState = useSelector(jobScheduleSliceSelector);
-  const selectedJobScheduleType = jobScheduleState.jobScheduleLocalScope.selectedJobScheduleType;
+  const jobScheduleLocalScope = jobScheduleState.jobScheduleLocalScope;
+  const selectedJobScheduleType = jobScheduleLocalScope.selectedJobScheduleType;
   const groupDisplayName =
     pageState.trainingConfigLocalScope.selectedFcConfigObj?.groupDetails?.groupDisplayName;
   const jobScheduleConfigData = jobScheduleState.jobSchedulingData;
@@ -58,22 +69,69 @@ const JobScheduleDrawer: FC<Props> = ({ isOpen }) => {
     onToggle: onToggleSavePrompt,
     onClose: onCloseSavePrompt
   } = useDisclosure();
+  const {
+    isOpen: isOpenTabChangePrompt,
+    onToggle: onToggleTabChangePrompt,
+    onClose: onCloseTabChangePrompt
+  } = useDisclosure();
   const dispatch = useDispatch();
 
   const tabList: JobScheduleTypes[] = ['training', 'forecasting'];
   let selectedTabIndex: number = tabList.indexOf(selectedJobScheduleType);
 
+  const accessType = useAccessType(MenuItems.FORECASTING_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.SCHEDULE]);
+
   const onDrawerClose = () => {
     dispatch(closeDrawer());
     onCloseSavePrompt();
   };
+  const isAnyUnsavedData = (): boolean => {
+    const selectedJobSchedulingDataJSON = JSON.stringify(
+      jobScheduleLocalScope.selectedJobSchedulingData
+    );
+    const jobScheduleConfigDataJSON = JSON.stringify(jobScheduleConfigData);
 
-  const onTabChange = (index: number) => {
+    const changesFlag: boolean = selectedJobSchedulingDataJSON !== jobScheduleConfigDataJSON;
+    if (changesFlag) {
+      onToggleTabChangePrompt();
+    }
+    return changesFlag;
+  };
+  const onTabChange = (index: number, checkRequired: boolean = true) => {
+    // let checkFlag: boolean = true;
+    // if (checkRequired) {
+    //   checkFlag = !isAnyUnsavedData();
+    // }
     if (selectedJobScheduleType !== tabList[index]) {
       dispatch(setSelectedJobScheduleType(tabList[index]));
       dispatch(getJobSchedulesRequest('fc'));
     }
   };
+
+  const isAllFieldValidated = (): boolean => {
+    if (jobScheduleLocalScope.currentEnableStatus === 0) return false;
+
+    if (
+      jobScheduleConfigData.startDate &&
+      jobScheduleConfigData.endDate &&
+      jobScheduleConfigData.scheduleConfiguration.frequency! > 0 &&
+      jobScheduleConfigData.scheduleType
+    ) {
+      if (
+        jobScheduleConfigData.scheduleType === 'Months' &&
+        jobScheduleConfigData.scheduleConfiguration.days[0] > 0
+      )
+        return false;
+      if (jobScheduleConfigData.startDate > jobScheduleConfigData.endDate) return true;
+      return false;
+    }
+    return true;
+  };
+
+  useEffect(() => {
+    setIsSaveDisabled(isAllFieldValidated());
+  }, [selectedTabIndex, jobScheduleConfigData, jobScheduleLocalScope]);
 
   const onSaveHandler = () => {
     const isAnyFieldFilled: boolean = validateSchedulingAllField(
@@ -98,7 +156,7 @@ const JobScheduleDrawer: FC<Props> = ({ isOpen }) => {
       dispatch(closeDrawer());
       dispatch(removeScheduleJobRequest());
     }
-
+    dispatch(setFcConfigCurrentPage(1));
     onCloseSavePrompt();
   };
 
@@ -108,28 +166,42 @@ const JobScheduleDrawer: FC<Props> = ({ isOpen }) => {
 
   const saveConfirmationPrompt = useCallback(() => {
     return (
-      <AppUserInputPrompt
+      <AppPopup
         isOpen={isOpenSavePrompt}
         onClose={onCloseSavePrompt}
         leftBtnName="NO"
         rightBtnName="YES"
         title="Save Changes"
-        onConfirmHandler={onSaveHandler}
-        onCloseHandler={onCloseSavePrompt}
-      >
-        <AppText fontSize="12px" fontWeight={400} mt={2} width="68%">
-          The changes made in the Schedule will be applied to all the Anchors in the group.
-        </AppText>
-        <AppText fontSize="12px" fontWeight={400}>
-          Are you sure you want to continue?
-        </AppText>
-      </AppUserInputPrompt>
+        infoMessage={`The changes made in the Schedule will be applied to all the Anchors in the group.`}
+        onConfirmHandler={onCloseSavePrompt}
+        onCloseHandler={onSaveHandler}
+        confirmationMessage="Are you sure you want to continue?"
+        icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
+      />
     );
   }, [isOpenSavePrompt]);
+
+  const saveChangePrompt = useCallback(() => {
+    return (
+      <AppPopup
+        isOpen={isOpenTabChangePrompt}
+        onClose={onCloseTabChangePrompt}
+        leftBtnName="YES"
+        rightBtnName="NO"
+        title="Discard Changes"
+        infoMessage={'The changes you have made will be discarded.'}
+        onConfirmHandler={onToggleTabChangePrompt}
+        onCloseHandler={onSaveHandler}
+        confirmationMessage="Are you sure you want to continue?"
+        icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
+      />
+    );
+  }, [isOpenTabChangePrompt]);
 
   return (
     <>
       {saveConfirmationPrompt()}
+      {saveChangePrompt()}
       <Drawer isOpen={isOpen} placement="right" onClose={onDrawerClose}>
         <DrawerOverlay />
         <DrawerContent
@@ -188,6 +260,7 @@ const JobScheduleDrawer: FC<Props> = ({ isOpen }) => {
                   color={blue_500}
                   w="105px"
                   h="36px"
+                  isDisabled={accessNotAllowed}
                 >
                   Clear
                 </AppButton>
@@ -201,6 +274,7 @@ const JobScheduleDrawer: FC<Props> = ({ isOpen }) => {
                   color={neutral_100}
                   w="105px"
                   h="36px"
+                  isDisabled={isSaveDisabled || accessNotAllowed}
                 >
                   Save
                 </AppButton>

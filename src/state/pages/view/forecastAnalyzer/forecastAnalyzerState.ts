@@ -21,11 +21,9 @@ export interface IForecastAnalyzer {
   kpiAccuracyData: AccuracyResponseI | null;
   individualGraphData: IndividualGraphResponseI[] | null;
   aggregatedGraphData: AggregatedGraphResponseI[] | null;
-  exclusionCriteriaList: ExclusionCriteriaResponseI[] | null;
   plannedActualList: PlannedActualObjI | null;
   kpiData: KPIResponseI | null;
   skuDetails: FCAnalyzerSkuResponseI | null;
-  accuracyDistributionData: AccuracyDistributionResponseI | null;
   fcAnalyzerLocalScope: FcAnalyzerLocalScopeI;
 }
 
@@ -37,18 +35,16 @@ export const ForecastAnalyzerSlice = createSlice({
     kpiAccuracyData: null,
     individualGraphData: null,
     aggregatedGraphData: null,
-    exclusionCriteriaList: null,
     plannedActualList: null,
     kpiData: null,
     skuDetails: null,
-    accuracyDistributionData: null,
     fcAnalyzerLocalScope: {
       selectedAnalyzerType: FCAnalyzerTypeEnum.INDIVIDUAL,
       originPage: 'df'
     }
   } as IForecastAnalyzer,
   reducers: {
-    fetchKpiAccuracyRequest: (state, action: PayloadAction<{ type: FCAnalyzerType }>) => {
+    fetchKpiAccuracyRequest: (state) => {
       state.isLoading = true;
     },
     fetchKpiAccuracyRequestSuccess: (state, action: PayloadAction<AccuracyResponseI>) => {
@@ -59,7 +55,7 @@ export const ForecastAnalyzerSlice = createSlice({
       state.isLoading = true;
     },
 
-    fetchIndividualGraphDataRequest: (state, action: PayloadAction<{ type: FCAnalyzerType }>) => {
+    fetchIndividualGraphDataRequest: (state) => {
       state.isLoading = true;
     },
     fetchIndividualGraphDataRequestSuccess: (
@@ -73,7 +69,7 @@ export const ForecastAnalyzerSlice = createSlice({
       state.isLoading = true;
     },
 
-    fetchAggregatedGraphDataRequest: (state, action: PayloadAction<{ type: FCAnalyzerType }>) => {
+    fetchAggregatedGraphDataRequest: (state) => {
       state.isLoading = true;
     },
     fetchAggregatedGraphDataRequestSuccess: (
@@ -86,22 +82,7 @@ export const ForecastAnalyzerSlice = createSlice({
     fetchAggregatedGraphDataRequestFailure: (state) => {
       state.isLoading = true;
     },
-
-    fetchExclusionCriteriaRequest: (state, action: PayloadAction<{ type: FCAnalyzerType }>) => {
-      state.isLoading = true;
-    },
-    fetchExclusionCriteriaRequestSuccess: (
-      state,
-      action: PayloadAction<ExclusionCriteriaResponseI[]>
-    ) => {
-      state.exclusionCriteriaList = action.payload;
-      state.progressPercentage = [...state.progressPercentage, 1];
-    },
-    fetchExclusionCriteriaRequestFailure: (state) => {
-      state.isLoading = true;
-    },
-
-    fetchPlannedActualDataRequest: (state, action: PayloadAction<{ type: FCAnalyzerType }>) => {
+    fetchPlannedActualDataRequest: (state) => {
       state.isLoading = true;
     },
     fetchPlannedActualDataRequestSuccess: (state, action: PayloadAction<PlannedActualObjI>) => {
@@ -112,7 +93,7 @@ export const ForecastAnalyzerSlice = createSlice({
       state.isLoading = true;
     },
 
-    fetchKpiDataRequest: (state, action: PayloadAction<{ type: FCAnalyzerType }>) => {
+    fetchKpiDataRequest: (state) => {
       state.isLoading = true;
     },
     fetchKpiDataRequestSuccess: (state, action: PayloadAction<KPIResponseI>) => {
@@ -133,22 +114,7 @@ export const ForecastAnalyzerSlice = createSlice({
     fetchSkuDetailsDataRequestFailure: (state) => {
       state.isLoading = true;
     },
-    fetchAccuracyDistributionDataRequest: (
-      state,
-      action: PayloadAction<{ type: FCAnalyzerType }>
-    ) => {
-      state.isLoading = true;
-    },
-    fetchAccuracyDistributionDataRequestSuccess: (
-      state,
-      action: PayloadAction<AccuracyDistributionResponseI>
-    ) => {
-      state.accuracyDistributionData = action.payload;
-      state.progressPercentage = [...state.progressPercentage, 1];
-    },
-    fetchAccuracyDistributionDataRequestFailure: (state) => {
-      state.isLoading = true;
-    },
+
     clearPercentage: (state) => {
       state.progressPercentage = [];
     },
@@ -160,11 +126,9 @@ export const ForecastAnalyzerSlice = createSlice({
       state.kpiAccuracyData = null;
       state.individualGraphData = null;
       state.aggregatedGraphData = null;
-      state.exclusionCriteriaList = null;
       state.plannedActualList = null;
       state.kpiData = null;
       state.skuDetails = null;
-      state.accuracyDistributionData = null;
     },
     setOriginPage: (state, action: PayloadAction<ORIGIN_PAGE>) => {
       state.fcAnalyzerLocalScope.originPage = action.payload;
@@ -184,9 +148,6 @@ export const {
   fetchAggregatedGraphDataRequest,
   fetchAggregatedGraphDataRequestSuccess,
   fetchAggregatedGraphDataRequestFailure,
-  fetchExclusionCriteriaRequest,
-  fetchExclusionCriteriaRequestSuccess,
-  fetchExclusionCriteriaRequestFailure,
   fetchPlannedActualDataRequest,
   fetchPlannedActualDataRequestSuccess,
   fetchPlannedActualDataRequestFailure,
@@ -196,9 +157,6 @@ export const {
   fetchSkuDetailsDataRequest,
   fetchSkuDetailsDataRequestSuccess,
   fetchSkuDetailsDataRequestFailure,
-  fetchAccuracyDistributionDataRequest,
-  fetchAccuracyDistributionDataRequestFailure,
-  fetchAccuracyDistributionDataRequestSuccess,
   clearPercentage,
   setSelectedAnalyzerType,
   resetFcAnalyzerData,

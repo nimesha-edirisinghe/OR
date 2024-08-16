@@ -1,63 +1,40 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import { Box, Center, HStack, Skeleton, usePrevious, VStack } from '@chakra-ui/react';
 import {
-  demandForecastChartRequest,
   dfViewSliceSelector,
-  getPredictorsRequest,
-  setSelectedSkuAction,
   getTrainingSummaryDataRequest,
   toggleTrainingSummaryPanel,
   toggleGraphPanel
 } from 'state/pages/view/demandForecastView/dfViewPageState';
 import { useDispatch, useSelector } from 'react-redux';
 import AppText from 'components/newTheme/AppText/AppText';
-import { neutral_500, ocean_blue_500, ocean_blue_600 } from 'theme/colors';
+import { neutral_500, ocean_blue_500, ocean_blue_600, red_500 } from 'theme/colors';
 import { scrollbarYStyles } from 'theme/styles';
-import useNavigator from 'hooks/useNavigator';
+import { Navigator } from 'hooks/useNavigator';
 import MaximizedGraphPanel from '../../MaximizedGraphPanel/MaximizedGraphPanel';
 import TrainingSummaryPanel from '../../TrainingSummaryPanel/TrainingSummaryPanel';
 import ControlPanel from '../../ControlPanel/ControlPanel';
 import ChartPanel from '../../ChartPanel/ChartPanel';
 import GridPanel from '../../GridPanel/GridPanel';
 import ForecastChartHeader from 'pages/View/DemandForecastChart/ForecastChartHeader';
+import { DemandForecastSkuListItem } from 'types/responses/viewResponses';
 
 interface IndividualViewTabProps {
   skuMaximized: boolean;
+  graphNavigator: Navigator<DemandForecastSkuListItem>;
 }
 
-const IndividualViewTab: FC<IndividualViewTabProps> = ({ skuMaximized }) => {
+const IndividualViewTab: FC<IndividualViewTabProps> = ({ skuMaximized, graphNavigator }) => {
   const [graphMaximized, setGraphMaximized] = useState<boolean>(false);
   const [scroll, setScroll] = useState<string>('hidden');
   const dfViewState = useSelector(dfViewSliceSelector);
   const selectedSkuList = dfViewState.selectedSkuList;
   const dispatch = useDispatch();
-  const graphNavigator = useNavigator(selectedSkuList);
-  const previousSelectedSkuList = usePrevious(selectedSkuList);
+  const alertType = dfViewState.AlertType;
 
   const onMaxMinHandler = () => {
     setGraphMaximized((prev) => !prev);
   };
-
-  const requestViewForecastChart = (currentStepIndex?: number) => {
-    dispatch(
-      setSelectedSkuAction(
-        currentStepIndex !== undefined ? currentStepIndex : graphNavigator.currentStepIndex
-      )
-    );
-    dispatch(demandForecastChartRequest({ chartType: dfViewState.selectedChartType }));
-    dispatch(getPredictorsRequest());
-  };
-
-  useEffect(() => {
-    if (
-      selectedSkuList &&
-      previousSelectedSkuList &&
-      previousSelectedSkuList.length &&
-      selectedSkuList.length === previousSelectedSkuList.length
-    ) {
-      requestViewForecastChart();
-    }
-  }, [graphNavigator.currentStepIndex]);
 
   const trainingSummaryHandler = () => {
     dispatch(getTrainingSummaryDataRequest());
@@ -114,6 +91,23 @@ const IndividualViewTab: FC<IndividualViewTabProps> = ({ skuMaximized }) => {
                 borderBottomRadius="10px"
               >
                 <VStack spacing="10px" p="16px" pl={'18px'}>
+                  <HStack w="full">
+                    {alertType.alertTypeDisplayName?.map((item) => (
+                      <HStack bg={'#F4312A1A'} borderRadius="28px" px="12px" py="4px">
+                        <AppText
+                          size={'body3'}
+                          fontWeight={400}
+                          lineHeight={'18px'}
+                          color={red_500}
+                          textAlign={'center'}
+                          textTransform={'capitalize'}
+                        >
+                          {item} Alert
+                        </AppText>
+                      </HStack>
+                    ))}
+                  </HStack>
+
                   {dfViewState?.graphData.length !== 0 ? (
                     <VStack w={'full'} h={'full'}>
                       <ChartPanel />

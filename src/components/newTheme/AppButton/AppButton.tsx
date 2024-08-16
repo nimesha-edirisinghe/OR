@@ -26,7 +26,6 @@ const AppButton: React.FC<Props & ButtonProps> = ({
 
   return (
     <Button
-      // minW="105px"
       whiletap={!isDisabled && tapAnimation}
       transition="0.25s ease-in"
       leftIcon={_leftIcon}
@@ -34,6 +33,7 @@ const AppButton: React.FC<Props & ButtonProps> = ({
       cursor={isDisabled ? 'not-allowed' : 'pointer'}
       onClick={isDisabled ? undefined : onClick}
       isDisabled={isDisabled}
+      minW={'100px'}
       {...rest}
     >
       {children}

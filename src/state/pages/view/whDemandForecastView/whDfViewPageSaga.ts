@@ -198,6 +198,7 @@ function* getDemandForecastDataRequestSaga(action: PayloadAction<{ searchKey: st
   try {
     const { searchKey } = action.payload;
     const userState: IUser = yield select(userSliceSelector);
+    const dfViewState: IWhDFView = yield select(whDfViewSliceSelector);
     const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
     const orgKey = userState.selectedOrg.orgKey;
     const selectedGroupKey = sharedGroupState.selectedGroupKey!;
@@ -208,6 +209,8 @@ function* getDemandForecastDataRequestSaga(action: PayloadAction<{ searchKey: st
     const filters = rightSidePanelFormatForRequest(
       groupFilter.filterLocalScope.rightPanelRetainDataList
     );
+    const selectedSkuList = dfViewState.selectedSkuList;
+    const globalSkuSelected = dfViewState.dfViewLocalScope.globalSkuSelected;
 
     const queryParams: DemandForecastDataRequestQueryI = {
       groupKey: selectedGroupKey!,
@@ -218,10 +221,31 @@ function* getDemandForecastDataRequestSaga(action: PayloadAction<{ searchKey: st
       whFlag: 1
     };
 
+    let additionalFilter: GroupFilterI = {
+      code: 1,
+      isSelectAll: false,
+      search: '',
+      selectedItems: [],
+      type: 'sku'
+    };
+
     if (selectedGroupKey) {
-      const requestBody: GroupFilterI[] = filters.filter(
+      if (globalSkuSelected) {
+        additionalFilter = { ...additionalFilter, isSelectAll: true };
+      } else {
+        additionalFilter = {
+          ...additionalFilter,
+          selectedItems: selectedSkuList.map((sku) => {
+            return sku.anchorProdKey.toString();
+          })
+        };
+      }
+
+      let requestBody: GroupFilterI[] = filters.filter(
         (filter) => !(filter.code === 1 && filter.type === 'group')
       );
+
+      requestBody = [...requestBody, additionalFilter];
 
       const response: ApiResponse<DemandForecastSkuResponseDataI> = yield call(() =>
         demandForecastApi.getDemandForecastDataRequest(requestBody, queryParams)
@@ -255,7 +279,7 @@ function* downloadDemandForecastReportRequestSaga(
     const selectedGroupKey = sharedGroupState.selectedGroupKey!;
     const orgKey = userState.selectedOrg.orgKey;
     const searchKey = dfViewState.dfViewLocalScope.skuSearchKey;
-
+    const selectedSkuList = dfViewState.selectedSkuList;
     const globalSkuSelected = dfViewState.dfViewLocalScope.globalSkuSelected;
     const groupConfigurationState: IGroupConfigurationSlice = yield select(
       groupConfigurationSliceSelector
@@ -272,19 +296,31 @@ function* downloadDemandForecastReportRequestSaga(
       whFlag: 1,
       search: searchKey
     };
+    
+    let additionalFilter: GroupFilterI = {
+      code: 1,
+      isSelectAll: false,
+      search: '',
+      selectedItems: [],
+      type: 'sku'
+    };
 
-    const requestBody: GroupFilterI[] = filters
-      .filter((filter) => !(filter.code === 1 && filter.type === 'group'))
-      .map((filter) => {
-        if (filter.code === 1) {
-          return {
-            ...filter,
-            selectedItems: globalSkuSelected ? [] : filter.selectedItems
-          };
-        }
-        return filter;
-      });
+    if (globalSkuSelected) {
+      additionalFilter = { ...additionalFilter, isSelectAll: true };
+    } else {
+      additionalFilter = {
+        ...additionalFilter,
+        selectedItems: selectedSkuList.map((sku) => {
+          return sku.anchorProdKey.toString();
+        })
+      };
+    }
 
+    let requestBody: GroupFilterI[] = filters.filter(
+      (filter) => !(filter.code === 1 && filter.type === 'group')
+    );
+
+    requestBody = [...requestBody, additionalFilter];
     const response: GeneralResponse = yield call(() =>
       demandForecastApi.downloadDemandForecastReportRequest(requestBody, queryParams)
     );

@@ -3,6 +3,7 @@ import { AppIconChakra } from 'assets/svg/chakraIcons';
 import AppText from 'components/AppText/AppText';
 import AppThreeStateSwitch from 'components/AppThreeStateSwitch/AppThreeStateSwitch';
 import AppCheckbox from 'components/newTheme/AppCheckbox/AppCheckbox';
+import useAccessType from 'hooks/useMenuAccessType';
 import useScrollState from 'hooks/useScrollState';
 import { produce } from 'immer';
 import { FC, useMemo, useRef } from 'react';
@@ -16,16 +17,23 @@ import {
 import { ocean_blue_350, ocean_blue_500, neutral_200 } from 'theme/colors';
 import { scrollbarYStyles } from 'theme/styles';
 import { TrainingConfigPredictorsI } from 'types/forecastConfig';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
+import { hasAccessPermission } from 'utils/permissions';
 
 interface Props {}
 
 const InfluencingFactorTab: FC<Props> = () => {
   const dispatch = useDispatch();
   const page = useSelector(fcConfigPageSliceSelector);
+  7;
   const predictors = page.trainingConfigData.predictors;
+  const isGlobalSelected = page.trainingConfigLocalScope.checkAllPredictionsCheckBoxChecked;
   const dragItem = useRef<any>(null);
   const dragOverItem = useRef<any>(null);
   const [scroll, handleMouseEnter, handleMouseLeave] = useScrollState();
+
+  const accessType = useAccessType(MenuItems.FORECASTING_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const handleSort = () => {
     let _items = [...predictors];
@@ -62,20 +70,21 @@ const InfluencingFactorTab: FC<Props> = () => {
           </AppText>
         </HStack>
         {predictors && predictors.length > 0 && (
-          <HStack justify="flex-end">
+          <HStack justify="space-between">
             <AppText
               fontSize="13px"
               fontWeight="400"
               textAlign="center"
-              w="110px"
+              w="102px"
               color={'#57809A'}
             >
               Direction
             </AppText>
             <AppCheckbox
               id={0}
-              isChecked={predictors && selectedPredictorsCount === predictors.length}
+              isChecked={predictors && isGlobalSelected}
               onChange={(e: any) => dispatch(checkAllPredictionsToggle())}
+              isDisabled={accessNotAllowed}
             />
           </HStack>
         )}
@@ -137,6 +146,7 @@ const InfluencingFactorTab: FC<Props> = () => {
                       );
                     }}
                     count={predictorDirectionToCount}
+                    isDisabled={accessNotAllowed}
                   />
                   <AppCheckbox
                     id={index + 1}
@@ -144,6 +154,7 @@ const InfluencingFactorTab: FC<Props> = () => {
                     onChange={(e: any, id?: number) =>
                       dispatch(updatePredictors({ actionType: 'check', data: e, index }))
                     }
+                    isDisabled={accessNotAllowed}
                   />
                 </HStack>
               </Flex>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Grid, HStack, VStack } from '@chakra-ui/react';
 import AppText from 'components/AppText/AppText';
 import { DAYS, MONTH_NAMES } from 'utils/constants';
@@ -27,6 +27,7 @@ interface AppDateCalendarProps {
   label?: string;
   disabledPrevMonth?: boolean;
   disabledPrevDate?: number;
+  calendarTopPadding?: number;
 }
 
 const AppDateCalendar: React.FC<AppDateCalendarProps> = ({
@@ -37,7 +38,8 @@ const AppDateCalendar: React.FC<AppDateCalendarProps> = ({
   validMaxDate,
   label,
   disabledPrevMonth = false,
-  disabledPrevDate = 0
+  disabledPrevDate = 0,
+  calendarTopPadding = 4
 }) => {
   const [fullDate, setFullDate] = useState<Date>();
   const [selectedMonth, setSelectedMonth] = useState<number | undefined>();
@@ -45,12 +47,12 @@ const AppDateCalendar: React.FC<AppDateCalendarProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | undefined | null>(prevSelectedDate);
   const [textDate, setTextDate] = useState<string>('');
   const [isDateTyping, setIsDateTyping] = useState<boolean>(false);
+  const disablePrevMonth: MutableRefObject<boolean> = useRef(disabledPrevMonth);
 
   useEffect(() => {
     const initialDate = prevSelectedDate ? prevSelectedDate : initDate ? initDate : new Date();
     const _selectedMonth = getMonth(initialDate);
     const _selectedYear = getYear(initialDate);
-
     setSelectedMonth(_selectedMonth);
     setSelectedYear(_selectedYear);
     setFullDate(initialDate);
@@ -75,6 +77,11 @@ const AppDateCalendar: React.FC<AppDateCalendarProps> = ({
       setFullDate(_fullDate);
       setSelectedYear(_fullDate.getFullYear());
       setSelectedMonth(_fullDate.getMonth());
+      if (disabledPrevMonth) {
+        disablePrevMonth.current =
+          _fullDate.getMonth()! <= initDate?.getMonth()! &&
+          initDate?.getFullYear()! >= _fullDate.getFullYear();
+      }
     },
     [selectedMonth]
   );
@@ -114,9 +121,9 @@ const AppDateCalendar: React.FC<AppDateCalendarProps> = ({
         const date = new Date(selectedYear, selectedMonth, i);
         const isSelected = isDateSelected(date);
         let disableFlag: boolean = false;
-
         if (disabledPrevMonth) {
-          if (initDate?.getMonth()! >= selectedMonth) disableFlag = i < disabledPrevDate + 1;
+          if (initDate?.getMonth()! >= selectedMonth && initDate?.getFullYear()! >= selectedYear)
+            disableFlag = i < disabledPrevDate + 1;
         }
         days.push(
           <AppCalenderDate
@@ -167,15 +174,15 @@ const AppDateCalendar: React.FC<AppDateCalendarProps> = ({
   };
 
   return (
-    <VStack w="200px" h="300px" bg={ocean_blue_600} userSelect="none">
+    <VStack w="216px" h="300px" bg={ocean_blue_600} userSelect="none">
       <HStack
         w="full"
         bg={ocean_blue_500}
         justify="center"
         gap="10px"
-        p="4px 0"
+        p={`${calendarTopPadding}px 0`}
         borderRadius="4px"
-        h="26px"
+        h={calendarTopPadding ? '26px' : '0px'}
       >
         <AppText size="caption" color={ocean_blue_100}>
           {label}
@@ -191,7 +198,7 @@ const AppDateCalendar: React.FC<AppDateCalendarProps> = ({
           variant="iconPrimary"
           size="iconSmall"
           onClick={() => onMonthChangeWithArrow(-1)}
-          isDisabled={disabledPrevMonth}
+          isDisabled={disablePrevMonth.current}
         />
         <AppText size="body3" color={neutral_200} textAlign="center">
           {selectedMonth !== undefined &&

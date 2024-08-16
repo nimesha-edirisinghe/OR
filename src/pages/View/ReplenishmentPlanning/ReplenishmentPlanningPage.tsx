@@ -80,6 +80,7 @@ const ReplenishmentPlanningPage: FC<Props> = () => {
       <FilterDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenFilterDrawer}
         filterHierarchy={viewReplenishmentFilterHierarchy}
+        showWarning
       />
       <FilterItemsSelectionDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenItemSelectionDrawer}

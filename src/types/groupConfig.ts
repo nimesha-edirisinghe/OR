@@ -17,13 +17,14 @@ export interface FilterLocalScopeI {
   rightPanelRetainDataList: RightFilterItemContentI[];
   beforeEditFilterOptionsLevel1: RightFilterItemContentI[] | undefined;
   beforeEditFilterOptionsLevel2: RightFilterItemContentI[] | undefined;
+  totalSelectedSkuCount: number | null;
 }
 
 export interface RightFilterItemContentI {
   code: number;
   isSelectAll: boolean;
   search?: null | string;
-  selectedItems: KeyValueI[] | string[] | [];
+  selectedItems: KeyValueI[] | string[] | number[] | [];
   outOfCount?: number;
   type: string;
 }
@@ -34,6 +35,7 @@ export interface GroupConfigurationLocalScopeI {
   isWarehouseGroup: boolean;
   currantPageNumber: number;
   isFilterApplied: boolean;
+  isEditEnabled: boolean;
 }
 
 export interface GroupLabelI {

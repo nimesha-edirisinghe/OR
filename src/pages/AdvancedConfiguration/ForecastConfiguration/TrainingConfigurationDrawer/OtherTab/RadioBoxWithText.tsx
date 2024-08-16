@@ -11,9 +11,17 @@ interface Props {
   isChecked: boolean;
   onChange: (name: BestFitCriteriaRadioName, value: boolean) => void;
   lineHeight?: string;
+  isDisabled?: boolean;
 }
 
-const RadioBoxWithText: FC<Props> = ({ text, name, isChecked, onChange, lineHeight = '30px' }) => {
+const RadioBoxWithText: FC<Props> = ({
+  text,
+  name,
+  isChecked,
+  onChange,
+  lineHeight = '30px',
+  isDisabled = false
+}) => {
   const textColor: string = isChecked ? neutral_200 : ocean_blue_200;
   const textWeight: string = isChecked ? '600' : '400';
 
@@ -31,9 +39,17 @@ const RadioBoxWithText: FC<Props> = ({ text, name, isChecked, onChange, lineHeig
         size="md"
         isChecked={isChecked}
         value={name}
-        onClick={(e: any) => onChange(name, e.target.value)}
+        onClick={(e: any) => !isDisabled && onChange(name, e.target.value)}
+        isDisabled={isDisabled}
       />
-      <AppText fontSize="13px" fontWeight={textWeight} lineHeight={lineHeight} color={textColor}>
+      <AppText
+        fontSize="13px"
+        fontWeight={textWeight}
+        lineHeight={lineHeight}
+        color={textColor}
+        onClick={(e: any) => !isDisabled && onChange(name, e.target.value)}
+        cursor={isDisabled ? 'not-allowed' : 'pointer'}
+      >
         {text}
       </AppText>
     </HStack>

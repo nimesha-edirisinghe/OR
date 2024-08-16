@@ -27,10 +27,15 @@ const ForecastConfigGroupNameCellDataMap: FC<ForecastConfigGroupNameCell> = ({
 }) => {
   return (
     <GeneralCellLayout
-    {...rest}
+      {...rest}
       rowId={'0'}
       mainLabel={
-        <AppText whiteSpace="nowrap" fontSize="12px" fontWeight={400}>
+        <AppText
+          whiteSpace="nowrap"
+          fontSize="12px"
+          fontWeight={400}
+          style={{ userSelect: 'text' }}
+        >
           {cellData.groupDetails?.groupDisplayName}
         </AppText>
       }

@@ -16,6 +16,11 @@ import {
 } from 'types/view/whReplenishmentView';
 import { ReplenishmentWHPlanDetailsStateI } from 'types/responses/whViewRplResponses';
 import { format } from 'date-fns';
+import { validateWhReplenishmentEditData } from 'state/pages/monitoringAndResolution/Alert/stateHelpers/stH_alert';
+import { AlertReplenishmentActionTypeEnum } from 'utils/enum';
+import { UpdateCellDataI } from 'state/pages/monitoringAndResolution/Alert/alertState';
+import { AlertTypeI } from 'types/alertConfig';
+import { ReplenishmentI } from 'types/requests/alertConfigRequest';
 
 export interface IRPLWhView {
   loading: RPLWHViewLoadingI;
@@ -30,6 +35,9 @@ export interface IRPLWhView {
   rplWhUploadedHistory: GetUploadHistoryResponseI | null;
   rplWhPlanTotalCount: { key: string; value: string }[] | null;
   isLoadWhData: boolean;
+  isReplEditable: boolean;
+  isReplValidated: boolean;
+  AlertType: AlertTypeI;
 }
 
 export const RPLWhViewSlice = createSlice({
@@ -41,7 +49,8 @@ export const RPLWhViewSlice = createSlice({
       planDetails: false,
       planDetailTotalCount: false,
       rplWhBulkEditDownload: false,
-      rplWhHistoryTableLoading: false
+      rplWhHistoryTableLoading: false,
+      editDetail: false
     },
     rplWhSkuDataList: null,
     rplWhSkuExpandedDataList: null,
@@ -60,7 +69,15 @@ export const RPLWhViewSlice = createSlice({
     rplWhLastUpdatedDateTime: new Date().toISOString(),
     rplWhUploadedHistory: null,
     rplWhPlanTotalCount: null,
-    isLoadWhData: true
+    isLoadWhData: true,
+    isReplEditable: false,
+    isReplValidated: false,
+    AlertType: {
+      alertType: null,
+      alertTypeDisplayName: null,
+      anchorProdKey: null,
+      groupKey: null
+    }
   } as IRPLWhView,
   reducers: {
     setIsLoadWhData: (state, action: PayloadAction<boolean>) => {
@@ -227,6 +244,7 @@ export const RPLWhViewSlice = createSlice({
       state,
       action: PayloadAction<{
         fileName: string;
+        groupKey: string;
         searchKey?: string;
       }>
     ) => {
@@ -283,7 +301,8 @@ export const RPLWhViewSlice = createSlice({
       state,
       action: PayloadAction<{ key: string; value: string }[]>
     ) => {
-      const headers = (state.rplWhSkuExpandedDataList?.headers as TableHeader[]).map((h) => h.key) || [];
+      const headers =
+        (state.rplWhSkuExpandedDataList?.headers as TableHeader[]).map((h) => h.key) || [];
       state.rplWhPlanTotalCount = action.payload.filter((obj) => headers.includes(obj.key));
     },
     getReplenishmentTotalCountFailure: (state) => {},
@@ -303,6 +322,84 @@ export const RPLWhViewSlice = createSlice({
     whRplResetSkuExpandedListData: (state) => {
       state.rplWhSkuExpandedDataList = null;
     },
+    setReplEditable: (state, action: PayloadAction<boolean>) => {
+      state.isReplEditable = action.payload;
+    },
+    addNewReplCellData: (state) => {
+      const orderList = state?.rplWhPlanDetails?.orderQtyDetails?.list;
+      if (orderList) {
+        let id: number = 0;
+        if (orderList.length > 0) {
+          const lastRow = orderList[orderList.length - 1];
+          id = lastRow.id + 1;
+        }
+        orderList.push({
+          id,
+          row: ['', 0, '', 0, ''],
+          isSelected: false,
+          fresh: true,
+          action: AlertReplenishmentActionTypeEnum.CREATE
+        });
+        state.isReplValidated = false;
+      }
+    },
+    deleteReplCellData: (state, action: PayloadAction<string>) => {
+      const id: number = parseInt(action.payload);
+      if (state?.rplWhPlanDetails?.orderQtyDetails?.list) {
+        state.rplWhPlanDetails.orderQtyDetails.list =
+          state.rplWhPlanDetails.orderQtyDetails.list.map((row) => {
+            if (row.id === id) {
+              row.action = AlertReplenishmentActionTypeEnum.DELETE;
+            }
+            return row;
+          });
+        state.isReplValidated = validateWhReplenishmentEditData(state);
+      }
+    },
+    updateReplCellData: (state, action: PayloadAction<UpdateCellDataI>) => {
+      const { id, index, value } = action.payload;
+      const orderList = state.rplWhPlanDetails?.orderQtyDetails?.list;
+      if (orderList?.length) {
+        const selectedRow = orderList[id as number].row;
+        let calculatedValue = value;
+        const supplyPackSize = state.rplWhPlanDetails?.orderPlan.unitOrderQty;
+        if (index === 1) {
+          calculatedValue = +value;
+          selectedRow[index + 2] =
+            calculatedValue * (state.rplWhPlanDetails?.orderPlan.unitPrice || 0);
+          selectedRow[index + 1] =
+            supplyPackSize !== undefined && value !== ''
+              ? Math.round(calculatedValue / supplyPackSize)
+              : '';
+        }
+        selectedRow[index] = calculatedValue;
+        if (!orderList[id as number].fresh)
+          orderList[id as number].action = AlertReplenishmentActionTypeEnum.EDIT;
+        state.isReplValidated = validateWhReplenishmentEditData(state);
+      }
+    },
+    rplWHEditRequest: (state, action: PayloadAction<ReplenishmentI>) => {
+      state.loading.editDetail = true;
+    },
+    rplWHEditSuccess: (state) => {
+      state.loading.editDetail = false;
+    },
+    rplWHEditFailure: (state) => {
+      state.loading.editDetail = false;
+    },
+    rplWHAlertTypeRequest: (state) => {
+      state.loading.planDetails = true;
+    },
+    rplWHAlertTypeSuccess: (state, action: PayloadAction<AlertTypeI>) => {
+      state.loading.planDetails = false;
+      state.AlertType = action.payload;
+    },
+    rplWHAlertTypeFailure: (state) => {
+      state.loading.planDetails = false;
+    },
+    setRplValidation: (state, action: PayloadAction<boolean>) => {
+      state.isReplValidated = action.payload;
+    }
   }
 });
 
@@ -348,7 +445,18 @@ export const {
   setDateRange,
   whRplResetSkuListData,
   whRplResetUploadHistoryData,
-  whRplResetSkuExpandedListData
+  whRplResetSkuExpandedListData,
+  setReplEditable,
+  addNewReplCellData,
+  deleteReplCellData,
+  updateReplCellData,
+  rplWHEditRequest,
+  rplWHEditSuccess,
+  rplWHEditFailure,
+  rplWHAlertTypeRequest,
+  rplWHAlertTypeSuccess,
+  rplWHAlertTypeFailure,
+  setRplValidation
 } = RPLWhViewSlice.actions;
 
 export default RPLWhViewSlice.reducer;

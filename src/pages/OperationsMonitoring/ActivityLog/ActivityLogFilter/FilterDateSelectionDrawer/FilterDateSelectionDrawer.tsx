@@ -1,6 +1,5 @@
 import {
   Box,
-  Divider,
   Drawer,
   DrawerBody,
   DrawerContent,
@@ -13,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 import AppButton from 'components/AppButton/AppButton';
 import AppText from 'components/AppText/AppText';
-import { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getFromLocal } from 'utils/localStorage';
 import {
@@ -26,39 +25,84 @@ import {
 } from 'state/pages/operationAndMonitoring/activityLog/activityLogState';
 import AppRadioButton from '../../../../../components/AppRadioButton/AppRadioButton';
 import { initialDateTypesAndValues } from './helper';
-import AppDateRangeCalendar from 'components/AppDateCalendar/Calender/AppDateRangeCalendar';
-import { getDate, getMonth, getTime, getYear } from 'date-fns';
+import { differenceInDays, getDate, getMonth, getTime, getYear } from 'date-fns';
 import { produce } from 'immer';
-import AppTimePicker, { TimeType } from 'components/AppTimePicker/AppTimePicker';
+import AppTimePicker from 'components/newTheme/AppTimePicker/AppTimePicker';
 import { AM_PM } from 'components/AppTimePicker/AppAMPMSkipper';
-import { blue_500, ocean_blue_350, ocean_blue_400, ocean_blue_600 } from 'theme/colors';
+import {
+  black_800,
+  blue_500,
+  neutral_100,
+  neutral_400,
+  ocean_blue_350,
+  ocean_blue_500,
+  ocean_blue_600,
+  ocean_blue_700
+} from 'theme/colors';
 import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import { AppIcon } from 'components/AppIcon/AppIcon';
+import AppInput from 'components/AppInput/AppInput';
+import { showErrorToast } from 'state/toast/toastState';
+import { format } from 'date-fns';
+import AppDateRangeCalendar from 'components/AppDateCalendar/Calender/AppDateRangeCalendar';
+import { convertTo24hours } from 'utils/date';
 
 const initialDateRange = {
   startDate: null,
-  endDate: null
+  endDate: null,
+  parsedDate: null
 };
 
 const initialTime = {
   startTime: {
     h: null,
-    m: null
+    m: null,
+    formatted: '',
+    timeType: null
   },
   endTime: {
     h: null,
-    m: null
+    m: null,
+    formatted: '',
+    timeType: null
   }
 };
 
+const initialTimeVisibility: TimeVisibility = {
+  start: false,
+  end: false,
+  dateRange: false
+};
+
+interface TimeVisibility {
+  start: boolean;
+  end: boolean;
+  dateRange: boolean;
+}
 export interface DateType {
   startDate: null | Date;
   endDate: null | Date;
+  parsedDate: string | null;
 }
 
 interface Props {
   isOpen: boolean;
+}
+
+interface ClockI {
+  startTime: {
+    h: number | null;
+    m: number | null;
+    formatted: string;
+    timeType: AM_PM | null;
+  };
+  endTime: {
+    h: number | null;
+    m: number | null;
+    formatted: string;
+    timeType: AM_PM | null;
+  };
 }
 
 const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
@@ -69,6 +113,9 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
     onClose: onCloseCancelPrompt
   } = useDisclosure();
   const activityLogState: IActivityLogSlice = useSelector(activityLogSliceSelector);
+  const dateRangeRef: any = useRef();
+  const fromDateRef: any = useRef();
+  const toDateRef: any = useRef();
   const dashboardFilter = activityLogState.dashboardFilter;
   const selectedDateTime = dashboardFilter.filterLocalScope.rightPanelRetainDataList.date;
   const beforeEditFilterOptionsLevel2 =
@@ -76,11 +123,10 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
   const [selectedDateType, setSelectedDateType] = useState(selectedDateTime.dateType);
   const [dateTypes, setDateTypes] = useState(initialDateTypesAndValues);
   const [dateRange, setDateRange] = useState<DateType>(initialDateRange);
-  const [time, setTime] = useState<TimeType>(initialTime);
-  const [unixTime, setUnixTime] = useState({
-    startDateTime: 0,
-    endDateTime: 0
-  });
+  const [time, setTime] = useState<ClockI>(initialTime);
+
+
+  const [timeVisibility, setTimeVisibility] = useState<TimeVisibility>(initialTimeVisibility);
 
   useEffect(() => {
     if (!selectedDateTime.endDate) {
@@ -91,35 +137,31 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
     }
   }, [selectedDateTime]);
 
-  useEffect(() => {
-    if (dateRange.startDate !== null && dateRange.endDate !== null) {
-      const startDateInUnixTime = getTime(
-        new Date(
-          getYear(dateRange.startDate),
-          getMonth(dateRange.startDate),
-          getDate(dateRange.startDate),
-          time.startTime.h ? time.startTime.h : 0,
-          time.startTime.m ? time.startTime.m : 0,
-          0
-        )
-      );
-      const endDateInUnixTime = getTime(
-        new Date(
-          getYear(dateRange.endDate),
-          getMonth(dateRange.endDate),
-          getDate(dateRange.endDate),
-          time.endTime.h ? time.endTime.h : 0,
-          time.endTime.m ? time.endTime.m : 0,
-          0
-        )
-      );
+  const getStartDate = () => {
+    return getTime(
+      new Date(
+        getYear(dateRange.startDate!),
+        getMonth(dateRange.startDate!),
+        getDate(dateRange.startDate!),
+        time.startTime.h ? convertTo24hours(time.startTime.h, time.startTime.timeType!) : 0,
+        time.startTime.m ? time.startTime.m : 0,
+        0
+      )
+    );
+  };
 
-      setUnixTime({
-        startDateTime: startDateInUnixTime,
-        endDateTime: endDateInUnixTime
-      });
-    }
-  }, [dateRange, time]);
+  const getEndDate = () => {
+    return getTime(
+      new Date(
+        getYear(dateRange.endDate!),
+        getMonth(dateRange.endDate!),
+        getDate(dateRange.endDate!),
+        time.endTime.h ? convertTo24hours(time.endTime.h, time.endTime.timeType!) : 0,
+        time.endTime.m ? time.endTime.m : 0,
+        0
+      )
+    );
+  };
 
   const onChangeDateType = (value: string) => {
     setSelectedDateType(value);
@@ -135,13 +177,13 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
     dispatch(openFilterDrawer());
   };
   const onSaveSelectedItems = () => {
-    if (unixTime.startDateTime && unixTime.endDateTime) {
+    if (dateRange.startDate && dateRange.endDate) {
       const _dashboardFilter = produce(dashboardFilter, (draft) => {
         draft.filterLocalScope.rightPanelRetainDataList.date.dateType = selectedDateType;
         draft.filterLocalScope.rightPanelRetainDataList.date.startDate =
-          selectedDateType === '5' ? unixTime.startDateTime : null;
+          selectedDateType === '5' ? getStartDate() : null;
         draft.filterLocalScope.rightPanelRetainDataList.date.endDate =
-          selectedDateType === '5' ? unixTime.endDateTime : null;
+          selectedDateType === '5' ? getEndDate() : null;
       });
       dispatch(updateDashboardFilter(_dashboardFilter));
     }
@@ -188,33 +230,67 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
       });
     setDateTypes(_dateTypes);
   };
-  const onRangeSelect = (startDate: Date, endDate: Date, id?: number) => {
-    setDateRange({ startDate, endDate });
-  };
+
   const onTimeChange = (
     hour: number,
     minute: number,
-    timeType: 'start' | 'end',
     isTimeValid: boolean,
-    amPm: AM_PM
+    amPm: AM_PM,
+    timeType: string = ''
   ) => {
-    let timeObj = { ...time };
-    if (amPm === 'PM' && hour + 12 <= 24) {
-      hour += 12;
-    }
-
-    if (amPm === 'AM' && hour - 12 >= 0) {
-      hour -= 12;
-    }
+    const timeObj = { ...time };
+    const formatted: string = `${hour > 12 ? hour - 12 : hour} : ${minute} ${amPm}`;
 
     if (timeType === 'start') {
-      timeObj.startTime = { h: hour, m: minute };
-    } else {
-      timeObj.endTime = { h: hour, m: minute };
+      timeObj.startTime = { h: hour, m: minute, formatted, timeType: amPm };
+    } else if (timeType === 'end') {
+      timeObj.endTime = { h: hour, m: minute, formatted, timeType: amPm };
     }
-
     setTime(timeObj);
   };
+
+  const onRangeSelect = (startDate: Date, endDate: Date, key: number) => {
+    const dateRange = differenceInDays(endDate, startDate);
+    if (dateRange > 14) {
+      showErrorToast('The maximum period between two dates must not exceed 14 days.');
+      setDateRange({ startDate: null, endDate: null, parsedDate: null });
+      return;
+    }
+    const strStartDate = format(startDate, 'yyyy-MM-dd').toString();
+    const strEndDate = format(endDate, 'yyyy-MM-dd').toString();
+    const parsedDate = `${strStartDate} to ${strEndDate}`;
+    setDateRange({ startDate: new Date(startDate), endDate: new Date(endDate), parsedDate });
+    handleTimeVisibility('dateRange');
+  };
+
+  const handleTimeVisibility = (type: string) => {
+    setTimeVisibility({ ...timeVisibility, [type]: !(timeVisibility as any)[type] });
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: any) => {
+      const target = event.target;
+      const tempTimeVisibility: TimeVisibility = { ...timeVisibility };
+      if (dateRangeRef.current && !dateRangeRef.current.contains(target)) {
+        tempTimeVisibility.dateRange = false;
+      }
+
+      if (toDateRef.current && !toDateRef.current.contains(target)) {
+        tempTimeVisibility.end = false;
+      }
+
+      if (fromDateRef.current && !fromDateRef.current.contains(target)) {
+        tempTimeVisibility.start = false;
+      }
+
+      setTimeVisibility(tempTimeVisibility);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [timeVisibility]);
 
   return (
     <>
@@ -224,14 +300,13 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
         <DrawerContent
           maxH="100vh"
           bg={ocean_blue_600}
-          w="700px"
-          maxW="700px"
-          px="17px"
-          pt="22px"
+          w="600px"
+          maxW="600px"
+          p="20px"
           userSelect="none"
         >
           <VStack w="full" spacing="20px">
-            <HStack justify="space-between" w="full">
+            <HStack justify="space-between" w="full" mx="20px">
               <HStack spacing="12px">
                 <AppIconButton
                   aria-label="back"
@@ -242,7 +317,9 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
                   icon={<AppIcon name="singleLeftArrow" w="24px" h="24px" fill={blue_500} />}
                   onClick={onDrawerClose}
                 />
-                <AppText size="h4Semibold">{getFromLocal('insightDrawerTitle')}</AppText>
+                <AppText fontSize="13px" fontWeight={600} color={neutral_100}>
+                  {getFromLocal('insightDrawerTitle')}
+                </AppText>
               </HStack>
               <AppIconButton
                 aria-label="close"
@@ -255,20 +332,14 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
               />
             </HStack>
           </VStack>
-          <Divider color="#595959" h="1px" mt="8px" />
           <DrawerBody p={0} overflow="hidden" w="full">
             <VStack
-              bg={ocean_blue_400}
               h="full"
               w="full"
               align="start"
               mt="20px"
-              borderRadius="6px"
-              px="13px"
-              pt="5px"
-              pb="25px"
-              gap={0}
-              spacing={0}
+              ml="6px"
+              spacing="200px"
               overflowY="auto"
               __css={{
                 '&::-webkit-scrollbar': {
@@ -287,11 +358,7 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
                 return (
                   <HStack
                     bg={item.value === selectedDateType ? ocean_blue_600 : 'transparent'}
-                    borderBottom="1px solid "
-                    borderBottomColor={ocean_blue_350}
                     w="full"
-                    py="10px"
-                    pl="8px"
                     key={key}
                   >
                     <AppRadioButton
@@ -299,46 +366,167 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
                       name={item.value}
                       text={item.displayName}
                       onChange={onChangeRadioButton}
+                      size="md"
                     />
                   </HStack>
                 );
               })}
               {selectedDateType === '5' && (
                 <Box w="full">
-                  <HStack pt="20px" justify="center" w="full">
-                    <AppDateRangeCalendar
-                      onRangeSelect={onRangeSelect}
-                      selectedDateRange={{
-                        startDate: dateRange.startDate!,
-                        endDate: dateRange.endDate!
-                      }}
-                    />
-                  </HStack>
+                  <VStack pt="20px" spacing="20px" w="full" align="start" pr="10px">
+                    <VStack align="start" w="full">
+                      <AppText fontSize="12px" fontWeight={400} color={neutral_400}>
+                        Date Range
+                      </AppText>
+                      <Flex position="relative" w="full">
+                        <AppInput
+                          bg={ocean_blue_500}
+                          border="none"
+                          borderRadius="8px"
+                          w="full"
+                          h="36px"
+                          fontSize="13px"
+                          fontWeight={400}
+                          color={neutral_100}
+                          value={dateRange.parsedDate || ''}
+                          onChange={(e) => {}}
+                          p="10px 8px 10px 12px"
+                          _disabled={{ backgroundColor: ocean_blue_600, color: black_800 }}
+                        />
+                        <AppIcon
+                          name="calenderWithDate"
+                          fill={blue_500}
+                          position="absolute"
+                          top="2"
+                          right="2"
+                          onClick={() => handleTimeVisibility('dateRange')}
+                          zIndex={2}
+                        />
 
-                  <VStack pt="34px">
-                    <HStack justify="space-between" w="full">
-                      <VStack align="start">
-                        <AppText fontSize="13px" fontWeight={400}>
-                          From Time
+                        {timeVisibility.dateRange && (
+                          <Box
+                            ref={dateRangeRef}
+                            position="absolute"
+                            top="-50px"
+                            right="8"
+                            zIndex={3}
+                          >
+                            <AppDateRangeCalendar
+                              onRangeSelect={onRangeSelect}
+                              selectedDateRange={dateRange}
+                            />
+                          </Box>
+                        )}
+                      </Flex>
+                    </VStack>
+
+                    <HStack align="start">
+                      <Box>
+                        <AppText fontSize="12px" fontWeight={400} color={neutral_400}>
+                          From
                         </AppText>
-                        <AppTimePicker
-                          onTimeSelect={(hours, minutes, isValid, amPm) => {
-                            onTimeChange(hours, minutes, 'start', isValid, amPm);
-                          }}
-                          time={time.startTime}
-                        />
-                      </VStack>
-                      <VStack align="start">
-                        <AppText fontSize="13px" fontWeight={400}>
-                          To Time
+                        <Flex position="relative">
+                          <AppInput
+                            bg={ocean_blue_500}
+                            border="none"
+                            borderRadius="8px"
+                            w="272px"
+                            h="36px"
+                            fontSize="13px"
+                            fontWeight={400}
+                            lineHeight="19.5px"
+                            color={neutral_100}
+                            value={time.startTime.formatted}
+                            onChange={(e) => {}}
+                            _disabled={{ backgroundColor: ocean_blue_600, color: black_800 }}
+                          />
+                          <Box position="absolute" top="1" right="2" zIndex={2}>
+                            <AppIcon name="clock" onClick={() => handleTimeVisibility('start')} />
+                          </Box>
+                          {timeVisibility.start && (
+                            <VStack
+                              ref={fromDateRef}
+                              align="center"
+                              justify="center"
+                              position="absolute"
+                              top="10"
+                              zIndex={2}
+                              backgroundColor={ocean_blue_700}
+                              w="272px"
+                              h="93px"
+                              p="8px"
+                            >
+                              <AppText
+                                w="full"
+                                fontSize="12px"
+                                fontWeight={400}
+                                color={neutral_400}
+                              >
+                                From Time
+                              </AppText>
+                              <AppTimePicker
+                                onTimeSelect={(hours, minutes, isValid, amPm) => {
+                                  onTimeChange(hours, minutes, isValid, amPm, 'start');
+                                }}
+                                time={time.startTime}
+                              />
+                            </VStack>
+                          )}
+                        </Flex>
+                      </Box>
+                      <Box>
+                        <AppText fontSize="12px" fontWeight={400} color={neutral_400}>
+                          To
                         </AppText>
-                        <AppTimePicker
-                          onTimeSelect={(hours, minutes, isValid, amPm) => {
-                            onTimeChange(hours, minutes, 'end', isValid, amPm);
-                          }}
-                          time={time.endTime}
-                        />
-                      </VStack>
+                        <Flex position="relative">
+                          <AppInput
+                            bg={ocean_blue_500}
+                            border="none"
+                            borderRadius="8px"
+                            w="272px"
+                            h="36px"
+                            fontSize="13px"
+                            fontWeight={400}
+                            lineHeight="19.5px"
+                            color={neutral_100}
+                            value={time.endTime.formatted}
+                            onChange={(e) => {}}
+                            _disabled={{ backgroundColor: ocean_blue_600, color: black_800 }}
+                          />
+                          <Box position="absolute" top="1" right="2" zIndex={2}>
+                            <AppIcon name="clock" onClick={() => handleTimeVisibility('end')} />
+                          </Box>
+                          {timeVisibility.end && (
+                            <VStack
+                              ref={toDateRef}
+                              align="center"
+                              justify="center"
+                              position="absolute"
+                              top="10"
+                              zIndex={2}
+                              backgroundColor={ocean_blue_700}
+                              w="272px"
+                              h="93px"
+                              p="8px"
+                            >
+                              <AppText
+                                w="full"
+                                fontSize="12px"
+                                fontWeight={400}
+                                color={neutral_400}
+                              >
+                                To Time
+                              </AppText>
+                              <AppTimePicker
+                                onTimeSelect={(hours, minutes, isValid, amPm) => {
+                                  onTimeChange(hours, minutes, isValid, amPm, 'end');
+                                }}
+                                time={time.endTime}
+                              />
+                            </VStack>
+                          )}
+                        </Flex>
+                      </Box>
                     </HStack>
                   </VStack>
                 </Box>
@@ -346,22 +534,17 @@ const FilterDateSelectionDrawer: FC<Props> = ({ isOpen }) => {
             </VStack>
           </DrawerBody>
           <DrawerFooter p={0}>
-            <Flex direction="column" w="full" pb="15px">
-              <Divider color="#595959" h="1px" mt="8px" mb="20px" />
-              <HStack w="full" justify="end">
-                <AppButton
-                  variant="secondary"
-                  size="medium"
-                  onClick={onToggleCancelPrompt}
-                  px="25px"
-                >
-                  Cancel
-                </AppButton>
-                <AppButton variant="primary" size="medium" onClick={onSaveSelectedItems} px="25px">
-                  Select
-                </AppButton>
-              </HStack>
-            </Flex>
+            <HStack w="full" justify="end">
+              <AppButton
+                variant="primary"
+                w="105px"
+                h="36px"
+                p="10px 14px 10px 14px"
+                onClick={onSaveSelectedItems}
+              >
+                Apply
+              </AppButton>
+            </HStack>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

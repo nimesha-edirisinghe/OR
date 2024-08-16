@@ -1,41 +1,55 @@
 import AppTooltip from 'components/AppTooltip/AppTooltip';
-import AppText from 'components/newTheme/AppText/AppText';
-import { FC, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { numberWithCommaSeparator } from 'utils/utility';
 import { CellTextAlignmentT } from '../../AppSimpleGrid';
+import { Text } from '@chakra-ui/react';
 
 interface Props {
   rowColorBg: string;
   displayValue: string;
   tableRoot?: any;
   textAlign?: CellTextAlignmentT;
+  cellWidth?: number;
 }
 
-const GeneralCell: FC<Props> = ({ displayValue, tableRoot, textAlign }) => {
+const GeneralCell: FC<Props> = ({ displayValue, tableRoot, textAlign, cellWidth = 0 }) => {
+  const textRef: any = useRef();
   const formattedDisplayValue =
     typeof displayValue === 'number'
       ? numberWithCommaSeparator(Number(displayValue))
       : displayValue;
   const alignment = textAlign ? textAlign : typeof displayValue === 'number' ? 'right' : 'left';
 
-  const shouldUseTooltip = displayValue && displayValue.toString().length > 18;
-  const [displayTootTip, setDisplayTooltip] = useState(false);
+  const [displayTootTip, setDisplayTooltip] = useState(true);
   useEffect(() => {
     const tableElement = tableRoot.current;
     tableElement.addEventListener('scroll', () => setDisplayTooltip(false));
     tableElement.addEventListener('scrollend', () => setDisplayTooltip(true));
+
+    return () => {
+      tableElement.removeEventListener('scroll', () => setDisplayTooltip(false));
+      tableElement.removeEventListener('scrollend', () => setDisplayTooltip(true));
+    };
   }, []);
 
+  const shouldUseTooltip = textRef.current?.offsetWidth + 16 >= cellWidth;
+
   return (
-    <AppText size="body2" noOfLines={1} textAlign={alignment} style={{ wordBreak: 'break-all' }}>
+    <Text
+      ref={textRef}
+      size="body2"
+      noOfLines={1}
+      textAlign={alignment}
+      style={{ wordBreak: 'break-all', userSelect: 'text' }}
+    >
       {shouldUseTooltip && displayTootTip ? (
-        <AppTooltip label={formattedDisplayValue} placement="auto-start">
+        <AppTooltip label={formattedDisplayValue} placement="top-end">
           <span>{formattedDisplayValue}</span>
         </AppTooltip>
       ) : (
         <span>{formattedDisplayValue}</span>
       )}
-    </AppText>
+    </Text>
   );
 };
 

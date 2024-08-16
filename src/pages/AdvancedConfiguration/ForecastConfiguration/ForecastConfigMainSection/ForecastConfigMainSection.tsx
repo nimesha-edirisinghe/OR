@@ -10,9 +10,12 @@ import { getCommonLastUpdateDateRequest } from 'state/pages/common/commonState';
 import FooterSection from './FooterSection/FooterSection';
 import { fcConfigPageSliceSelector } from 'state/pages/advancedConfiguration/forecastConfigurationPage/pageState';
 import {
-  forecastConfigTableRowDataMapping,
+  getForecastConfigTableRowDataMapping,
   tableHeaders
 } from 'components/AppTable/TableDataMapping/ForecastingConfigTable';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface Props {}
 
@@ -21,6 +24,10 @@ const ForecastConfigMainSection: FC<Props> = () => {
   const isLeftMenuOpen = useSelector(layoutSliceSelector).leftMenuOpen;
   const fConfigPage = useSelector(fcConfigPageSliceSelector);
   const isLoading = fConfigPage.isLoading;
+
+  const accessType = useAccessType(MenuItems.FORECASTING_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EXECUTE]);
+  const forecastConfigTableRowDataMapping = getForecastConfigTableRowDataMapping(accessNotAllowed);
 
   useEffect(() => {
     dispatch(getCommonLastUpdateDateRequest());

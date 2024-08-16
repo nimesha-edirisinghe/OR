@@ -71,3 +71,27 @@ export const tableScrollbarXYStyles = {
   },
   scrollbarGutter: 'stable'
 };
+
+export const customScrollbarXYStyles = (width:string='0px',height:string='0px') => {
+  return{
+  '&::-webkit-scrollbar': {
+    width: width,
+    height: height
+  },
+  '&::-webkit-scrollbar-track': {
+    width: width,
+    height: height,
+    backgroundColor: ocean_blue_400
+  },
+  '&::-webkit-scrollbar-thumb': {
+    borderRadius: '10px',
+    backgroundColor: ocean_blue_350
+  },
+  ' &::-webkit-scrollbar-track-piece': {
+    display: 'none'
+  },
+  '&::-webkit-scrollbar-corner': {
+    backgroundColor: ocean_blue_400
+  }
+}
+};

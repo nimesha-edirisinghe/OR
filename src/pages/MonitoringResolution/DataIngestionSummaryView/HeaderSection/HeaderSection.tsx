@@ -1,5 +1,5 @@
 import { FC, useState } from 'react';
-import { HStack } from '@chakra-ui/react';
+import { Box, HStack } from '@chakra-ui/react';
 import { useDispatch, useSelector } from 'react-redux';
 import AppText from 'components/AppText/AppText';
 import { AppIcon } from 'components/AppIcon/AppIcon';
@@ -13,6 +13,7 @@ import {
   setDataIngestionSummaryPaginationAction,
   getDataIngestionSummaryViewDataRequest
 } from 'state/pages/monitoringAndResolution/dataIngestionSummaryView/dataIngestionSummaryViewState';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 
 interface HeaderSectionProps {
   searchHandler: (key: string) => void;
@@ -78,22 +79,26 @@ const HeaderSection: FC<HeaderSectionProps> = ({ searchHandler }) => {
             {lastUpdateDataTime}
           </AppText>
         </HStack>
-        <AppIconButton
-          aria-label="next"
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name="refresh"
-              width="14px"
-              height="14px"
-              fill={blue_500}
+        <AppTooltip label="Refresh" placement="bottom-start">
+          <Box>
+            <AppIconButton
+              aria-label="next"
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name="refresh"
+                  width="14px"
+                  height="14px"
+                  fill={blue_500}
+                />
+              }
+              variant="secondary"
+              size="iconMedium"
+              onClick={refreshHandler}
+              bg={ocean_blue_600}
             />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={refreshHandler}
-          bg={ocean_blue_600}
-        />
+          </Box>
+        </AppTooltip>
       </HStack>
     </HStack>
   );

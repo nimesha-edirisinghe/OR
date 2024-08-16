@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ocean_blue_500, ocean_blue_600 } from 'theme/colors';
 import {
   alertSliceSelector,
-  AlertForecastChartRequest
+  alertForecastChartRequest
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import BottomOption from './BottomOption';
 import TopOption from './TopOption';
@@ -18,7 +18,7 @@ const ControlPanel: FC<ControlPanelProps> = ({}) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(AlertForecastChartRequest({ chartType: aggregateOption.selectedAggregateOption! }));
+    dispatch(alertForecastChartRequest({ chartType: aggregateOption.selectedAggregateOption! }));
   }, [aggregateOption, graphDateRange]);
 
   return (

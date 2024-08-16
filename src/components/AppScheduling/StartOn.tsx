@@ -22,9 +22,10 @@ import { formatUnixDateTime, getTimeFromTimestamp } from 'utils/utility';
 
 interface StartOnSectionProps {
   status: boolean;
+  isDisabled?: boolean;
 }
 
-const StartOnSection: FC<StartOnSectionProps> = ({ status }) => {
+const StartOnSection: FC<StartOnSectionProps> = ({ status, isDisabled = false }) => {
   const dispatch = useDispatch();
   const jobScheduleState = useSelector(jobScheduleSliceSelector);
   const schedulingStartDate = jobScheduleState?.jobSchedulingData?.startDate;
@@ -34,6 +35,8 @@ const StartOnSection: FC<StartOnSectionProps> = ({ status }) => {
   const onSelectStartDateTime = (unixDateTime: number) => {
     dispatch(setJobScheduleConfig({ field: 'startDateTime', value: unixDateTime }));
   };
+
+  const disabled = !status || isDisabled;
 
   return (
     <HStack h="40px" w="full">
@@ -55,16 +58,20 @@ const StartOnSection: FC<StartOnSectionProps> = ({ status }) => {
               color={neutral_100}
               value={date ?? ''}
               onChange={(e) => {}}
-              isDisabled={!status}
-              _disabled={{ backgroundColor: ocean_blue_600, color: black_800 }}
+              isDisabled={disabled}
+              _disabled={{ backgroundColor: ocean_blue_500, color: black_800 }}
+              cursor={disabled ? 'not-allowed' : 'default'}
+              opacity={disabled ? 0.5 : 1}
             />
             <Box position="absolute" top="1" right="2" zIndex={2}>
               <AppDateTimePicker
-                children={<AppIcon name="clock" fill={blue_500} />}
+                children={
+                  <AppIcon name="calenderWithDate" fill={blue_500} opacity={disabled ? 0.5 : 1} />
+                }
                 onSelectStartDateTime={onSelectStartDateTime}
                 prePos={{ x: -234, y: -2 }}
                 initialTime={{ h: hours, m: minutes }}
-                isDisabled={!status}
+                isDisabled={disabled}
               />
             </Box>
           </Flex>
@@ -86,16 +93,18 @@ const StartOnSection: FC<StartOnSectionProps> = ({ status }) => {
               color={neutral_100}
               value={time ?? ''}
               onChange={(e) => console.log('end_date', e.target.value)}
-              isDisabled={!status}
-              _disabled={{ backgroundColor: ocean_blue_600, color: black_800 }}
+              isDisabled={disabled}
+              _disabled={{ backgroundColor: ocean_blue_500, color: black_800 }}
+              opacity={disabled ? 0.6 : 1}
+              cursor={disabled ? 'not-allowed' : 'default'}
             />
-            <Box position="absolute" top="1" right="2" zIndex={2}>
+            <Box position="absolute" top="1" right="2" zIndex={1}>
               <AppDateTimePicker
-                children={<AppIcon name="calenderWithDate" fill={blue_500} />}
+                children={<AppIcon name="clock" fill={blue_500} opacity={disabled ? 0.6 : 1} />}
                 onSelectStartDateTime={onSelectStartDateTime}
                 prePos={{ x: -500, y: -2 }}
                 initialTime={{ h: hours, m: minutes }}
-                isDisabled={!status}
+                isDisabled={disabled}
               />
             </Box>
           </Flex>

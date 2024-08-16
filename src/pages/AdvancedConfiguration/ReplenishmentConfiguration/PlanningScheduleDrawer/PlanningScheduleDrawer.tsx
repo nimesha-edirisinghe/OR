@@ -23,7 +23,8 @@ import {
 import {
   closeRplDrawer,
   getReplenishmentConfigDataRequest,
-  rplConfigPageSliceSelector
+  rplConfigPageSliceSelector,
+  setRplConfigCurrentPage
 } from 'state/pages/advancedConfiguration/replenishmentConfigurationPage/rplConfigPageState';
 import ReplenishmentPlanningTab from './ReplenishmentPlanningTab';
 import {
@@ -34,6 +35,9 @@ import {
 import { blue_500, neutral_100, ocean_blue_600, yellow_500 } from 'theme/colors';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppPopup from 'components/newTheme/AppPopup/AppPopup';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface Props {
   isOpen: boolean;
@@ -80,6 +84,7 @@ const PlanningScheduleDrawer: FC<Props> = ({ isOpen }) => {
       if (isValidScheduleConfigs && isValidStartAndEndDate) {
         dispatch(createScheduleRequest('repl'));
         dispatch(getReplenishmentConfigDataRequest({ pageNo: 1 }));
+        dispatch(setRplConfigCurrentPage(1));
         onDrawerClose();
       }
     } else {
@@ -98,6 +103,9 @@ const PlanningScheduleDrawer: FC<Props> = ({ isOpen }) => {
     onDrawerClose();
     onCloseCancelPrompt();
   };
+
+  const accessType = useAccessType(MenuItems.REPLENISHMENT_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.SCHEDULE]);
 
   const saveConfirmationPrompt = useCallback(() => {
     return (
@@ -195,6 +203,7 @@ const PlanningScheduleDrawer: FC<Props> = ({ isOpen }) => {
                   fontWeight="400"
                   borderColor={ocean_blue_600}
                   color={blue_500}
+                  isDisabled={accessNotAllowed}
                 >
                   Clear
                 </AppButton>
@@ -210,6 +219,7 @@ const PlanningScheduleDrawer: FC<Props> = ({ isOpen }) => {
                   color={neutral_100}
                   bg={blue_500}
                   _hover={{ bg: blue_500 }}
+                  isDisabled={accessNotAllowed}
                 >
                   Save
                 </AppButton>

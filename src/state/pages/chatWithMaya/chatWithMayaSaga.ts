@@ -25,6 +25,7 @@ function* getContextRequestSaga() {
       const response: ApiResponse<ChatContextI[]> = yield call(() => genAiApi.getContextRequest());
 
       if (!responseValidator(response, true)) {
+        yield put(getContextFailure());
         return;
       }
       if (response) {
@@ -65,6 +66,7 @@ function* conversationChatRequestSaga(
         genAiApi.conversationChatRequest(requestBody)
       );
       if (!responseValidator(response, true)) {
+        yield put(conversationChatFailure());
         return;
       }
       if (response) {

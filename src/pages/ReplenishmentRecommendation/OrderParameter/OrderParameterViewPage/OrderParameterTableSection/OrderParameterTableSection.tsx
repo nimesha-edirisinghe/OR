@@ -31,7 +31,9 @@ const OrderParameterTableSection: FC<Props> = () => {
   const orderParameterTableData = formatOrderParameterRowData(orderParameterSummaryData!);
 
   useEffect(() => {
-    dispatch(getRplParameterSummaryRequest());
+    if (isFilterApplied) {
+      dispatch(getRplParameterSummaryRequest());
+    }
   }, [isFilterApplied]);
   return (
     <VStack w="full" h="full" spacing="16px">

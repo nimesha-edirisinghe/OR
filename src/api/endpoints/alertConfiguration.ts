@@ -9,9 +9,14 @@ import {
   EditAlertQueryParamI,
   GetAlertBodyI,
   GetAlertConfigsQueryParamI,
+  GetAlertedGroupDetailsQueryI,
   GetAlertsQueryParamI
 } from 'types/requests/alertConfigRequest';
-import { GetAlertList, GetAlertSummaryI } from 'types/responses/alertConfigResponse';
+import {
+  AlertedGroupDetailsResponseI,
+  GetAlertList,
+  GetAlertSummaryI
+} from 'types/responses/alertConfigResponse';
 
 export const getAlertConfigsRequest = async (
   queryParams: GetAlertConfigsQueryParamI
@@ -115,6 +120,20 @@ export const getAlertTypeRequest = async (
 ): Promise<ApiResponse<AlertTypeI>> => {
   try {
     const response = await apiClient.post('/alert/resolution/available/alerts', requestBody);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+export const getAlertedGroupDetailsRequest = async (
+  queryParams: GetAlertedGroupDetailsQueryI,
+  requestBody: GetAlertBodyI
+): Promise<ApiResponse<AlertedGroupDetailsResponseI>> => {
+  try {
+    const response = await apiClient.post('/alert/group', requestBody, {
+      params: queryParams
+    });
     return response.data;
   } catch (error) {
     console.error(error);

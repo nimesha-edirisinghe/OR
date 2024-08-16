@@ -12,6 +12,7 @@ interface Props {
 
 const AggregatedAccuracyDistributionSection: FC<Props> = ({ chartData }) => {
   const formattedData = transformAccDistributionObj(chartData as any);
+
   return (
     <VStack
       h="231px"

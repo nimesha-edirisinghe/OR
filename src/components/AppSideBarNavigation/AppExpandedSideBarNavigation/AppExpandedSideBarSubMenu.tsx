@@ -31,11 +31,13 @@ const AppExpandedSideBarSubMenu: FC<Props> = ({
       left="56px"
     >
       <VStack spacing={0} w="224px" align="start" justify="start">
-        <AppExpandedSideBarSubMenuItem
-          subMenuType="title"
-          subMenuName={mainMenu.displayName!}
-          backToMainMenu={() => backToMainMenu()}
-        />
+        {subMenuList && (
+          <AppExpandedSideBarSubMenuItem
+            subMenuType="title"
+            subMenuName={mainMenu.displayName!}
+            backToMainMenu={() => backToMainMenu()}
+          />
+        )}
 
         {subMenuList &&
           Object.entries(subMenuList).map((entry) => {

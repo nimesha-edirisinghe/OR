@@ -69,7 +69,8 @@ const PanelHeader: FC<Props> = ({
           pageNumber: 1,
           viewFilter: false,
           searchKey,
-          whFlag
+          whFlag,
+          isModifyAlertPage: true
         })
       );
     }

@@ -2,9 +2,23 @@
 import { format, fromUnixTime, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { IJobSchedule } from 'state/pages/shared/jobScheduling/jobSchedulingState';
-import { red_300, red_500, yellow_300 } from 'theme/colors';
+import {
+  blue_500,
+  green_500,
+  neutral_200,
+  red_300,
+  red_400,
+  red_500,
+  yellow_300,
+  yellow_400
+} from 'theme/colors';
 import { ConfigurationI, TableDataI, CandidateAlgoTreeDataI } from 'types/forecastConfig';
+import {
+  ExternalUrlsI,
+  ReportUrlsI
+} from 'types/responses/systemConfigurations/systemConfigurations';
 import { v4 as uuidv4 } from 'uuid';
+import { ExternalUrlKeyEnum } from './enum';
 
 // Function Definition for get group key by clicked row id
 export const getGroupKeyByRowId = (tableData: TableDataI[], rowId: string) => {
@@ -214,9 +228,24 @@ export const splitLastOccurrence = (str: string, substring: string) => {
 export const getStatusColor = (status: string | undefined, key: string): string => {
   const colorMap: Record<string, Record<string, string>> = {
     status: {
-      C: '#38C153',
-      P: '#FBFBFB',
-      F: '#F4312A'
+      C: green_500,
+      P: yellow_400,
+      F: red_400,
+      W: blue_500
+    }
+  };
+
+  const specificColorMap = colorMap[key] || {};
+  return specificColorMap[status || ''] || '#E6E6E6';
+};
+
+export const getStatusBackgroundColor = (status: string | undefined, key: string): string => {
+  const colorMap: Record<string, Record<string, string>> = {
+    status: {
+      C: '#3DC65333',
+      P: '#FFA91447',
+      F: '#F4312A47',
+      W: '#0AA5FF4D'
     }
   };
 
@@ -307,6 +336,15 @@ export const addSecondsToTimestamp = (timestamp: number | null, seconds: number)
   }
 
   return timestamp + seconds;
+};
+
+export const getEndOfDayTimestamp = (startOfDayTimestamp: number | null): number | null => {
+  if (startOfDayTimestamp === null) {
+    return null;
+  }
+  const startOfDay = new Date(startOfDayTimestamp);
+  startOfDay.setHours(23, 59, 59);
+  return startOfDay.getTime();
 };
 
 export const repeatDurationOptions = [
@@ -402,4 +440,14 @@ export const convertToShortDateFormat = (inputDate?: string): string => {
     locale: enUS
   });
   return formattedDate;
+};
+
+export const getReportUrlValueByKey = (obj: ReportUrlsI, key: ExternalUrlKeyEnum): string => {
+  if (!obj || typeof obj !== 'object') {
+    return '';
+  }
+  if (!(key in obj)) {
+    return '';
+  }
+  return obj[key as keyof ReportUrlsI] ?? '';
 };

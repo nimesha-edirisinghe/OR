@@ -1,4 +1,4 @@
-import { Box, VStack } from '@chakra-ui/react';
+import { VStack } from '@chakra-ui/react';
 import InsightsPageLayout from 'layouts/PageLayouts/InsightsPageLayout';
 import { FC, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,21 +8,39 @@ import MainHomeSection from './MainHomeSection/MainHomeSection';
 import { scrollbarYStyles } from 'theme/styles';
 import { getCommonLastUpdateDateRequest } from 'state/pages/common/commonState';
 import { setActiveMenuItem, setActiveSubMenuItem } from 'state/layout/layoutState';
+import { getWorkflowTaskCountRequest, resetWorkflowTaskCount } from 'state/pages/home/homeState';
+import {
+  ISystemConfiguration,
+  systemConfigurationSliceSelector
+} from 'state/pages/systemConfiguration/systemConfigurationState';
 
 interface Props {}
 
 const HomePage: FC<Props> = () => {
   const userState: IUser = useSelector(userSliceSelector);
+  const dynamicConfigState: ISystemConfiguration = useSelector(systemConfigurationSliceSelector);
+  const dynamicConfigData = dynamicConfigState.dynamicConfigData?.externalUrls!;
+  const userName = userState.userOrgs?.username;
+  const keyCloakToken = userState.keyCloakInfo?.token!;
   const selectedOrgKey = userState.selectedOrg && userState.selectedOrg.orgKey;
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(resetSkuListData());
   });
+
   useEffect(() => {
     dispatch(setActiveMenuItem({ menuItem: 'Home' }));
     dispatch(setActiveSubMenuItem({ subMenuItem: '/app/home' }));
   }, []);
+
+  useEffect(() => {
+    if (dynamicConfigData && dynamicConfigData.vlTaskApiUrl) {
+      dispatch(getWorkflowTaskCountRequest());
+    } else {
+      dispatch(resetWorkflowTaskCount());
+    }
+  }, [dynamicConfigData]);
 
   useEffect(() => {
     try {

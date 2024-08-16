@@ -14,7 +14,7 @@ const AppButton: React.FC<Props & ButtonProps> = ({
   ...rest
 }: Props) => {
   return (
-    <Button leftIcon={_leftIcon} {...rest} onClick={onClick}>
+    <Button leftIcon={_leftIcon} minW={'100px'} {...rest} onClick={onClick}>
       {children}
     </Button>
   );

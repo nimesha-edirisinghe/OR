@@ -1,10 +1,8 @@
 import { Box, HStack, useOutsideClick } from '@chakra-ui/react';
-import { FC, ReactNode, useEffect, useRef, useState } from 'react';
-import AppDateCalendar from '../Calender/AppDateCalendar';
-import { addMonths } from 'date-fns';
-import { motion } from 'framer-motion';
-import { getBoxPosition } from 'utils/layouts';
+import { FC, ReactNode, useRef, useState } from 'react';
 import AppDateRangeCalendar from '../Calender/AppDateRangeCalendar';
+import { addMonths } from 'date-fns';
+import { getBoxPosition } from 'utils/layouts';
 import { DateRange } from 'types/view';
 
 interface Props {
@@ -19,6 +17,7 @@ interface Props {
     y?: number;
   };
   selectedDateRange?: DateRange | null | undefined;
+  isDisabled?: boolean;
 }
 
 const AppDateRangePicker: FC<Props> = ({
@@ -29,7 +28,8 @@ const AppDateRangePicker: FC<Props> = ({
   initialDate1 = addMonths(new Date(), -1),
   initialDate2 = new Date(),
   prePos,
-  selectedDateRange
+  selectedDateRange,
+  isDisabled = false
 }) => {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -40,30 +40,27 @@ const AppDateRangePicker: FC<Props> = ({
   });
 
   const onRangeSelectionComplete = (startDate: Date, endDate: Date, key: number) => {
-    onRangeSelect(startDate, endDate, id);
-    setIsVisible(false);
+    if (!isDisabled) {
+      onRangeSelect(startDate, endDate, id);
+      setIsVisible(false);
+    }
   };
 
   const onCalenderIconClick = (e: any) => {
-    const pos = getBoxPosition(e, 488, 317, prePos);
-    setPos(pos);
-    setIsVisible(!isVisible);
+    if (!isDisabled) {
+      const pos = getBoxPosition(e, 488, 317, prePos);
+      setPos(pos);
+      setIsVisible(!isVisible);
+    }
   };
 
   return (
     <Box ref={ref} zIndex={9}>
-      <Box onClick={onCalenderIconClick}>{children}</Box>
-      {isVisible && (
-        <Box
-          pos="absolute"
-          top={pos.y}
-          left={pos.x}
-          as={motion.div}
-          initial={{ opacity: 0, scale: 0, y: '-30px' }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition=".1s"
-          zIndex={20}
-        >
+      <Box onClick={onCalenderIconClick} cursor={isDisabled ? 'not-allowed' : 'pointer'}>
+        {children}
+      </Box>
+      {isVisible && !isDisabled && (
+        <Box pos="absolute" top={pos.y} left={pos.x} zIndex={20}>
           <AppDateRangeCalendar
             onRangeSelect={onRangeSelectionComplete}
             selectedDateRange={selectedDateRange}

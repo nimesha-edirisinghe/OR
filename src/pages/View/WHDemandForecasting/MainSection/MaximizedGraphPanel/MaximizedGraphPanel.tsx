@@ -32,6 +32,8 @@ interface Props {
 
 const MaximizedGraphPanel: FC<Props> = ({ onMaxMinHandler, isOpenPanel, graphNavigator }) => {
   const dfViewState: IWhDFView = useSelector(whDfViewSliceSelector);
+  const isAllSkuSelected = dfViewState.dfViewLocalScope.globalSkuSelected;
+  const totalSkuCount = dfViewState.skuListData?.totalCount;
   return (
     <Modal onClose={() => {}} size={'full'} isOpen={isOpenPanel}>
       <ModalOverlay />
@@ -54,7 +56,11 @@ const MaximizedGraphPanel: FC<Props> = ({ onMaxMinHandler, isOpenPanel, graphNav
               <HStack pos="relative" w="full">
                 {dfViewState.selectedSkuList.length > 0 && (
                   <HStack w="full" bg={ocean_blue_500} maxH={'52px'} p={'12px'}>
-                    <ForecastChartNavigator graphNavigator={graphNavigator} />
+                    <ForecastChartNavigator
+                      graphNavigator={graphNavigator}
+                      isAllSkuSelected={isAllSkuSelected}
+                      totalSkuCount={totalSkuCount!}
+                    />
                     <Box h="28px" w="1px" bg={'rgba(26, 52, 69, 1)'}></Box>
                     <AppText size="h4Semibold">
                       {`${dfViewState.selectedSku?.sku} | ${dfViewState.selectedSku?.store}`}

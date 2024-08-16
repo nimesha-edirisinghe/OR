@@ -8,6 +8,14 @@ export const validateBulkEditForecastFile = (file: File): FileValidationResultI 
     return { isValid: false, errorMessage: 'Incorrect file format' };
   }
 
+  const startsWithIntegerRegex = /^[0-9]/;
+  if (!startsWithIntegerRegex.test(file.name)) {
+    return {
+      isValid: false,
+      errorMessage: 'The file name must start with an integer.'
+    };
+  }
+
   const allowedCharactersRegex = /^[a-zA-Z0-9\s\-_.]+$/;
   if (!allowedCharactersRegex.test(file.name)) {
     return {

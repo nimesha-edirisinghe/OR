@@ -43,7 +43,7 @@ export const useTable = (
         draft.map((header, key) => {
           if (selectedColumnKey === key) {
             const newColumnWidth = selectedColumnWidth + diff;
-            header.w = newColumnWidth > 150 ? newColumnWidth : header.w;
+            header.w = newColumnWidth > 110 ? newColumnWidth : header.w;
           }
         });
       });
@@ -58,7 +58,7 @@ export const useTable = (
     if (columnKey > 0) {
       const preColumns = _freezedColumns?.filter((column) => column < columnKey);
       preColumns?.forEach((column) => {
-        leftMargin += headerConfigs[column]?.w;
+        leftMargin += headerConfigs[column]?.w + 1;
       });
     }
 

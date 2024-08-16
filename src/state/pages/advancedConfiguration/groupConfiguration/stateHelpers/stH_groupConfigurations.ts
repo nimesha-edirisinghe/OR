@@ -1,6 +1,7 @@
 import { RightFilterItemContentI } from 'types/groupConfig';
 import { ScheduleType } from 'types/responses/jobScheduleResponses';
 import { IGroupConfigurationSlice } from '../groupConfigurationState';
+import { MAX_ALERT_DATA_COUNT } from 'utils/constants';
 
 export const getSelectedItemsCount = (
   filterType: string,
@@ -27,7 +28,6 @@ export const updateFilterOutOfCount = (
   const filteredItem = rightPanelRetainDataList?.find(
     (item) => item.code === filterCode && item.type === filterType
   );
-
   if (filteredItem) {
     filteredItem.outOfCount = mutableTotalCount;
   } else {

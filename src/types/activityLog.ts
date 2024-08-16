@@ -105,4 +105,5 @@ export interface ActivityLogSummaryDataI {
 export interface ActivityLogLocalScopeI {
   ascendingSort: boolean;
   currentPageNumber?: number;
+  searchKey: string;
 }

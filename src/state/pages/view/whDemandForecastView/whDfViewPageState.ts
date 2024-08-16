@@ -59,11 +59,11 @@ export const DFViewSlice = createSlice({
     dfViewLocalScope: {
       skuSearchKey: '',
       globalSkuSelected: false,
-      shouldReloadData:false,
+      shouldReloadData: false
     },
     dfTable: null,
     predictorList: null,
-    gridSkuListData:null
+    gridSkuListData: null
   } as IWhDFView,
   reducers: {
     downloadForecastReportRequest: (state) => {
@@ -90,7 +90,7 @@ export const DFViewSlice = createSlice({
       const _selectedCName = getSelectedChartName(state.selectedChartType)!;
       let dfTable: DemandForecastChartTable = {
         headers: [{ displayValue: '', key: 'Label', w: 150 }],
-        skuForecast: state.selectedChartType !== 'aggregate' ? ['SKU Forecast'] : [],
+        skuForecast: state.selectedChartType !== 'aggregate' ? ['Sales'] : [],
         compareForecast: [_selectedCName]
       };
       action.payload.forEach((graphData) => {
@@ -231,7 +231,8 @@ export const DFViewSlice = createSlice({
       state.graphDateRange = action.payload;
     },
     resetViewForecastRightPanel: (state) => {
-      state.aggregateOption.selectedAggregateOption = 'sku';
+      const isAggregate = state.aggregateOption.selectedAggregateOption === 'aggregate';
+      state.aggregateOption.selectedAggregateOption = isAggregate ? 'aggregate' : 'sku';
       state.selectedSku = null;
       state.selectedSkuList = [];
       state.graphData = [];
@@ -244,6 +245,7 @@ export const DFViewSlice = createSlice({
     getPredictorsFailure: (state) => {},
     getDemandForecastSkuListRequest: (state, action: PayloadAction<{ searchKey?: string }>) => {
       state.loading.skuDataLoading = true;
+      state.dfViewLocalScope.globalSkuSelected = false;
       state.selectedSkuList = [];
     },
     getDemandForecastSkuListSuccess: (
@@ -274,6 +276,9 @@ export const DFViewSlice = createSlice({
     },
     updateShouldReloadData: (state, action: PayloadAction<boolean>) => {
       state.dfViewLocalScope.shouldReloadData = action.payload;
+    },
+    toggleGlobalSkuSelection: (state) => {
+      state.dfViewLocalScope.globalSkuSelected = false;
     }
   }
 });
@@ -307,7 +312,8 @@ export const {
   getDemandForecastSkuListSuccess,
   getDemandForecastSkuListFailure,
   whDemandResetSkuListData,
-  updateShouldReloadData
+  updateShouldReloadData,
+  toggleGlobalSkuSelection
 } = DFViewSlice.actions;
 
 export default DFViewSlice.reducer;

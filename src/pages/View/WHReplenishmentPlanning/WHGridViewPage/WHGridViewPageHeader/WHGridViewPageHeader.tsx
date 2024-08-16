@@ -32,6 +32,7 @@ import AppPopover from 'components/AppPopover/AppPopover';
 import { orderFrequencyT } from 'pages/View/ReplenishmentPlanning/ReplenishmentHeader/ReplenishmentHeader';
 import MoreOptionContent from '../../WHReplenishmentHeader/MoreOptionContent';
 import { whReplBulkMoreOptionItemList } from 'utils/constants';
+import { WHReplTypeEnum } from 'utils/enum';
 
 interface Props {}
 
@@ -257,7 +258,12 @@ const WHGridViewPageHeader: FC<Props> = () => {
                   bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
                 />
               }
-              content={<MoreOptionContent options={whReplBulkMoreOptionItemList} />}
+              content={
+                <MoreOptionContent
+                  options={whReplBulkMoreOptionItemList}
+                  type={WHReplTypeEnum.BULK}
+                />
+              }
             />
           </Box>
         </HStack>

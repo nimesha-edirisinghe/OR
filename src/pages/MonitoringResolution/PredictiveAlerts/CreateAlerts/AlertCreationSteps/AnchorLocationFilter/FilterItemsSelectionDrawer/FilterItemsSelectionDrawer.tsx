@@ -41,9 +41,19 @@ interface Props {
   isOpen: boolean;
   okButtonName?: string;
   whFlag?: 0 | 1 | 2;
+  isOnAlertPage?: boolean;
+  totalCount?: number;
+  isEnableSelectAll?: boolean;
 }
 
-const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen, okButtonName = 'Apply', whFlag = 0 }) => {
+const FilterItemsSelectionDrawer: FC<Props> = ({
+  isOpen,
+  okButtonName = 'Apply',
+  whFlag = 0,
+  isOnAlertPage = false,
+  totalCount = 0,
+  isEnableSelectAll = true
+}) => {
   const dispatch = useDispatch();
   const {
     isOpen: isOpenCancelPrompt,
@@ -51,6 +61,8 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen, okButtonName = 'Apply',
     onClose: onCloseCancelPrompt
   } = useDisclosure();
   const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
+  const [selectedRightSideItem, setSelectedRightSideItem] = useState<RightFilterItemContentI>();
+  const [searchKey, setSearchKey] = useState<string>(selectedRightSideItem?.search || '');
   const groupFilter = groupConfigState.groupFilter;
   const filterType = groupFilter?.filterType!;
   const filterCode = groupFilter?.filterCode!;
@@ -58,8 +70,6 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen, okButtonName = 'Apply',
   const itemSelectionDrawerOpenFrom = groupFilter?.filterLocalScope.itemSelectionDrawerOpenFrom;
   const rightPanelRetainDataList = groupFilter?.filterLocalScope.rightPanelRetainDataList;
   const beforeEditFilterOptionsLevel2 = groupFilter?.filterLocalScope.beforeEditFilterOptionsLevel2;
-  const [selectedRightSideItem, setSelectedRightSideItem] = useState<RightFilterItemContentI>();
-  const [searchKey, setSearchKey] = useState<string>(selectedRightSideItem?.search || '');
 
   useEffect(() => {
     const _selectedRightSideItem = getSelectedRightSideItem(
@@ -100,7 +110,7 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen, okButtonName = 'Apply',
     onCloseCancelPrompt();
   };
   const onSaveSelectedItems = () => {
-    dispatch(getFilterCountRequest({ whFlag }));
+    dispatch(getFilterCountRequest({ whFlag, isAlertPage: isOnAlertPage }));
     dispatch(toggleGroupFilterItemSelectionDrawer(false));
     if (itemSelectionDrawerOpenFrom === 'drawer') {
       dispatch(toggleDrawerFilter({ isOpen: true }));
@@ -115,7 +125,7 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen, okButtonName = 'Apply',
         onClose={onCloseCancelPrompt}
         leftBtnName="YES"
         rightBtnName="NO"
-        infoMessage="The changes you have made in filters will be discarded.Are you sure you want to continue?"
+        infoMessage="The changes you have made in filters will be discarded. Are you sure you want to continue?"
         onConfirmHandler={onDrawerClose}
         onCloseHandler={onCloseCancelPrompt}
         icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
@@ -123,7 +133,28 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen, okButtonName = 'Apply',
     );
   }, [isOpenCancelPrompt]);
 
+  const checkEmptyAndNotSavedData = () => {
+    const foundLv2 = beforeEditFilterOptionsLevel2?.find(
+      (element) => element.code === filterCode && element.type === filterType
+    );
+    if (!foundLv2) {
+      const found = rightPanelRetainDataList?.find(
+        (element) => element.code === filterCode && element.type === filterType
+      );
+
+      if (found) {
+        if (found.selectedItems.length === 0) {
+          onDrawerClose();
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
   const onDrawerCloseEvent = () => {
+    if (checkEmptyAndNotSavedData()) return;
+
     if (!_.isEqual(beforeEditFilterOptionsLevel2, rightPanelRetainDataList)) {
       onToggleCancelPrompt();
     } else {
@@ -186,6 +217,7 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen, okButtonName = 'Apply',
                     <LeftPanel
                       addOrRemoveItem={addOrRemoveItem}
                       selectedRightSideItem={selectedRightSideItem}
+                      isEnableSelectAll={isEnableSelectAll}
                     />
                   </Box>
                   <Box flex={1} h="calc(100vh - 200px)">
@@ -193,6 +225,7 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen, okButtonName = 'Apply',
                       selectedRightSideItem={selectedRightSideItem}
                       addOrRemoveItem={addOrRemoveItem}
                       defaultMessage=""
+                      totalCount={totalCount}
                     />
                   </Box>
                 </HStack>

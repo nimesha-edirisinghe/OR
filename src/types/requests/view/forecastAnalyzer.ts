@@ -1,10 +1,15 @@
 import { RightFilterItemContentI } from 'types/groupConfig';
+import { FCAnalyzerType } from 'types/view/forecastAnalyzer';
 
-export interface ForecastAnalyzerReqBodyI {
-  anchorKey: number[] | null;
-  anchorProdKey: number[] | null;
-  anchorProdModelKey: number[] | null;
-  forecastKey: number[] | null;
+export interface ForecastAnalyzerCommonReqBodyI {
   filters: RightFilterItemContentI[];
-  whFlag: number;
+  groupKey: number;
+  search: string;
+}
+export interface ForecastAnalyzerReqBodyI {
+  anchorProdKey: number;
+  groupKey: number;
+}
+export interface ForecastAnalyzerSKUDetailsQueryParamI {
+  type: FCAnalyzerType;
 }

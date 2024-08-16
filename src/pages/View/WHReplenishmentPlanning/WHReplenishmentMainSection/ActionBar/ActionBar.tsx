@@ -19,14 +19,19 @@ import { blue_500, ocean_blue_400, ocean_blue_600, yellow_500 } from 'theme/colo
 import { ReplenishmentSkuListItem } from 'types/responses/viewResponses';
 import { whReplSingleMoreOptionItemList } from 'utils/constants';
 import MoreOptionContent from '../../WHReplenishmentHeader/MoreOptionContent';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
+import { AccessPermissionEnum, MenuItems, WHReplTypeEnum } from 'utils/enum';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
 
 interface ActionBarProps {
   onMaxMinHandler: () => void;
   navigator: Navigator<ReplenishmentSkuListItem>;
   isOpenPanel?: boolean;
+  setMaximizedInfo?: (flag: boolean) => void;
 }
 
-const ActionBar: FC<ActionBarProps> = ({ onMaxMinHandler, navigator, isOpenPanel }) => {
+const ActionBar: FC<ActionBarProps> = ({ onMaxMinHandler, navigator, isOpenPanel = false }) => {
   const {
     isOpen: isOpenMoreOption,
     onToggle: onToggleMoreOption,
@@ -35,11 +40,22 @@ const ActionBar: FC<ActionBarProps> = ({ onMaxMinHandler, navigator, isOpenPanel
   const rplWHViewState: IRPLWhView = useSelector(rplWHViewSliceSelector);
   const totalSkuCount = rplWHViewState.rplWhSkuDataList?.totalCount;
   const isSelectAll = rplWHViewState.rplWhViewLocalScope.globalRplWhSkuSelected;
-  const selectedSKUCount = rplWHViewState.rplWhSelectedSkuList.length;
+  const selectedSKUCount = rplWHViewState.rplWhSelectedSkuList?.length;
   const selectedSkuName =
     rplWHViewState.rplWhSelectedSku?.sku + ' | ' + rplWHViewState.rplWhSelectedSku?.location;
   const [isTooltipOpen, handleMouseEnter, handleMouseLeave] = useTooltip();
+  const [isMoreOptionTooltipOpen, handleMoreOptionMouseEnter, handleMoreOptionMouseLeave] =
+    useTooltip();
+
+  const accessType = useAccessType(MenuItems.WH_ORDERING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
+
   const isEdited = !!rplWHViewState.rplWhPlanDetails?.isEdited;
+  const alertType = rplWHViewState.AlertType;
+  const options = whReplSingleMoreOptionItemList.filter((option, index) => {
+    if (option.id !== 2) return option;
+    if (option.id === 2 && Object.keys(alertType).length > 0) return option;
+  });
 
   const moreOptionPopoverStyles: CSSProperties = {
     maxWidth: '277px',
@@ -72,46 +88,68 @@ const ActionBar: FC<ActionBarProps> = ({ onMaxMinHandler, navigator, isOpenPanel
           />
         )}
       </HStack>
+
       <HStack>
-        <AppPopover
-          isOpen={isOpenMoreOption}
-          onClose={onCloseMoreOption}
-          contentStyles={moreOptionPopoverStyles}
-          trigger="click"
-          children={
+        <AppTooltip
+          label="Options"
+          placement="bottom-start"
+          isOpen={isMoreOptionTooltipOpen}
+          onClose={handleMoreOptionMouseLeave}
+          display={isOpenMoreOption ? 'none' : 'block'}
+        >
+          <Box onMouseEnter={handleMoreOptionMouseEnter} onMouseLeave={handleMoreOptionMouseLeave}>
+            <AppPopover
+              isOpen={isOpenMoreOption}
+              onClose={onCloseMoreOption}
+              contentStyles={moreOptionPopoverStyles}
+              trigger="click"
+              children={
+                <AppIconButton
+                  aria-label="moreOption"
+                  icon={<AppIcon transition="transform 0.25s ease" name="wrench" fill={blue_500} />}
+                  variant="secondary"
+                  size="iconMedium"
+                  onClick={onToggleMoreOption}
+                  bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
+                  isDisabled={(!isSelectAll && selectedSKUCount == 0) || accessNotAllowed}
+                  h="28px"
+                  w="28px"
+                  p="7px"
+                />
+              }
+              content={
+                <MoreOptionContent
+                  onMaxMinHandler={onMaxMinHandler}
+                  options={options}
+                  isOpenPanel={isOpenPanel}
+                  type={WHReplTypeEnum.INDIVIDUAL}
+                />
+              }
+            />
+          </Box>
+        </AppTooltip>
+        <AppTooltip label="Maximize" placement="bottom-start">
+          <Box>
             <AppIconButton
-              aria-label="moreOption"
-              icon={<AppIcon transition="transform 0.25s ease" name="wrench" fill={blue_500} />}
+              aria-label="maximize"
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name={isOpenPanel ? 'collapse' : 'expand'}
+                  fill={blue_500}
+                />
+              }
               variant="secondary"
               size="iconMedium"
-              onClick={onToggleMoreOption}
-              bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
-              isDisabled={!isSelectAll && selectedSKUCount == 0}
+              onClick={onMaxMinHandler}
+              bg={ocean_blue_600}
+              disabled
               h="28px"
               w="28px"
               p="7px"
             />
-          }
-          content={<MoreOptionContent options={whReplSingleMoreOptionItemList} />}
-        />
-        <AppIconButton
-          aria-label="maximize"
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name={isOpenPanel ? "collapse" : "expand"}
-              stroke={blue_500}
-            />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={onMaxMinHandler}
-          bg={ocean_blue_600}
-          disabled
-          h="28px"
-          w="28px"
-          p="7px"
-        />
+          </Box>
+        </AppTooltip>
       </HStack>
     </HStack>
   );

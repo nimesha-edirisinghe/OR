@@ -45,7 +45,7 @@ const ReplenishmentViewPage: FC<Props> = () => {
       const abortController = new AbortController();
       if (selectedOrgKey) {
         dispatch(rplResetUploadHistoryData());
-        if (isLoadData){
+        if (isLoadData) {
           dispatch(rplSkuSearchAction(''));
         }
         dispatch(getGroupListRequest({ whFlag: 0 }));
@@ -88,6 +88,7 @@ const ReplenishmentViewPage: FC<Props> = () => {
       <FilterDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenFilterDrawer}
         filterHierarchy={viewReplenishmentFilterHierarchy}
+        showWarning
       />
       <FilterItemsSelectionDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenItemSelectionDrawer}

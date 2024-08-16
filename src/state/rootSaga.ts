@@ -22,11 +22,19 @@ import dashboardSaga from './pages/dashboard/dashboardSaga';
 import newStoreActivationSaga from './pages/stores/newActivation/storeNewActivationSaga';
 import newProductActivationSaga from './pages/product/newActivation/productNewActivationSaga';
 import forecastAnalyzerSaga from './pages/view/forecastAnalyzer/forecastAnalyzerSaga';
+import homeSaga from './pages/home/homeSaga';
+import systemConfigurationSaga from './pages/systemConfiguration/systemConfigurationSaga';
 
 export interface GeneralResponse {
   data?: any;
   status?: number;
   json: () => { data: [] };
+}
+
+export interface ExtendedGeneralResponse extends GeneralResponse {
+  headers: {
+    'Content-Disposition'?: string;
+  };
 }
 
 export default function* rootSaga() {
@@ -53,4 +61,6 @@ export default function* rootSaga() {
   yield fork(newStoreActivationSaga);
   yield fork(newProductActivationSaga);
   yield fork(forecastAnalyzerSaga);
+  yield fork(homeSaga);
+  yield fork(systemConfigurationSaga);
 }

@@ -1,4 +1,4 @@
-import { FC, KeyboardEvent, useState } from 'react';
+import { FC } from 'react';
 import { Center, Flex, HStack } from '@chakra-ui/react';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import { AppIcon } from 'components/AppIcon/AppIcon';
@@ -6,39 +6,15 @@ import { blue_500, ocean_blue_100, ocean_blue_500, ocean_blue_600 } from 'theme/
 import AppText from 'components/newTheme/AppText/AppText';
 import { Navigator } from 'hooks/useNavigator';
 import { DemandForecastSkuListItem } from 'types/responses/viewResponses';
-import AppInput from 'components/newTheme/AppInput/AppInput';
-import { showErrorToast } from 'state/toast/toastState';
 
 interface Props {
   graphNavigator: Navigator<DemandForecastSkuListItem>;
+  isAllSkuSelected: boolean;
+  totalSkuCount: number;
 }
 
-const ForecastChartNavigator: FC<Props> = ({ graphNavigator }) => {
-  const [currantPosEdit, setCurrantPosEdit] = useState(false);
-  const [currentPos, setCurrantPos] = useState(0);
-
-  const onInputChange = (e: any) => {
-    setCurrantPos(e.target.value);
-  };
-
-  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement> | KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' && !e.defaultPrevented) {
-      e.preventDefault();
-
-      if (currentPos >= graphNavigator.steps.length || currentPos <= 0) {
-        showErrorToast('Enter valid number');
-        return false;
-      }
-
-      graphNavigator.goTo(currentPos - 1);
-      setCurrantPosEdit(false);
-    }
-  };
-
-  const startNavigationInputChange = () => {
-    setCurrantPosEdit(true);
-    setCurrantPos(graphNavigator.currentStepIndex + 1);
-  };
+const ForecastChartNavigator: FC<Props> = ({ graphNavigator, isAllSkuSelected, totalSkuCount }) => {
+  const selectedSkuLength = isAllSkuSelected ? totalSkuCount : graphNavigator.steps.length;
 
   return (
     <HStack spacing="4px">
@@ -60,40 +36,23 @@ const ForecastChartNavigator: FC<Props> = ({ graphNavigator }) => {
         isDisabled={graphNavigator.isFirstStep}
       />
       <Center h="28px" w="72px" bg={ocean_blue_500} borderRadius="8px">
-        {!currantPosEdit && (
-          <Flex
-            h="28px"
-            w="72px"
-            bg={ocean_blue_600}
-            justify={'center'}
-            align={'center'}
-            borderRadius={'8px'}
+        <Flex
+          h="28px"
+          w="72px"
+          bg={ocean_blue_600}
+          justify={'center'}
+          align={'center'}
+          borderRadius={'8px'}
+        >
+          <AppText
+            size="body3"
+            justifyContent={'center'}
+            alignItems={'center'}
+            color={ocean_blue_100}
           >
-            <AppText
-              size="body3"
-              justifyContent={'center'}
-              alignItems={'center'}
-              color={ocean_blue_100}
-              onClick={startNavigationInputChange}
-            >
-              {`${graphNavigator.currentStepIndex + 1}/${graphNavigator.steps.length || 0}`}
-            </AppText>
-          </Flex>
-        )}
-        {currantPosEdit && (
-          <AppInput
-            autoFocus
-            onChange={(e: any) => onInputChange(e)}
-            onKeyDown={(e) => handleKeyPress(e)}
-            value={`${currentPos}`}
-            h="25px"
-            fontSize="12px"
-            textAlign="center"
-            maxLength={3}
-            bg={ocean_blue_600}
-            borderRadius={'8px'}
-          />
-        )}
+            {`${graphNavigator.currentStepIndex + 1}/${selectedSkuLength || 0}`}
+          </AppText>
+        </Flex>
       </Center>
       <AppIconButton
         aria-label="chevronRight"

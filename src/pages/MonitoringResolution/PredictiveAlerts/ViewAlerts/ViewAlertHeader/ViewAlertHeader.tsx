@@ -1,5 +1,5 @@
 import { FC, useCallback, useMemo, useState } from 'react';
-import { HStack } from '@chakra-ui/react';
+import { Box, HStack } from '@chakra-ui/react';
 import AppText from 'components/AppText/AppText';
 import AppButton from 'components/AppButton/AppButton';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +16,11 @@ import { blue_500, ocean_blue_100, ocean_blue_600 } from 'theme/colors';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import AppInputGroup from 'components/newTheme/AppInputGroup/AppInputGroup';
 import { debounce } from 'lodash';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
+import { hasAccessPermission } from 'utils/permissions';
+import useAccessType from 'hooks/useMenuAccessType';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
+import useTooltip from 'hooks/useTooltip';
 
 interface Props {}
 
@@ -23,6 +28,10 @@ const ViewAlertHeader: FC<Props> = () => {
   const [searchKey, setSearchKey] = useState<string>('');
   const alertState: IAlert = useSelector(alertSliceSelector);
   const lastUpdatedDate = alertState.alertSummaryList.lastUpdatedOn;
+  const [isFilterTooltipOpen, handleFilterMouseEnter, handleFilterMouseLeave] = useTooltip();
+
+  const accessType = useAccessType(MenuItems.PREDICTIVE_ALERTS);
+  const isDisabled = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -93,23 +102,39 @@ const ViewAlertHeader: FC<Props> = () => {
         </HStack>
       </HStack>
       <HStack spacing="8px">
-        <AppIconButton
-          aria-label="next"
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name="refresh"
-              width="14px"
-              height="14px"
-              fill={blue_500}
+        <AppTooltip
+          label={'Refresh'}
+          noOfLines={1}
+          placement="bottom-start"
+          isOpen={isFilterTooltipOpen}
+          onClose={handleFilterMouseLeave}
+        >
+          <Box onMouseEnter={handleFilterMouseEnter} onMouseLeave={handleFilterMouseLeave}>
+            <AppIconButton
+              aria-label="next"
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name="refresh"
+                  width="14px"
+                  height="14px"
+                  fill={blue_500}
+                />
+              }
+              variant="secondary"
+              size="iconMedium"
+              onClick={refreshHandler}
+              bg={ocean_blue_600}
             />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={refreshHandler}
-          bg={ocean_blue_600}
-        />
-        <AppButton variant="primary" size="medium" onClick={createNewAlertHandler} px="25px">
+          </Box>
+        </AppTooltip>
+        <AppButton
+          variant="primary"
+          size="medium"
+          onClick={createNewAlertHandler}
+          px="25px"
+          isDisabled={isDisabled}
+        >
           Create new alert
         </AppButton>
       </HStack>

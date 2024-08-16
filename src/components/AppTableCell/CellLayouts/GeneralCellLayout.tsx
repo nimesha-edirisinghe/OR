@@ -24,8 +24,8 @@ const GeneralCellLayout: FC<Props> = ({
 
   return (
     <Td p={1} {...rest}>
-      <HStack align="start">
-        <VStack align="start" spacing={0}>
+      <HStack align="center">
+        <VStack align="start" justify="center" spacing={0}>
           {mainLabel}
           {subLabel}
         </VStack>
@@ -36,14 +36,18 @@ const GeneralCellLayout: FC<Props> = ({
           visibility={rowActionsEnable ? 'visible' : 'hidden'}
         >
           {actions?.map((action, index) => {
+            console.log('action : ', action);
             return (
               <AppIcon
-                cursor="pointer"
+                cursor={action?.isDisabled ? 'not-allowed' : 'pointer'}
                 key={index}
                 transition="transform 0.25s ease"
                 name={action.iconName as any}
                 fill={neutral_100}
-                onClick={() => action.onClick && action.onClick(action.action, rowId)}
+                opacity={action?.isDisabled ? 0.1 : 1}
+                onClick={() =>
+                  !action?.isDisabled && action.onClick && action.onClick(action.action, rowId)
+                }
               />
             );
           })}

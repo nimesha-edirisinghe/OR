@@ -1,5 +1,6 @@
 import { Box, HStack, useDisclosure } from '@chakra-ui/react';
 import { AppIcon } from 'components/AppIcon/AppIcon';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import AppInput from 'components/newTheme/AppInput/AppInput';
@@ -93,40 +94,48 @@ const OrderParameterHeader: FC<Props> = () => {
             {lastUpdateDataTime}
           </AppText>
         </HStack>
-        <AppIconButton
-          aria-label="refresh"
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name="refresh"
-              width="14px"
-              height="14px"
-              fill={blue_500}
+        <AppTooltip label={'Refresh'} noOfLines={1} placement="bottom-start">
+          <Box>
+            <AppIconButton
+              aria-label="refresh"
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name="refresh"
+                  width="14px"
+                  height="14px"
+                  fill={blue_500}
+                />
+              }
+              variant="secondary"
+              size="iconMedium"
+              onClick={refreshHandler}
+              bg={ocean_blue_600}
             />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={refreshHandler}
-          bg={ocean_blue_600}
-        />
-        <AppIconButton
-          aria-label="download"
-          isDisabled={orderSummaryData === 0}
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name="download"
-              width="14px"
-              height="14px"
-              fill={blue_500}
+          </Box>
+        </AppTooltip>
+        <AppTooltip label={'Download'} noOfLines={1} placement="bottom-start">
+          <Box>
+            <AppIconButton
+              aria-label="download"
+              isDisabled={orderSummaryData === 0}
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name="download"
+                  width="14px"
+                  height="14px"
+                  fill={blue_500}
+                />
+              }
+              variant="secondary"
+              size="iconMedium"
+              onClick={onToggle}
+              bg={ocean_blue_600}
+              isLoading={isDownloading}
             />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={onToggle}
-          bg={ocean_blue_600}
-          isLoading={isDownloading}
-        />
+          </Box>
+        </AppTooltip>
       </HStack>
     </>
   );

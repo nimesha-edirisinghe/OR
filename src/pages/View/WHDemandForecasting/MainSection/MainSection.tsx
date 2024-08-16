@@ -1,4 +1,4 @@
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { Box, HStack, VStack } from '@chakra-ui/react';
 import SkuSelectionPanel from './SkuSelectionPanel/SkuSelectionPanel';
 import {
@@ -51,6 +51,7 @@ const MainSection: FC<MainSectionProps> = ({
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
   const groupFilter = groupConfigState.groupFilter;
+  const isAggregated = dfViewState.aggregateOption.selectedAggregateOption === 'aggregate';
 
   const skuSelectorWidth = useCallback(() => {
     if (!leftMenuOpen) return 'calc(100vw/3)';
@@ -58,15 +59,14 @@ const MainSection: FC<MainSectionProps> = ({
   }, [leftMenuOpen, skuMaximized]);
 
   const requestViewForecastChart = (currentStepIndex?: number) => {
-    dispatch(
-      setSelectedSkuAction(
-        currentStepIndex !== undefined ? currentStepIndex : graphNavigator.currentStepIndex
-      )
-    );
+    const graphNav = graphNavigator.currentStepIndex < 0 ? 0 : graphNavigator.currentStepIndex;
+
+    dispatch(setSelectedSkuAction(currentStepIndex !== undefined ? currentStepIndex : graphNav));
     dispatch(demandForecastChartRequest({ chartType: dfViewState.selectedChartType }));
   };
 
   const onChangeAllHandler = (isSelected: boolean, id: number) => {
+    graphNavigator.resetNavigator();
     dispatch(
       updateSkuListSelectedStatus({
         id: 1,
@@ -80,34 +80,6 @@ const MainSection: FC<MainSectionProps> = ({
       })
     );
     !isSelectedAll && requestViewForecastChart();
-    updateFilter();
-  };
-
-  const updateFilter = () => {
-    const skuProdKeys: KeyValueI[] =
-      tableDataList?.map((item) => {
-        return { key: item.anchorProdKey.toString(), value: '' };
-      }) || [];
-
-    const _groupFilter = produce(groupFilter, (draft) => {
-      const filteredItem = draft.filterLocalScope.rightPanelRetainDataList.find(
-        (item) => item.code === 1 && item.type === 'sku'
-      );
-      if (filteredItem) {
-        filteredItem.selectedItems = isSelectedAll ? [] : skuProdKeys;
-      } else {
-        const ft = {
-          code: 1,
-          isSelectAll: false,
-          search: null,
-          selectedItems: skuProdKeys,
-          outOfCount: 0,
-          type: 'sku'
-        };
-        draft.filterLocalScope.rightPanelRetainDataList.push(ft);
-      }
-    });
-    dispatch(updateGroupFilter(_groupFilter));
   };
 
   const updateSelectedListAndSkuStates = (
@@ -132,34 +104,41 @@ const MainSection: FC<MainSectionProps> = ({
         updateSelectedListAndSkuStates(isSelected, id, _selectedSku);
         graphNavigator.setCurrentStepIndex(selectedSkuList.length);
         requestViewForecastChart(selectedSkuList.length);
-        addOrRemoveItemHelper(1, 'sku', true, item, groupFilter, dispatch);
       } else {
         const idx = selectedSkuList.findIndex(
           (skuListItem) => skuListItem.anchorProdKey === _selectedSku?.anchorProdKey
         );
         graphNavigator.removeStep(idx);
-        if (id === selectedSkuForChart?.anchorProdKey && selectedSkuList.length > 1) {
+        if (isAggregated) {
+          graphNavigator.setCurrentStepIndex(selectedSkuList.length - 2);
           updateSelectedListAndSkuStates(isSelected, id, _selectedSku);
-          requestViewForecastChart(idx === 0 ? 0 : idx - 1);
+          requestViewForecastChart(selectedSkuList.length - 2);
         } else {
-          updateSelectedListAndSkuStates(isSelected, id, _selectedSku);
+          if (id === selectedSkuForChart?.anchorProdKey && selectedSkuList.length > 1) {
+            updateSelectedListAndSkuStates(isSelected, id, _selectedSku);
+            requestViewForecastChart(idx === 0 ? 0 : idx - 1);
+          } else {
+            updateSelectedListAndSkuStates(isSelected, id, _selectedSku);
+          }
         }
-        addOrRemoveItemHelper(1, 'sku', false, item, groupFilter, dispatch);
       }
     } catch (e) {
       console.log('Sku list update error ', e);
     }
   };
 
-  const onSelectTabHandler = (index: number) => {
-    const tabName = index === ForecastType.INDIVIDUAL ? 'sku' : 'aggregate';
-    setSelectedTab(index);
+  useEffect(() => {
+    const tabName = selectedTab === ForecastType.INDIVIDUAL ? 'sku' : 'aggregate';
     dispatch(
       setAggregateOption({
         type: '',
         item: tabName
       })
     );
+  }, [selectedTab]);
+
+  const onSelectTabHandler = (index: number) => {
+    setSelectedTab(index);
   };
 
   return (
@@ -182,7 +161,12 @@ const MainSection: FC<MainSectionProps> = ({
               tabs={[
                 {
                   label: 'Individual',
-                  content: <IndividualViewTab skuMaximized={skuMaximized} />
+                  content: (
+                    <IndividualViewTab
+                      skuMaximized={skuMaximized}
+                      graphNavigator={graphNavigator}
+                    />
+                  )
                 },
                 { label: 'Aggregate', content: <AggregateViewTab skuMaximized={skuMaximized} /> }
               ]}

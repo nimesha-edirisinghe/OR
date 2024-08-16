@@ -59,7 +59,8 @@ export const formatOrderParameterRowData = (orderParameterData: RplParameterSumm
       item.orderingFrequency,
       item.daysOfCover,
       item.MOQ,
-      item.supplyPackSize
+      item.supplyPackSize,
+      item.shelfLife
     ]
   }));
 };

@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { HStack } from '@chakra-ui/react';
+import { Box, HStack } from '@chakra-ui/react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   IAlert,
@@ -7,7 +7,8 @@ import {
   downloadAlertRequest,
   getAlertsRequest,
   setAlertDefinitionPaginationPageNo,
-  setAlertDefinitionSearchKey
+  setAlertDefinitionSearchKey,
+  setSelectedAlertTypeName
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import { blue_500, ocean_blue_600 } from 'theme/colors';
@@ -22,6 +23,7 @@ import {
   getLabelsRequest,
   toggleDrawerFilter
 } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 
 interface Props {
   initialAlertName: AlertNamesT | undefined;
@@ -32,6 +34,7 @@ const ViewAllActionBar: FC<Props> = ({ initialAlertName }) => {
   const [initialRender, setInitialRender] = useState<boolean>(true);
   const alertState: IAlert = useSelector(alertSliceSelector);
   const searchKey = alertState.alertLocalScope?.skuSearchKey;
+
   const prevSelectedItemRef = useRef(selectedItem);
   const dispatch = useDispatch();
 
@@ -46,14 +49,6 @@ const ViewAllActionBar: FC<Props> = ({ initialAlertName }) => {
     prevSelectedItemRef.current = selectedItem;
   }, [initialRender, selectedItem]);
 
-  const sendRequest = useCallback(() => {
-    dispatch(getAlertsRequest({ alertOnly: 0}));
-  }, []);
-
-  const debouncedSendRequest = useMemo(() => {
-    return debounce(sendRequest, 1000);
-  }, [sendRequest]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     dispatch(setAlertDefinitionSearchKey(value));
@@ -63,14 +58,16 @@ const ViewAllActionBar: FC<Props> = ({ initialAlertName }) => {
     if (event.key === 'Enter' && !event.defaultPrevented) {
       event.preventDefault();
       dispatch(setAlertDefinitionPaginationPageNo(1));
-      debouncedSendRequest();
+      const alertType = defaultAlertTypeList.find((obj) => obj.name === selectedItem)?.type;
+      dispatch(getAlertsRequest({ alertOnly: 0, selectedAlertType: alertType }));
     }
   };
 
   const onClickDownloadHandler = () => {
     dispatch(
       downloadAlertRequest({
-        alertOnly: 0, selectedAlertType: selectedItem
+        alertOnly: 0,
+        selectedAlertType: selectedItem
       })
     );
   };
@@ -79,15 +76,16 @@ const ViewAllActionBar: FC<Props> = ({ initialAlertName }) => {
     setSelectedItem(item);
     dispatch(setAlertDefinitionSearchKey(''));
     dispatch(setAlertDefinitionPaginationPageNo(1));
+
     const alertType = defaultAlertTypeList.find((obj) => obj.name === item)?.type;
-    
+    dispatch(setSelectedAlertTypeName(alertType!));
     dispatch(getAlertsRequest({ alertOnly: 0, selectedAlertType: alertType as AlertTypesT }));
   };
 
   const alertTypeOptions = defaultAlertTypeList.map((option) => option.name);
 
   const onFilterClick = () => {
-    dispatch(getLabelsRequest({ labelTypes: ['location', 'product', 'store'] }));
+    dispatch(getLabelsRequest({ labelTypes: ['location', 'product', 'store', 'sku'] }));
     dispatch(getFilterCountRequest({ whFlag: 0 }));
     dispatch(toggleDrawerFilter({ isOpen: true }));
   };
@@ -113,38 +111,46 @@ const ViewAllActionBar: FC<Props> = ({ initialAlertName }) => {
           handleItemClick={handleItemClick}
           selectedItem={selectedItem}
         />
-        <AppIconButton
-          aria-label="next"
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name="filter"
-              width="13px"
-              height="15px"
-              fill={blue_500}
+        <AppTooltip label="Filter" placement="bottom-start">
+          <Box>
+            <AppIconButton
+              aria-label="next"
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name="filter"
+                  width="13px"
+                  height="15px"
+                  fill={blue_500}
+                />
+              }
+              variant="secondary"
+              size="iconMedium"
+              onClick={onFilterClick}
+              bg={ocean_blue_600}
             />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={onFilterClick}
-          bg={ocean_blue_600}
-        />
-        <AppIconButton
-          aria-label="next"
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name="download"
-              width="12px"
-              height="15px"
-              fill={blue_500}
+          </Box>
+        </AppTooltip>
+        <AppTooltip label="Download" placement="bottom-start">
+          <Box>
+            <AppIconButton
+              aria-label="next"
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name="download"
+                  width="12px"
+                  height="15px"
+                  fill={blue_500}
+                />
+              }
+              variant="secondary"
+              size="iconMedium"
+              onClick={onClickDownloadHandler}
+              bg={ocean_blue_600}
             />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={onClickDownloadHandler}
-          bg={ocean_blue_600}
-        />
+          </Box>
+        </AppTooltip>
       </HStack>
     </HStack>
   );

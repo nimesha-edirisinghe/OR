@@ -4,7 +4,7 @@ import { AppIcon } from 'components/AppIcon/AppIcon';
 import { iconName } from 'components/AppIcon/svgIcons';
 import AppText from 'components/AppText/AppText';
 import AppSimpleGrid from 'components/newTheme/AppSimpleGrid/AppSimpleGrid';
-import { FC, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { formatDateToYMD } from 'state/helpers/dateHelper';
 import {
@@ -16,28 +16,15 @@ import {
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import { neutral_200, ocean_blue_400, ocean_blue_600 } from 'theme/colors';
 import { AlertReplenishmentActionTypeEnum } from 'utils/enum';
+import ReplenishmentOrderTableFooter from './ReplenishmentOrderTableFooter';
+import { AlertCalendarI, AlertCalendarPrevMonthI } from 'types/alertConfig';
 
-interface PrevMonthI {
-  date: Date;
-  day: number;
-  isDisabled: boolean;
-}
-interface CalendarI {
-  id: number;
-  index: number;
-  visibility: boolean;
-  coordinates: {
-    x: number;
-    y: number;
-  };
-  prevMonth: PrevMonthI;
-}
 interface ReplenishmentOrderTableProps {}
 
 const ReplenishmentOrderTable: FC<ReplenishmentOrderTableProps> = () => {
   const alertState: IAlert = useSelector(alertSliceSelector);
   const dispatch = useDispatch();
-  const [calendarData, setCalendarData] = useState<CalendarI>({
+  const [calendarData, setCalendarData] = useState<AlertCalendarI>({
     id: 0,
     index: 0,
     visibility: false,
@@ -51,12 +38,13 @@ const ReplenishmentOrderTable: FC<ReplenishmentOrderTableProps> = () => {
       isDisabled: false
     }
   });
+  const calendarRef: any = useRef();
   const orderQtyDetails = alertState.rplPlanDetails?.orderQtyDetails;
-  const headers = orderQtyDetails?.headers!;
-  const rows: any = orderQtyDetails?.list!;
+  const headers = orderQtyDetails?.headers || [];
+  const rows: any = orderQtyDetails?.list || [];
   const isEditable: boolean = alertState.isReplenishmentEditable;
-  const editableFlags = [true, true, false, true, false];
-  const iconList: string[] = ['calenderWithDate', '', '', 'calenderWithDate'];
+  const editableFlags = [true, true, false, false, true, false];
+  const iconList: string[] = ['calenderWithDate', '', '', '', 'calenderWithDate'];
 
   const header: any = headers?.map((item, index) => {
     const tempItem: any = {
@@ -68,8 +56,21 @@ const ReplenishmentOrderTable: FC<ReplenishmentOrderTableProps> = () => {
     return tempItem;
   });
 
+  useEffect(() => {
+    const handleClickOutside = (event: any) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setCalendarData({ ...calendarData, visibility: false });
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   if (isEditable) {
-    header.push({
+    header?.push({
       w: 105,
       displayValue: '',
       key: header.length + 1,
@@ -82,7 +83,7 @@ const ReplenishmentOrderTable: FC<ReplenishmentOrderTableProps> = () => {
     .filter((row: any) => row.action !== AlertReplenishmentActionTypeEnum.DELETE)
     .map((row: any) => {
       const tempRow: any[] = [...row.row];
-      if (isEditable) tempRow.push(' ');
+      if (isEditable) tempRow?.push(' ');
       return { id: row.id, row: tempRow, editableFlags };
     });
 
@@ -90,7 +91,9 @@ const ReplenishmentOrderTable: FC<ReplenishmentOrderTableProps> = () => {
     dispatch(addNewCellData());
   };
   const updateCellValue = (id: number | string, index: number, value: string | number) => {
-    dispatch(updateCellData({ id, index, value }));
+    const isDate = isNaN(Date.parse(value.toString())) === false;
+    const isValueValid = /^\d+$/.test(value.toString()) || value.toString() === '' || isDate;
+    if (isValueValid) dispatch(updateCellData({ id, index, value }));
   };
 
   const changeDate = (date: Date) => {
@@ -107,17 +110,25 @@ const ReplenishmentOrderTable: FC<ReplenishmentOrderTableProps> = () => {
     icon?: iconName
   ) => {
     const coord = ref.current.getBoundingClientRect();
-    const prevMonth: PrevMonthI = {
+    const prevMonth: AlertCalendarPrevMonthI = {
       date: new Date(),
       day: 0,
       isDisabled: false
     };
-    if (index === 3) {
-      const startDate: Date = new Date(rows[id].row[0]);
+
+    const startDateValue = rows[id].row[0];
+    const startDate: Date = startDateValue ? new Date(startDateValue) : new Date();
+    if (index === 0) {
+      prevMonth.date = startDate;
+      prevMonth.day = startDate.getDate();
+      prevMonth.isDisabled = false;
+    } else if (index === 3) {
+      startDate.setDate(startDate.getDate());
       prevMonth.date = startDate;
       prevMonth.day = startDate.getDate();
       prevMonth.isDisabled = true;
     }
+
     setCalendarData({
       ...calendarData,
       id: +id,
@@ -135,9 +146,10 @@ const ReplenishmentOrderTable: FC<ReplenishmentOrderTableProps> = () => {
   };
 
   return (
-    <Box h="30%" w="full">
+    <Box h="full" w="full">
       {calendarData.visibility && (
         <Flex
+          ref={calendarRef}
           position="absolute"
           left={`${calendarData.coordinates.x}px`}
           top={`${calendarData.coordinates.y}px`}
@@ -165,20 +177,7 @@ const ReplenishmentOrderTable: FC<ReplenishmentOrderTableProps> = () => {
         cellCallback={updateCellValue}
         onActionHandler={iconClickHandler}
         onEditActionHandler={onEditActionHandler}
-        footerRow={
-          isEditable && (
-            <td colSpan={5}>
-              <Box bg={ocean_blue_400} w="full" h="36px" p="8px">
-                <HStack w="130px" spacing="4px" onClick={addNewCell} cursor="pointer">
-                  <AppIcon name="plus" fill={neutral_200} w="10.5px" h="10.5px" />
-                  <AppText fontSize="13px" fontWeight="400" color={neutral_200}>
-                    Add another plan
-                  </AppText>
-                </HStack>
-              </Box>
-            </td>
-          )
-        }
+        footerRow={isEditable && <ReplenishmentOrderTableFooter addNewCell={addNewCell} />}
       />
     </Box>
   );

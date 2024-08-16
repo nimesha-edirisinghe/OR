@@ -1,16 +1,15 @@
-import { Box, HStack, VStack } from '@chakra-ui/react';
+import { VStack } from '@chakra-ui/react';
 import AppInput from 'components/AppInput/AppInput';
-import AppSelect from 'components/AppSelect/AppSelect';
-import AppSkipper from 'components/AppSkipper/AppSkipper';
 import AppText from 'components/AppText/AppText';
-import { FC, useEffect, useState } from 'react';
+import AppDropdown from 'components/newTheme/AppDropdown/AppDropdown';
+import { INSTRUCTION_MESSAGES } from 'constants/messages';
+import { ChangeEvent, FC, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
   IGroupConfigurationSlice,
   groupConfigurationSliceSelector
 } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
-import { getResponseAnchorAndSkuCount } from 'state/pages/advancedConfiguration/groupConfiguration/stateHelpers/stH_groupConfigurations';
-import { ocean_blue_500, ocean_blue_100 } from 'theme/colors';
+import { ocean_blue_500, white, neutral_200, ocean_blue_300 } from 'theme/colors';
 import { GroupDetailsI, GroupDetailsKeyT } from 'types/groupConfig';
 import { ScheduleType } from 'types/responses/jobScheduleResponses';
 import { repeatDurationOptions } from 'utils/utility';
@@ -22,83 +21,78 @@ interface Props {
 }
 
 const SaveGroup: FC<Props> = ({ onChangeHandler, detailsObj, onChangeOption }) => {
-  const options: { key: string; value: string }[] = repeatDurationOptions;
-
   const groupConfigurationState: IGroupConfigurationSlice = useSelector(
     groupConfigurationSliceSelector
   );
-  const groupFilter = groupConfigurationState.groupFilter;
-  const [anchorCount, setAnchorCount] = useState(0);
-  const [skuCount, setSkuCount] = useState(0);
+  const groupDetailsState = groupConfigurationState.groupDetails;
+  const [forecastHorizon, setForecastHorizon] = useState<string>('');
+
+  const options: string[] = repeatDurationOptions.map(
+    (obj: { key: string; value: string }) => obj.key
+  );
 
   useEffect(() => {
-    const obj = getResponseAnchorAndSkuCount(groupFilter);
-    setAnchorCount(obj.anchor);
-    setSkuCount(obj.sku);
-  }, [groupFilter.filterTotalItemsCount]);
+    if (groupDetailsState.horizon !== 0) setForecastHorizon(groupDetailsState.horizon.toString());
+  }, [groupDetailsState.horizon]);
+
+  const onChangeHorizonHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    const horizon = e.target.value;
+    const isHorizonValid = /^\d+$/.test(horizon.toString()) || horizon.toString() === '';
+    if (isHorizonValid) onChangeHandler('horizon', horizon);
+  };
 
   return (
-    <VStack w="full" align="start" gap="20px" pt="20px">
-      <HStack>
-        <Box w="200px">
-          <AppText fontSize="14px">Group Name :</AppText>
-        </Box>
-        <Box>
-          <AppInput
-            onChange={(e) => onChangeHandler('name', e.target.value)}
-            value={detailsObj.name}
-            maxLength={40}
-            bg={ocean_blue_500}
-            borderColor={ocean_blue_100}
-          />
-        </Box>
-      </HStack>
-      <HStack>
-        <Box w="200px">
-          <AppText fontSize="14px">Forecasting Frequency :</AppText>
-        </Box>
-        <AppSelect
+    <VStack w="636px" gap="20px" pt="20px">
+      <AppText textAlign={'center'} w={'full'} size={'body3'} color={white} fontWeight={400}>
+        {INSTRUCTION_MESSAGES.STORE_GROUP_MESSAGE}
+      </AppText>
+      <VStack w={'full'}>
+        <AppText w={'full'} size={'body2'} color={neutral_200} fontWeight={'400'}>
+          Group Name
+        </AppText>
+        <AppInput
+          onChange={(e) => onChangeHandler('name', e.target.value)}
+          value={detailsObj.name}
+          maxLength={40}
+          bg={ocean_blue_500}
+          h={'36px'}
+          border={'none'}
+          borderRadius={'8px'}
+          placeholder="Enter group name"
+          fontSize="12px"
+          _placeholder={{ color: ocean_blue_300, fontSize: '12px' }}
+        />
+      </VStack>
+      <VStack w={'full'}>
+        <AppText size={'body2'} w={'full'} color={neutral_200} fontWeight={'400'}>
+          Forecasting Frequency
+        </AppText>
+        <AppDropdown
           options={options}
-          onConfigTypeChange={onChangeOption}
-          selectedScheduleType={detailsObj.frequency}
+          buttonWidth="636px"
+          height="36px"
+          handleItemClick={(value) => onChangeOption({ key: value, value })}
+          selectedItem={detailsObj.frequency!}
         />
-      </HStack>
-      <HStack>
-        <Box w="200px">
-          <AppText fontSize="14px" w="200px">
-            Forecasting Horizon :
-          </AppText>
-        </Box>
-        <AppSkipper
-          onValueChange={(value) => onChangeHandler('horizon', value)}
-          value={detailsObj.horizon}
-          w="60px"
-          minNumber={0}
-          bg="none"
-          border="1px solid"
-          borderColor={ocean_blue_100}
+      </VStack>
+
+      <VStack w={'full'}>
+        <AppText size={'body2'} w={'full'} color={neutral_200} fontWeight={'400'}>
+          Forecasting Horizon
+        </AppText>
+        <AppInput
+          type="text"
+          onChange={(e) => onChangeHorizonHandler(e)}
+          value={forecastHorizon}
+          bg={ocean_blue_500}
+          h={'36px'}
+          border={'none'}
+          borderRadius={'8px'}
+          placeholder="Enter forecasting horizon"
+          fontSize="12px"
+          _placeholder={{ color: ocean_blue_300, fontSize: '12px' }}
         />
-      </HStack>
-      <HStack>
-        <Box w="200px">
-          <AppText fontSize="14px" w="200px">
-            Anchors-locations :
-          </AppText>
-        </Box>
-        <AppText fontSize="14px" w="200px">
-          {anchorCount}
-        </AppText>
-      </HStack>
-      <HStack>
-        <Box w="200px">
-          <AppText fontSize="14px" w="200px">
-            SKU-locations :
-          </AppText>
-        </Box>
-        <AppText fontSize="14px" w="200px">
-          {skuCount}
-        </AppText>
-      </HStack>
+      </VStack>
     </VStack>
   );
 };

@@ -1,6 +1,6 @@
 import { Box, HStack, VStack } from '@chakra-ui/react';
 import InsightsPageLayout from 'layouts/PageLayouts/InsightsPageLayout';
-import { FC, useCallback, useEffect } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { IUser, userSliceSelector } from 'state/user/userState';
 import {
@@ -34,6 +34,8 @@ const ViewAll: FC<Props> = () => {
   const groupConfigurationState: IGroupConfigurationSlice = useSelector(
     groupConfigurationSliceSelector
   );
+  const filterAppliedIndicator = groupConfigurationState.groupFilter.filterAppliedIndicator;
+  const [orgKey, setOrgKey] = useState<number>(selectedOrgKey);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -42,13 +44,18 @@ const ViewAll: FC<Props> = () => {
     try {
       const abortController = new AbortController();
       if (selectedOrgKey) {
-        if (alertSummaryList.list) {
-          dispatch(setAlertDefinitionSearchKey(''));
-          dispatch(setAlertDefinitionPaginationPageNo(1));
-          dispatch(getAlertsRequest({ alertOnly: 0 }));
-        } else {
+        if (selectedOrgKey !== orgKey || alertSummaryList.list?.length === 0)
           navigate('/app/predictive-alerts');
+        else {
+          if (alertSummaryList.list) {
+            dispatch(setAlertDefinitionSearchKey(''));
+            dispatch(setAlertDefinitionPaginationPageNo(1));
+            dispatch(getAlertsRequest({ alertOnly: 0 }));
+          } else {
+            navigate('/app/predictive-alerts');
+          }
         }
+        setOrgKey(selectedOrgKey);
       }
       return () => {
         abortController.abort();
@@ -56,7 +63,7 @@ const ViewAll: FC<Props> = () => {
     } catch (error) {
       console.error('', error);
     }
-  }, [selectedOrgKey]);
+  }, [selectedOrgKey, filterAppliedIndicator]);
 
   const getAlertNameByType = () => {
     const selectedAlertType = alertState.alertLocalScope.selectedAlertTypeObj.alertType;

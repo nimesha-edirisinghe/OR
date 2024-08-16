@@ -12,7 +12,7 @@ interface ParameterPanelProps {}
 const ParameterPanel: FC<ParameterPanelProps> = () => {
   const alertState: IAlert = useSelector(alertSliceSelector);
   const orderPlan = alertState.rplPlanDetails?.orderPlan;
-  const ubp = orderPlan?.unitPrice ? '$' + orderPlan?.unitPrice : '';
+  const ubp = orderPlan?.unitPrice?.toString() || '';
   const [scroll, setScroll] = useState('hidden');
   const parameterItemArr: RplParameterObjI[] = [
     {
@@ -39,6 +39,11 @@ const ParameterPanel: FC<ParameterPanelProps> = () => {
       key: 'orderingFrequency',
       displayName: 'Ordering Freq',
       value: orderPlan?.orderingFrequency.toString()!
+    },
+    {
+      key: 'shelfLife',
+      displayName: 'Shelf Life',
+      value: orderPlan?.shelfLife.toString()!
     },
     {
       key: 'unitBuyingPrice',

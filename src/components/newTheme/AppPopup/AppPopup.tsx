@@ -16,10 +16,11 @@ import { neutral_100 } from 'theme/colors';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  title?:string;
+  title?: string;
   infoMessage: string | ReactNode;
   leftBtnName: string;
   rightBtnName: string;
+  confirmationMessage?: string;
   onConfirmHandler: () => void;
   onCloseHandler: () => void;
   icon: ReactElement<any, string | JSXElementConstructor<any>>;
@@ -28,29 +29,33 @@ interface Props {
 const AppPopup: React.FC<Props> = ({
   isOpen,
   onClose,
-  title="Warning",
+  title = 'Warning',
   infoMessage,
   leftBtnName,
   rightBtnName,
   onConfirmHandler,
   onCloseHandler,
+  confirmationMessage,
   icon
 }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay backdropFilter="blur(2px)" />
-      <ModalContent borderRadius="8px" bg="popup.primary.container.bg" w="440px" h="268px">
-        <ModalBody p="28px">
+      <ModalContent borderRadius="8px" bg="popup.primary.container.bg" w="440px" minH="268px">
+        <ModalBody pt="28px">
           <VStack spacing={0}>
             <Center h="50px" w="80px" mb="16px">
               {icon}
             </Center>
             <AppText size="h3Semibold">{title}</AppText>
-            <Center h="50px" w="392px" pt="20px">
+            <VStack minH="50px" w="392px" pt="20px" spacing="16px">
               <AppText size="body2" color={neutral_100} align="center">
                 {infoMessage}
               </AppText>
-            </Center>
+              <AppText size="body2" color={neutral_100} align="center">
+                {confirmationMessage}
+              </AppText>
+            </VStack>
           </VStack>
         </ModalBody>
         <ModalFooter justifyContent="center" pb="24px">

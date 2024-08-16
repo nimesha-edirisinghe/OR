@@ -22,7 +22,7 @@ export interface JobScheduleRequestI {
   scheduleConfiguration: JobScheduleConfigI;
   endDate: number | null;
   executionDetails: JobScheduleExecDetailsI;
-  scheduleType: ScheduleType;
+  scheduleType: string;
   startDate: number | null;
   additionalConfig: { etlValidation: boolean };
   scheduleBatchId?: string | null;

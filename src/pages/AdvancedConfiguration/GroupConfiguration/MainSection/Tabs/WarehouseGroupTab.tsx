@@ -6,7 +6,7 @@ interface WarehouseGroupTabProps {}
 
 const WarehouseGroupTab: FC<WarehouseGroupTabProps> = () => {
   return (
-    <Box h="calc(100vh - 265px)" w="full">
+    <Box h="full" w="full">
       <WarehouseGroup />
     </Box>
   );

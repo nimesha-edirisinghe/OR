@@ -12,9 +12,22 @@ interface Props {
     y?: number;
   };
   isDisabled?: boolean;
+  initDate?: Date;
+  disabledPrevMonth?: boolean;
+  disabledPrevDate?: number;
+  calendarTopPadding?: number;
 }
 
-const AppDatePicker: FC<Props> = ({ children, onDateSelect, prePos, isDisabled = false }) => {
+const AppDatePicker: FC<Props> = ({
+  children,
+  onDateSelect,
+  prePos,
+  isDisabled = false,
+  initDate,
+  disabledPrevMonth = false,
+  disabledPrevDate = 0,
+  calendarTopPadding = 4
+}) => {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef();
@@ -46,7 +59,7 @@ const AppDatePicker: FC<Props> = ({ children, onDateSelect, prePos, isDisabled =
           // @ts-ignore
           ref={ref}
           position="absolute"
-          w="220px"
+          w="236px"
           h="320px"
           top={pos.y}
           left={pos.x}
@@ -57,7 +70,13 @@ const AppDatePicker: FC<Props> = ({ children, onDateSelect, prePos, isDisabled =
           transition=".2s"
           zIndex={1}
         >
-          <AppDateCalendar onDateSelect={(date) => onSelectDate(date)} />
+          <AppDateCalendar
+            onDateSelect={(date) => onSelectDate(date)}
+            initDate={initDate}
+            disabledPrevMonth={disabledPrevMonth}
+            disabledPrevDate={disabledPrevDate}
+            calendarTopPadding={calendarTopPadding}
+          />
         </Box>
       )}
     </Box>

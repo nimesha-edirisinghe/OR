@@ -5,9 +5,17 @@ import {
   IAlert,
   alertSliceSelector,
   downloadAlertRequest,
+  getAlertedGroupDetailsRequest,
   getAlertsRequest,
+  getRplPlanDetailsRequest,
+  resetSelectedSkuList,
   setAlertDefinitionPaginationPageNo,
-  setAlertDefinitionSearchKey
+  setAlertDefinitionSearchKey,
+  setAlertSelectionOption,
+  setGraphPanelEditable,
+  setReplenishmentEditable,
+  toggleGraphPanel,
+  toggleReplenishmentPanel
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import {
@@ -31,6 +39,11 @@ import useTooltip from 'hooks/useTooltip';
 import AppPopover from 'components/AppPopover/AppPopover';
 import AppText from 'components/AppText/AppText';
 import { forecastOptions, replenishmentOptions } from './ActionBarMoreOption';
+import { useNavigate } from 'react-router-dom';
+import { AlertTypeEnum } from 'state/pages/monitoringAndResolution/Alert/sagaHelpers/sgH_alert';
+import { AccessPermissionEnum, AlertSelectionEnum, MenuItems } from 'utils/enum';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
 
 interface ActionBarProps {}
 
@@ -43,25 +56,31 @@ const optionPopoverStyles: CSSProperties = {
 };
 
 const ActionBar: FC<ActionBarProps> = () => {
-  const alertState: IAlert = useSelector(alertSliceSelector);
-  const searchKey = alertState.alertLocalScope?.skuSearchKey;
   const dispatch = useDispatch();
-  const totalCount = alertState.alertDataList?.totalCount || 0;
-  const isAllSkuSelected = alertState.alertLocalScope.globalSkuSelected;
-  const totalSkuCount = alertState.alertDataList?.totalCount;
-  const selectedSkuListLen = alertState.selectedSkuList.length;
-  const aggregatedCount = (isAllSkuSelected ? totalSkuCount : selectedSkuListLen) || 0;
-  const alertType = alertState.alertLocalScope.selectedAlertTypeObj.alertType;
+  const navigate = useNavigate();
+  const alertState: IAlert = useSelector(alertSliceSelector);
   const [isResolveTooltipOpen, handleResolveMouseEnter, handleResolveMouseLeave] = useTooltip();
   const [isDownloadTooltipOpen, handleDownloadMouseEnter, handleDownloadMouseLeave] = useTooltip();
   const [isFilterTooltipOpen, handleFilterMouseEnter, handleFilterMouseLeave] = useTooltip();
-  const isForecastAlertType = alertType === 'degrowth' || alertType === 'growth';
+  const { isOpen: isOpen, onToggle: onOpen, onClose: onClose } = useDisclosure();
+  const searchKey = alertState.alertLocalScope?.skuSearchKey;
+  const isAllSkuSelected = alertState.alertLocalScope.globalSkuSelected;
+  const totalSkuCount = alertState.alertDataList?.totalCount;
+  const selectedSkuListLen = alertState.selectedSkuList?.length;
+  const aggregatedCount = (isAllSkuSelected ? totalSkuCount : selectedSkuListLen) || 0;
+  const alertType = alertState.alertLocalScope.selectedAlertTypeObj?.alertType!;
+  const accessType = useAccessType(MenuItems.PREDICTIVE_ALERTS);
+  const isDisabled = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
+  const isDisableIconBtn = selectedSkuListLen === 0;
+  const isDisableResolveBtn = isDisableIconBtn || isDisabled;
+  const isDownloading = alertState.loading.download;
+
+  const isForecastAlertType =
+    alertType === AlertTypeEnum.DE_GROWTH || alertType === AlertTypeEnum.GROWTH;
   const selectedForecastLabel =
     aggregatedCount === 1
       ? `${aggregatedCount} SKU-location Selected`
       : `${aggregatedCount} SKU-locations Selected`;
-
-  const { isOpen: isOpen, onToggle: onOpen, onClose: onClose } = useDisclosure();
 
   const sendRequest = useCallback(() => {
     dispatch(getAlertsRequest({ alertOnly: 1 }));
@@ -79,6 +98,7 @@ const ActionBar: FC<ActionBarProps> = () => {
   const handleSearchFieldPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && !event.defaultPrevented) {
       event.preventDefault();
+      dispatch(resetSelectedSkuList());
       dispatch(setAlertDefinitionPaginationPageNo(1));
       debouncedSendRequest();
     }
@@ -92,20 +112,41 @@ const ActionBar: FC<ActionBarProps> = () => {
     );
   };
 
+  const onPathHandler = (path: string, key: string) => {
+    const isViewKey = key === 'view';
+    const isForecastAlert =
+      alertType === AlertTypeEnum.DE_GROWTH || alertType === AlertTypeEnum.GROWTH;
+
+    if (isViewKey) {
+      const action = isForecastAlert ? toggleGraphPanel() : toggleReplenishmentPanel();
+      const editAction = isForecastAlert
+        ? setGraphPanelEditable(false)
+        : setReplenishmentEditable(false);
+      dispatch(setAlertSelectionOption(AlertSelectionEnum.MULTIPLE));
+      !isForecastAlert && dispatch(getRplPlanDetailsRequest());
+      dispatch(editAction);
+
+      dispatch(action);
+    } else {
+      isAllSkuSelected &&
+        dispatch(
+          getAlertedGroupDetailsRequest({
+            alertOnly: 1
+          })
+        );
+      navigate(path);
+    }
+  };
+
   const onFilterClick = () => {
-    // dispatch(resetGroupFilter());
-    dispatch(getLabelsRequest({ labelTypes: ['location', 'product', 'store'] }));
-    dispatch(getFilterCountRequest({ whFlag: 0 }));
+    dispatch(getLabelsRequest({ labelTypes: ['location', 'product', 'store', 'sku'] }));
+    dispatch(getFilterCountRequest({ whFlag: 0, isAlertPage: true }));
     dispatch(toggleDrawerFilter({ isOpen: true }));
   };
 
   const getResolvedOption = () => {
-    return alertType === 'degrowth' || alertType === 'growth'
-      ? forecastOptions
-      : replenishmentOptions;
+    return isForecastAlertType ? forecastOptions : replenishmentOptions;
   };
-
-  if (totalCount === 0) return null;
 
   return (
     <HStack w="full" borderRadius="10px" userSelect="none" justify="space-between">
@@ -119,15 +160,16 @@ const ActionBar: FC<ActionBarProps> = () => {
           inputSize="large"
           width="306px"
           onKeyDown={handleSearchFieldPress}
+          height="36px"
         />
         {aggregatedCount > 0 && (
           <HStack
-            h={'36px'}
-            borderRadius={'8px'}
-            px={'4px'}
-            py={'8px'}
+            h="36px"
+            borderRadius="8px"
+            px="8px"
+            py="8px"
             bg={yellow_500_t28}
-            justify={'center'}
+            justify="center"
           >
             <AppText size="body2" color={yellow_500} noOfLines={1}>
               {selectedForecastLabel}
@@ -183,6 +225,8 @@ const ActionBar: FC<ActionBarProps> = () => {
               size="iconMedium"
               onClick={onClickDownloadHandler}
               bg={ocean_blue_600}
+              isDisabled={isDisableIconBtn}
+              isLoading={isDownloading}
             />
           </Box>
         </AppTooltip>
@@ -212,15 +256,15 @@ const ActionBar: FC<ActionBarProps> = () => {
                       width="14px"
                       height="14px"
                       fill={blue_500}
-                      onClick={() => {
-                        onOpen();
-                      }}
                     />
                   }
                   variant="secondary"
                   size="iconMedium"
-                  onClick={() => {}}
+                  onClick={() => {
+                    onOpen();
+                  }}
                   bg={ocean_blue_600}
+                  isDisabled={isDisableResolveBtn}
                 />
               }
               content={
@@ -243,7 +287,7 @@ const ActionBar: FC<ActionBarProps> = () => {
                         bg: ocean_blue_400
                       }}
                       px="12px"
-                      onClick={() => {}}
+                      onClick={() => onPathHandler(option.path!, option.key)}
                     >
                       <AppText
                         fontSize="12px"

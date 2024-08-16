@@ -8,14 +8,18 @@ import { orgDetailsI } from 'types/responses/userResponses';
 import { userSliceSelector, setUserSelectedOrg } from 'state/user/userState';
 import { useDisclosure, useOutsideClick } from '@chakra-ui/react';
 import AppTooltip from 'components/AppTooltip/AppTooltip';
+import { getDynamicConfigDataRequest } from 'state/pages/systemConfiguration/systemConfigurationState';
 
 interface OrgHeaderProps {}
 
 const OrgHeader: React.FC<OrgHeaderProps> = () => {
+  const dispatch = useDispatch();
   const { isOpen, onToggle, onClose } = useDisclosure();
   const userState = useSelector(userSliceSelector);
-  const dispatch = useDispatch();
+  const selectedOrgKey = userState.selectedOrg.orgKey!;
   const ref = useRef<HTMLDivElement | null>(null);
+  const MAX_LENGTH: number = 17;
+
   useOutsideClick({
     ref: ref,
     handler: (event) => {
@@ -32,7 +36,6 @@ const OrgHeader: React.FC<OrgHeaderProps> = () => {
   };
 
   const getShortOrgName = (orgName: string): string => {
-    const MAX_LENGTH: number = 17;
     return orgName && orgName.length <= MAX_LENGTH ? orgName : orgName?.slice(0, MAX_LENGTH);
   };
 
@@ -66,10 +69,12 @@ const OrgHeader: React.FC<OrgHeaderProps> = () => {
               transition="color 0.6s"
               noOfLines={1}
             >
-              {userState.selectedOrg && (
+              {userState.selectedOrg && userState.selectedOrg.name?.length > MAX_LENGTH ? (
                 <AppTooltip label={userState.selectedOrg.name} placement="right-start">
                   <span>{getShortOrgName(userState.selectedOrg.name)}</span>
                 </AppTooltip>
+              ) : (
+                <span>{getShortOrgName(userState.selectedOrg.name)}</span>
               )}
             </AppText>
           </Box>

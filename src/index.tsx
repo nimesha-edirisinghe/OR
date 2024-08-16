@@ -50,7 +50,8 @@ root.render(
         checkLoginIframe: false
       }}
     >
-      <React.StrictMode>
+      <>
+        {/* <React.StrictMode> */}
         <Provider store={store}>
           <App />
           <ToastContainer
@@ -67,7 +68,8 @@ root.render(
             }}
           />
         </Provider>
-      </React.StrictMode>
+        {/* </React.StrictMode> */}
+      </>
     </ReactKeycloakProvider>
   </ChakraProvider>
 );

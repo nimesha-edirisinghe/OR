@@ -81,7 +81,7 @@ export interface OutlierDetectionChartDataI {
   adjusted: number | null;
 }
 
-export type TableCellT = 'generalCell' | 'indicatorCell' | 'actionIconCell' | 'editableCell';
+export type TableCellT = 'generalCell' | 'indicatorCell' | 'actionIconCell' | 'editableCell'|'operationCell';
 
 export interface TableHeader {
   w: number;
@@ -164,6 +164,7 @@ export interface RplOrderPlanI {
   unitOrderQty: number;
   wayOfSupply: string;
   riskValue: number;
+  shelfLife:number;
 }
 
 export interface RplStockMovementI {
@@ -185,6 +186,8 @@ export interface RplOrderQtyDetailsI {
   delivery_date: string;
   quantity: number;
   value: number;
+  sellingUom:number;
+  buyingUOM:number;
 }
 
 export interface OrderQtyDetailsStateI {

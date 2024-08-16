@@ -1,4 +1,4 @@
-import { IAlert } from "../alertState";
+import { IAlert } from '../alertState';
 
 export enum AlertTypeEnum {
   OUT_OF_STOCK = 'outofstock',
@@ -8,18 +8,16 @@ export enum AlertTypeEnum {
   DE_GROWTH = 'degrowth'
 }
 
-
-
-export const getAlertCardData=(alertState:IAlert)=>{
-  
-    const alertTypeList= alertState.alertSummaryList.list?.find((alert)=>alert.alertName===alertState.alertName)?.alertDetails.map((alert)=>alert.alertType)
-    return alertState.defaultAlertTypes
-      .filter((alert) => alertTypeList?.includes(alert.type)||alert.enable)
-      .map(({ type, threshold, compareValue, enable }) => ({
-        type,
-        threshold,
-        compareValue,
-        enable
-      }));
-
-}
+export const getAlertCardData = (alertState: IAlert) => {
+  const alertTypeList = alertState.alertSummaryList.list
+    ?.find((alert) => alert.alertName === alertState.alertName)
+    ?.alertDetails.map((alert) => alert.alertType);
+  return alertState.defaultAlertTypes
+    .filter((alert) => alertTypeList?.includes(alert.type) || alert.enable)
+    .map(({ type, threshold, compareValue, enable }) => ({
+      type,
+      threshold,
+      compareValue,
+      enable
+    }));
+};

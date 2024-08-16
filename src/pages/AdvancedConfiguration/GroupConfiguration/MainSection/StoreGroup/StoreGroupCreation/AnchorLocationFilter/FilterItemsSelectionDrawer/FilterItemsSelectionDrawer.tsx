@@ -27,17 +27,17 @@ import {
   IGroupConfigurationSlice,
   getFilterCountRequest,
   groupConfigurationSliceSelector,
-  openGroupConfigDrawer,
   toggleViewGroupConfigDrawer,
   toggleGroupFilterItemSelectionDrawer,
-  updateGroupFilter
+  updateGroupFilter,
+  resetGroupDetail
 } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
 import { RightFilterItemContentI } from 'types/groupConfig';
-import { blue_500, ocean_blue_600 } from 'theme/colors';
+import { blue_500, ocean_blue_600, yellow_500 } from 'theme/colors';
 import AppButton from 'components/newTheme/AppButton/AppButton';
-import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import { AppIcon } from 'components/AppIcon/AppIcon';
+import AppPopup from 'components/newTheme/AppPopup/AppPopup';
 
 interface Props {
   isOpen: boolean;
@@ -60,11 +60,6 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen }) => {
   const rightPanelRetainDataList = groupFilter?.filterLocalScope.rightPanelRetainDataList;
   const beforeEditFilterOptionsLevel2 = groupFilter?.filterLocalScope.beforeEditFilterOptionsLevel2;
   const [selectedRightSideItem, setSelectedRightSideItem] = useState<RightFilterItemContentI>();
-  const [searchKey, setSearchKey] = useState<string>(selectedRightSideItem?.search || '');
-
-  useEffect(() => {
-    setSearchKey(selectedRightSideItem?.search!);
-  }, [selectedRightSideItem?.search, filterItemListData]);
 
   useEffect(() => {
     const _selectedRightSideItem = getSelectedRightSideItem(
@@ -106,40 +101,29 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen }) => {
         }
       );
       dispatch(updateGroupFilter(_groupFilter));
-      dispatch(openGroupConfigDrawer());
-      setSearchKey('');
+      dispatch(resetGroupDetail());
       onCloseCancelPrompt();
     }
   };
+
   const onSaveSelectedItems = () => {
     dispatch(getFilterCountRequest({ whFlag: 0 }));
     dispatch(toggleGroupFilterItemSelectionDrawer(false));
-    dispatch(openGroupConfigDrawer());
-    setSearchKey('');
+    dispatch(resetGroupDetail());
   };
 
   const cancelConfirmationPrompt = useCallback(() => {
-    const renderBody = () => {
-      return (
-        <>
-          <AppText size="usm">The changes you have made in filters will be discarded.</AppText>
-          <AppText size="usm" mt={2}>
-            Are you sure you want to continue?
-          </AppText>
-        </>
-      );
-    };
-
     return (
-      <AppUserInputPrompt
+      <AppPopup
         isOpen={isOpenCancelPrompt}
         onClose={onCloseCancelPrompt}
-        leftBtnName="NO"
-        rightBtnName="YES"
+        leftBtnName="Yes"
+        rightBtnName="No"
         title="Cancel Changes"
+        infoMessage={`The changes you have made in filters will be discarded.Are you sure you want to continue?`}
         onConfirmHandler={onDrawerClose}
         onCloseHandler={onCloseCancelPrompt}
-        children={renderBody()}
+        icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
       />
     );
   }, [isOpenCancelPrompt]);
@@ -154,8 +138,7 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen }) => {
           bg={ocean_blue_600}
           w="1000px"
           maxW="1000px"
-          pl="16px"
-          pr="16px"
+          px="16px"
           pt="22px"
           userSelect="none"
         >
@@ -191,10 +174,9 @@ const FilterItemsSelectionDrawer: FC<Props> = ({ isOpen }) => {
                 <Box flex={1} h="40px" justifyContent="start" pt="18px">
                   <PanelHeader
                     selectedRightSideItem={selectedRightSideItem}
-                    setSearchKey={setSearchKey}
-                    searchKey={searchKey}
                     viewFilter={viewFilter}
                     title={getFromLocal('insightDrawerTitle')}
+                    width="full"
                   />
                 </Box>
               </HStack>

@@ -16,6 +16,7 @@ export interface RplParameterSummaryListI {
   daysOfCover: number;
   MOQ: number;
   supplyPackSize: number;
+  shelfLife: number;
 }
 
 export interface RplParameterSummaryResponseI {

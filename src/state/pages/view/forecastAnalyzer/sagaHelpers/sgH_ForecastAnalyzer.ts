@@ -1,62 +1,78 @@
-import { rightSidePanelFormatForRequest } from 'state/pages/advancedConfiguration/groupConfiguration/sagaHelpers/sgH_groupConfigurations';
 import { IDFView } from '../../demandForecastView/dfViewPageState';
-import { IGroupConfigurationSlice } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
 import { ForecastAnalyzerReqBodyI } from 'types/requests/view/forecastAnalyzer';
 import { PlannedActualResponseI } from 'types/responses/view/forecastAnalyzer';
-import { TableHeader } from 'types/responses/viewResponses';
+import { DemandForecastSkuListItem, TableHeader } from 'types/responses/viewResponses';
+import { RightFilterItemContentI } from 'types/groupConfig';
+import { FCAnalyzerTypeEnum } from 'utils/enum';
 
-export const prepareAggregatedFcAnalyzerRequestBody = (
-  dfState: IDFView,
-  groupConfigurationState: IGroupConfigurationSlice
+export const generateFilterForAggregateFC = (
+  selectedSkuList: DemandForecastSkuListItem[],
+  globalSkuSelected: boolean,
+  searchKey: string
+): RightFilterItemContentI[] => {
+  const filteredData = [
+    {
+      code: 1,
+      isSelectAll: globalSkuSelected || false,
+      search: '',
+      selectedItems: globalSkuSelected
+        ? []
+        : (selectedSkuList.map((i) => i.anchorProdKey.toString()) as string[]),
+      type: 'sku'
+    }
+  ];
+  return filteredData;
+};
+
+export const generateFilterForSingleFC = (
+  selectedSkuObj: DemandForecastSkuListItem | null,
+  searchKey: string
+): RightFilterItemContentI[] => {
+  const filteredData = [
+    {
+      code: 1,
+      isSelectAll: false,
+      search: '',
+      selectedItems: [selectedSkuObj?.anchorProdKey.toString()] as string[],
+      type: 'sku'
+    }
+  ];
+  return filteredData;
+};
+
+export const prepareFcAnalyzerCommonRequestBody = (
+  searchKey: string,
+  selectedSkuList: DemandForecastSkuListItem[],
+  selectedSkuObj: DemandForecastSkuListItem | null,
+  selectedGroupKey: string,
+  globalSkuSelected: boolean,
+  selectedAnalyzerType: FCAnalyzerTypeEnum
 ) => {
-  const groupFilter = groupConfigurationState.groupFilter;
-  const filters = rightSidePanelFormatForRequest(
-    groupFilter.filterLocalScope.rightPanelRetainDataList
+  const aggregateFilters = generateFilterForAggregateFC(
+    selectedSkuList,
+    globalSkuSelected,
+    searchKey
   );
-  const selectedSkuList = dfState.selectedSkuList;
-  const globalSkuSelected = dfState.dfViewLocalScope.globalSkuSelected;
-
-  const obj = {
-    anchorKeyList: [] as number[],
-    anchorProdKeyList: [] as number[],
-    anchorProdModelKeyList: [] as number[],
-    forecastKeyList: [] as number[]
-  };
-
-  selectedSkuList.forEach((sku) => {
-    obj.anchorKeyList.push(sku.anchorKey);
-    obj.anchorProdKeyList.push(sku.anchorProdKey);
-    obj.anchorProdModelKeyList.push(sku.anchorProdModelKey);
-    obj.forecastKeyList.push(sku.forecastKey!);
-  });
+  const singleFilters = generateFilterForSingleFC(selectedSkuObj, searchKey);
+  const formattedFilter =
+    selectedAnalyzerType === FCAnalyzerTypeEnum.AGGREGATED ? aggregateFilters : singleFilters;
 
   return {
-    anchorKey: globalSkuSelected ? null : obj.anchorKeyList,
-    anchorProdKey: globalSkuSelected ? null : obj.anchorProdKeyList,
-    anchorProdModelKey: globalSkuSelected ? null : obj.anchorProdModelKeyList,
-    forecastKey: globalSkuSelected ? null : obj.forecastKeyList,
-    filters: filters,
-    whFlag: 0
+    filters: formattedFilter,
+    groupKey: Number(selectedGroupKey!),
+    search: searchKey
   };
 };
 
-export const prepareIndividualFcAnalyzerRequestBody = (
+export const prepareFcAnalyzerRequestBody = (
   dfState: IDFView,
-  groupConfigurationState: IGroupConfigurationSlice
+  selectedGroupKey: string
 ): ForecastAnalyzerReqBodyI => {
-  const groupFilter = groupConfigurationState.groupFilter;
-  const filters = rightSidePanelFormatForRequest(
-    groupFilter.filterLocalScope.rightPanelRetainDataList
-  );
   const selectedSkuObj = dfState.selectedSku;
 
   return {
-    anchorKey: [selectedSkuObj?.anchorKey!],
-    anchorProdKey: [selectedSkuObj?.anchorProdKey!],
-    anchorProdModelKey: [selectedSkuObj?.anchorProdModelKey!],
-    forecastKey: [selectedSkuObj?.forecastKey!],
-    filters: filters,
-    whFlag: 0
+    anchorProdKey: selectedSkuObj?.anchorProdKey!,
+    groupKey: Number(selectedGroupKey!)
   };
 };
 
@@ -79,15 +95,15 @@ export const plannedActualListFormatter = (data: PlannedActualResponseI[]) => {
   if (data) {
     list.push({
       id: 0,
-      row: ['Planned Discounts', ...data.map((i) => `${i.plannedDiscount}%`)]
+      row: ['Planned Discounts', ...data.map((i) => `${i.plannedDiscount}`)]
     });
     list.push({
       id: 1,
-      row: ['Actual Discounts', ...data.map((i) => `${i.actualDiscount}%`)]
+      row: ['Actual Discounts', ...data.map((i) => `${i.actualDiscount}`)]
     });
     list.push({
       id: 2,
-      row: ['Out of Stock Days', ...data.map((i) => `${i.outOfStockDays}`)]
+      row: ['Days with insufficient stock', ...data.map((i) => `${i.outOfStockDays}`)]
     });
   }
 

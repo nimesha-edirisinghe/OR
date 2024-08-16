@@ -91,7 +91,6 @@ const PromotionSummaryViewPage: FC<Props> = () => {
     <>
       <FilterDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenFilterDrawer}
-        showWarning={false}
       />
       <FilterItemsSelectionDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenItemSelectionDrawer}

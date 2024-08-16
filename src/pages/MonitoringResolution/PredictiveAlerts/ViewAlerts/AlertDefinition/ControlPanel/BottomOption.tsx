@@ -2,7 +2,7 @@ import { Box, HStack, VStack, useDisclosure } from '@chakra-ui/react';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import AppText from 'components/newTheme/AppText/AppText';
-import { CSSProperties, FC } from 'react';
+import { CSSProperties, FC, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { blue_500, ocean_blue_200, ocean_blue_400, ocean_blue_600, yellow_500 } from 'theme/colors';
 import AppPopover from 'components/AppPopover/AppPopover';
@@ -10,10 +10,13 @@ import PopoverContent, { editedPopoverStyles } from './PopoverContent';
 import AppTooltip from 'components/AppTooltip/AppTooltip';
 import useTooltip from 'hooks/useTooltip';
 import {
+  alertForecastChartRequest,
   alertSliceSelector,
+  getPredictorsRequest,
   getTrainingSummaryDataRequest,
   resetSelectedSkuList,
   setGraphPanelEditable,
+  setSelectedSkuByIndexAction,
   toggleGraphPanel,
   toggleTrainingPanel
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
@@ -25,6 +28,7 @@ import {
   setSelectedAnalyzerType
 } from 'state/pages/view/forecastAnalyzer/forecastAnalyzerState';
 import { FCAnalyzerTypeEnum } from 'utils/enum';
+import usePrevious from 'hooks/usePrevious';
 
 const optionPopoverStyles: CSSProperties = {
   maxWidth: '180px',
@@ -70,20 +74,46 @@ const BottomOption: FC<BottomOptionProps> = () => {
   const [isForecastOpen, handleForecastMouseEnter, handleForecastMouseLeave] = useTooltip();
   const [isResolveOpen, handleResolveExpandMouseEnter, handleResolveExpandMouseLeave] =
     useTooltip();
-  const selectedSku = alertState.selectedSku ? [alertState.selectedSku] : [];
   const onTrainingSummaryHandler = () => {
     dispatch(getTrainingSummaryDataRequest());
     dispatch(toggleGraphPanel());
     dispatch(toggleTrainingPanel());
   };
   const navigate = useNavigate();
+  const alertSelectionOption = alertState.alertLocalScope.selectedOption;
 
-  const graphNavigator = useNavigator(selectedSku);
+  const selectedSku = alertState?.selectedSku!;
+  const selectedSkuList =
+    alertSelectionOption === 'multiple' ? alertState.selectedSkuList : [selectedSku];
+  const previousSelectedSkuList = usePrevious(selectedSkuList);
+  const graphNavigator = useNavigator(selectedSkuList);
   const isEdited = graphData?.some((item) => item.isEdited === 1) || false;
   const isDisabled = alertState.isGraphModalEditable;
+  const aggregateOption = alertState.aggregateOption;
+
+  const requestViewForecastChart = (currentStepIndex?: number) => {
+    dispatch(
+      setSelectedSkuByIndexAction(
+        currentStepIndex !== undefined ? currentStepIndex : graphNavigator.currentStepIndex
+      )
+    );
+    dispatch(alertForecastChartRequest({ chartType: aggregateOption.selectedAggregateOption! }));
+    dispatch(getPredictorsRequest());
+  };
+
+  useEffect(() => {
+    if (
+      selectedSkuList &&
+      previousSelectedSkuList &&
+      previousSelectedSkuList.length &&
+      selectedSkuList.length === previousSelectedSkuList.length
+    ) {
+      requestViewForecastChart();
+    }
+  }, [graphNavigator.currentStepIndex]);
 
   const onClickValidate = () => {
-    navigate('/app/demand-forecast/individual-forecast-analyzer');
+    navigate('/app/demand-forecast/individual-forecast-analyser');
     dispatch(resetSelectedSkuList());
     dispatch(toggleGraphPanel());
     dispatch(setOriginPage('alert'));
@@ -166,7 +196,7 @@ const BottomOption: FC<BottomOptionProps> = () => {
           </Box>
         </AppTooltip>
         <AppTooltip
-          label="Resolve"
+          label="Options"
           placement="bottom-start"
           isOpen={isResolveOpen}
           onClose={handleResolveExpandMouseLeave}
@@ -182,7 +212,7 @@ const BottomOption: FC<BottomOptionProps> = () => {
               trigger="click"
               children={
                 <AppIconButton
-                  aria-label="resolve"
+                  aria-label="options"
                   icon={
                     <AppIcon
                       transition="transform 0.25s ease"
@@ -211,31 +241,38 @@ const BottomOption: FC<BottomOptionProps> = () => {
                   boxShadow="0px 12px 20px 0px #001019"
                   overflow={'hidden'}
                 >
-                  {options.map((option: OptionI, index) => (
-                    <HStack
-                      key={index}
-                      h="36px"
-                      w="full"
-                      spacing="4px"
-                      cursor="pointer"
-                      _hover={{
-                        bg: ocean_blue_400
-                      }}
-                      px="12px"
-                      onClick={() => executeOption(option)}
-                    >
-                      <AppText
-                        fontSize="12px"
-                        size={'body3'}
-                        fontWeight={400}
-                        lineHeight="18px"
-                        color={ocean_blue_200}
-                        width={'100%'}
+                  {options.map((option: OptionI, index) => {
+                    if (
+                      !!!alertState.AlertType.alertTypeDisplayName?.length &&
+                      option.title === 'Ignore alert'
+                    )
+                      return null;
+                    return (
+                      <HStack
+                        key={index}
+                        h="36px"
+                        w="full"
+                        spacing="4px"
+                        cursor="pointer"
+                        _hover={{
+                          bg: ocean_blue_400
+                        }}
+                        px="12px"
+                        onClick={() => executeOption(option)}
                       >
-                        {option.title}
-                      </AppText>
-                    </HStack>
-                  ))}
+                        <AppText
+                          fontSize="12px"
+                          size={'body3'}
+                          fontWeight={400}
+                          lineHeight="18px"
+                          color={ocean_blue_200}
+                          width={'100%'}
+                        >
+                          {option.title}
+                        </AppText>
+                      </HStack>
+                    );
+                  })}
                 </VStack>
               }
               contentStyles={optionPopoverStyles}

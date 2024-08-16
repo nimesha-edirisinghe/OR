@@ -31,6 +31,7 @@ import { TableHeader } from 'types/responses/viewResponses';
 import { GroupLabelTypes } from 'types/requests/groupConfigRequests';
 import { produce } from 'immer';
 import { removeAllSelectedItems } from 'pages/MonitoringResolution/PredictiveAlerts/CreateAlerts/AlertCreationSteps/AnchorLocationFilter/FilterItemsSelectionDrawer/Helpers/addOrRemoveItemHelper';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 
 interface SkuSelectionPanelProps {
   maximized: boolean;
@@ -83,7 +84,6 @@ const SkuSelectionPanel: FC<SkuSelectionPanelProps> = ({
         dispatch(getDemandForecastDataRequest({ searchKey }));
       }
     }
-    removeAllSelectedItems(1, 'sku', groupFilter, dispatch);
   };
 
   const renderSimpleGrid = () => {
@@ -155,6 +155,7 @@ const SkuSelectionPanel: FC<SkuSelectionPanelProps> = ({
   useEffect(() => {
     if (shouldReloadData) {
       dispatch(resetViewForecastRightPanel());
+      dispatch(skuSearchAction(''));
     }
   }, [sharedGroupState.selectedGroupKey]);
 
@@ -191,22 +192,24 @@ const SkuSelectionPanel: FC<SkuSelectionPanelProps> = ({
             height="36px"
             onKeyDown={handleSearchFieldPress}
           />
-          <HStack spacing="0px">
-            <AppIconButton
-              aria-label="filter"
-              icon={<AppIcon transition="transform 0.25s ease" name="filter" fill={blue_500} />}
-              variant="secondary"
-              size="iconMedium"
-              onClick={() => onFilterClick()}
-              bg={ocean_blue_600}
-            />
-          </HStack>
+          <AppTooltip label={'Filter'} noOfLines={1} placement="bottom-start">
+            <HStack spacing="0px">
+              <AppIconButton
+                aria-label="filter"
+                icon={<AppIcon transition="transform 0.25s ease" name="filter" fill={blue_500} />}
+                variant="secondary"
+                size="iconMedium"
+                onClick={() => onFilterClick()}
+                bg={ocean_blue_600}
+              />
+            </HStack>
+          </AppTooltip>
         </HStack>
         <Box w="full" h={'calc(100vh - 230px)'}>
           {renderSimpleGrid()}
         </Box>
         <Box w="full" h="18px">
-          <SkuSelectionFooter totalItems={totalSkuCount!} currentPage={1} />
+          <SkuSelectionFooter totalItems={totalSkuCount!} currentPage={1} footerLabel="Forecasts" />
         </Box>
       </VStack>
     </Skeleton>

@@ -15,6 +15,12 @@ export const getJobGroupTypeByTab = (tab: JobScheduleTypes): JobGroupTypes => {
   }
 };
 
+const scheduleTypeMapping: any = {
+  Months: 'MONTHLY',
+  Weeks: 'WEEKLY',
+  Days: 'DAILY'
+};
+
 export const executionDetailsFormatter = (
   currentModule: 'fc' | 'repl',
   orgKey: number,
@@ -71,7 +77,7 @@ export const createJobSchedulingRequestFormatter = (
     previousEnableStatus: jobSchedulingConfig.previousEnableStatus,
     currentEnableStatus: currentEnableStatus,
     scheduleConfiguration: jobSchedulingConfig.scheduleConfiguration,
-    scheduleType: jobSchedulingConfig.scheduleType,
+    scheduleType: scheduleTypeMapping[jobSchedulingConfig.scheduleType!],
     startDate: Number(jobSchedulingConfig.startDate),
     additionalConfig: {
       etlValidation: jobSchedulingConfig.additionalConfig.etlValidation

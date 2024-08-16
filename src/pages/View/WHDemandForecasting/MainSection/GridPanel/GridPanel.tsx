@@ -17,7 +17,8 @@ const GridPanel: FC<Props> = ({ ...rest }) => {
     (DemandForecastChartTable['skuForecast'] | DemandForecastChartTable['compareForecast'])[]
   >([]);
   const isAnchorSelected =
-    dfViewState.selectedChartType !== 'sku' && dfViewState.selectedChartType !== 'aggregate';
+    dfViewState.aggregateOption.selectedAggregateOption !== 'sku' &&
+    dfViewState.aggregateOption.selectedAggregateOption !== 'aggregate';
 
   const formattedDataRow = rows
     .filter((arr) => arr.every((value) => value !== null))

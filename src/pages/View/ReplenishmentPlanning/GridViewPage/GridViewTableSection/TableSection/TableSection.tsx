@@ -36,10 +36,7 @@ const TableSection: FC<Props> = () => {
             Total ({rplViewState.rplSkuExpandedDataList?.totalCount} SKU-locations)
           </AppText>
         </td>
-        <td 
-          colSpan={2}
-          >
-          </td>
+        <td colSpan={2}></td>
         {rplPlanTotalCount?.map((c) => (
           <td key={c.key} style={{ backgroundColor: ocean_blue_400, height: '36px' }}>
             <AppText size="body2">
@@ -77,7 +74,7 @@ const TableSection: FC<Props> = () => {
   };
 
   return (
-    <Box w="full" h={'calc(100vh - 235px)'} >
+    <Box w="full" h={'calc(100vh - 235px)'}>
       {renderSimpleGrid()}
     </Box>
   );

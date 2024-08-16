@@ -32,7 +32,7 @@ const IndicatorCell: FC<Props> = ({ displayValue, showIndicator = true }) => {
         borderRadius="8px"
         boxShadow="0px 12px 20px 0px #001019"
         border={'1px solid'}
-        borderColor={ocean_blue_400} 
+        borderColor={ocean_blue_400}
       >
         <AppText size="body3" color={ocean_blue_100}>
           Data validation failed due to issues identified within the data. Download the provided
@@ -45,7 +45,7 @@ const IndicatorCell: FC<Props> = ({ displayValue, showIndicator = true }) => {
   return (
     <HStack justify="space-between">
       <Box w="fit-content" h="24px" px="8px" py="2px" bg={bgColor} mt="-1px" borderRadius="8px">
-        <AppText size="body2" noOfLines={1} color={textColor}>
+        <AppText size="body2" noOfLines={1} color={textColor} style={{ userSelect: 'text' }}>
           {value}
         </AppText>
       </Box>

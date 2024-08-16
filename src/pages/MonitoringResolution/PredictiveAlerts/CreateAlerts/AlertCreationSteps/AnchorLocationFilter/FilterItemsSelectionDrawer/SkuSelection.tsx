@@ -24,13 +24,13 @@ interface Props {}
 const SkuSelection: FC<Props> = () => {
   const dispatch = useDispatch();
   const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
+  const [selectedRightSideItem, setSelectedRightSideItem] = useState<RightFilterItemContentI>();
+  const [searchKey, setSearchKey] = useState<string>('');
   const groupFilter = groupConfigState.groupFilter;
   const filterType = groupFilter?.filterType!;
   const filterCode = groupFilter?.filterCode!;
   const filterItemListData = groupFilter?.filterItemListData;
   const rightPanelRetainDataList = groupFilter?.filterLocalScope.rightPanelRetainDataList;
-  const [selectedRightSideItem, setSelectedRightSideItem] = useState<RightFilterItemContentI>();
-  const [searchKey, setSearchKey] = useState<string>('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

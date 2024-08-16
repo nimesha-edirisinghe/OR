@@ -19,13 +19,15 @@ interface Props {
   responseTimeGranularity: ResponseTimeGranularity;
   configValue?: number;
   onConfigTypeChange: (value: ConfigType) => void;
+  isDisabled?: boolean;
 }
 
 const ConfigTypeSelection: FC<Props> = ({
   configType,
   configValue,
   responseTimeGranularity,
-  onConfigTypeChange
+  onConfigTypeChange,
+  isDisabled = false
 }) => {
   const { isOpen, onClose, onToggle } = useDisclosure();
   const [selectedConfigType, setSelectedConfigType] = useState<ConfigType | undefined>(configType);
@@ -74,6 +76,7 @@ const ConfigTypeSelection: FC<Props> = ({
           height="36px"
           handleItemClick={(value) => onItemSelect(value as ConfigType)}
           selectedItem={selectedConfigType || ''}
+          isDisabled={isDisabled}
         />
       </VStack>
     </HStack>

@@ -164,11 +164,11 @@ export const moreOptionItemList = [
   },
   {
     id: 2,
-    value: 'Adjust to Threshold',
+    value: 'Adjust to Threshold'
   },
   {
     id: 3,
-    value: 'Ignore alert',
+    value: 'Ignore alert'
   }
 ];
 export const storeReplBulkMoreOptionItemList: moreOptionItems[] = [
@@ -259,7 +259,7 @@ export const replenishmentParameterSummaryTableHeader: TableHeader[] = [
   { displayValue: 'Ways of Supply', key: 'wayOfSupply', w: 80, cellType: 'generalCell' },
   { displayValue: 'Warehouse', key: 'warehouse', w: 80, cellType: 'generalCell' },
   {
-    displayValue: 'Unit Buying Price ($)',
+    displayValue: 'Unit Buying Price',
     key: 'unitBuyingPrice',
     w: 100,
     cellType: 'generalCell'
@@ -294,7 +294,14 @@ export const replenishmentParameterSummaryTableHeader: TableHeader[] = [
     key: 'supplyPackSize',
     w: 100,
     cellType: 'generalCell'
+  },
+  {
+    displayValue: 'Shelf Life',
+    key: 'shelfLife',
+    w: 100,
+    cellType: 'generalCell'
   }
 ];
 
 export const PRODUCT_ACTIVATION_TABLE_PAGE_SIZE = 15;
+export const MAX_ALERT_DATA_COUNT = 1000;

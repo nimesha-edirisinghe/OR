@@ -57,14 +57,14 @@ const AlertTableHeader: FC<Props> = ({ alertTableHeaders, tableType }) => {
             </AlertHeaderCell>
           )}
           {Object.entries(alertTableHeaders).map((td, key) => (
-            <AlertHeaderCell key={key}>
+            <AlertHeaderCell key={key} flex={1}>
               <AppText size="h4Semibold" noOfLines={1} color={neutral_200}>
                 {td[1]}
               </AppText>
             </AlertHeaderCell>
           ))}
           {isOperationEnabled && (
-            <AlertHeaderCell key={'-2'} minW="45px">
+            <AlertHeaderCell key={'-2'} minW="40px">
               {''}
             </AlertHeaderCell>
           )}

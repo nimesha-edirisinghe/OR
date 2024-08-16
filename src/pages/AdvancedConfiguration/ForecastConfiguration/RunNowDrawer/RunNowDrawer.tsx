@@ -1,6 +1,5 @@
 import {
   Box,
-  Divider,
   Drawer,
   DrawerBody,
   DrawerCloseButton,
@@ -20,7 +19,8 @@ import {
   closeDrawer,
   executeRunNowRequest,
   fcConfigPageSliceSelector,
-  getEstimatedTimeRequest
+  getEstimatedTimeRequest,
+  setFcConfigCurrentPage
 } from 'state/pages/advancedConfiguration/forecastConfigurationPage/pageState';
 import { getGroupDetailsByRowId } from 'utils/utility';
 import { showWarningToast } from 'state/toast/toastState';
@@ -28,18 +28,15 @@ import { WARNING_MESSAGES } from 'constants/messages';
 import {
   ocean_blue_350,
   blue_500,
-  ocean_blue_100,
-  ocean_blue_200,
-  ocean_blue_50,
-  ocean_blue_700,
   neutral_100,
   ocean_blue_600,
   neutral_200,
-  ocean_blue_500
+  ocean_blue_500,
+  yellow_500
 } from 'theme/colors';
-import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
 import AppCheckbox from 'components/newTheme/AppCheckbox/AppCheckbox';
 import { AppIcon } from 'components/AppIcon/AppIcon';
+import AppPopup from 'components/newTheme/AppPopup/AppPopup';
 
 interface RunNowDrawerProps {
   isOpen: boolean;
@@ -73,6 +70,7 @@ const RunNowDrawer: FC<RunNowDrawerProps> = ({ isOpen }) => {
   const onSaveHandler = () => {
     dispatch(executeRunNowRequest(isSelectedTraining, isSelectedForecasting));
     onPromptClose();
+    onDrawerClose();
   };
   const getGroupDetails = () => {
     if (pageState.tableData) {
@@ -87,10 +85,10 @@ const RunNowDrawer: FC<RunNowDrawerProps> = ({ isOpen }) => {
     const sec = pageState.estimatedTime?.estimated_time_sec;
     const message = `${
       getGroupDetails()?.anchorCount
-    } anchors is estimated to take approximately ${hours} hours ${min} minutes and ${sec} seconds`;
+    } anchors is estimated to take approximately ${hours} hours ${min} minutes ${sec} seconds`;
 
     if (isSelectedTraining && isSelectedForecasting) {
-      return `Training and forecasting for ${message}`;
+      return `Forecasting & Training for ${message}`;
     } else if (isSelectedTraining) {
       return `Training for ${message}`;
     }
@@ -99,22 +97,18 @@ const RunNowDrawer: FC<RunNowDrawerProps> = ({ isOpen }) => {
 
   const runNowConfirmationPrompt = useCallback(() => {
     return (
-      <AppUserInputPrompt
+      <AppPopup
         isOpen={isPromptOpen}
         onClose={onPromptClose}
         leftBtnName="NO"
         rightBtnName="YES"
-        title="Confirmation"
-        onConfirmHandler={onSaveHandler}
-        onCloseHandler={onPromptClose}
-      >
-        <AppText fontSize="12px" fontWeight={400} mt={2} width="68%">
-          {generateConfirmationMessage()}
-        </AppText>
-        <AppText fontSize="12px" fontWeight={400}>
-          Are you sure you want to proceed?
-        </AppText>
-      </AppUserInputPrompt>
+        title="Are you sure?"
+        infoMessage={`${generateConfirmationMessage()}`}
+        onConfirmHandler={onPromptClose}
+        onCloseHandler={onSaveHandler}
+        confirmationMessage="Are you sure you want to proceed?"
+        icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
+      />
     );
   }, [isPromptOpen, dispatch, pageState.estimatedTime]);
 

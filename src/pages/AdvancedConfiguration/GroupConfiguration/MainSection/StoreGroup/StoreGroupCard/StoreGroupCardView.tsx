@@ -1,52 +1,78 @@
 import { Box, HStack, Tag, VStack, useDisclosure } from '@chakra-ui/react';
-import { AppIconChakra } from 'assets/svg/chakraIcons';
 import AppText from 'components/AppText/AppText';
-import { FC, useCallback, useState } from 'react';
+import { CSSProperties, FC, useCallback, useState } from 'react';
 import { StoreGroupI } from 'types/responses/groupConfigResponses';
-import StoreGroupCardEdit from './StoreGroupCardEdit/StoreGroupCardEdit';
 import { useDispatch } from 'react-redux';
 import {
-  cancelEditMode,
   deleteGroupRequest,
-  editGroupRequest,
   getFilterCountRequest,
   getLabelsRequest,
   groupDefinitionRequest,
   resetGroupFilter,
-  setActiveStatus,
+  resetStoreGroup,
   setSelectedStore,
+  toggleEditDrawer,
   toggleViewGroupConfigDrawer
 } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
 import { GroupTypes } from 'types/groupConfig';
 import AppPopover from 'components/AppPopover/AppPopover';
 import AppTooltip from 'components/AppTooltip/AppTooltip';
 import {
-  green_500,
-  neutral_200,
+  blue_500,
+  green_100_t20,
+  green_600,
   ocean_blue_400,
-  ocean_blue_50,
   ocean_blue_500,
-  red_500
+  ocean_blue_600,
+  red_400,
+  red_500_t28,
+  white,
+  yellow_500
 } from 'theme/colors';
-import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
+import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
+import { AppIcon } from 'components/AppIcon/AppIcon';
+import { AccessPermissionEnum, GroupTypesEnum, MenuItems } from 'utils/enum';
+import AppPopup from 'components/newTheme/AppPopup/AppPopup';
+import MoreOptionContent from './StoreGroupCardEdit/MoreOptionContent';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
 
 interface Props {
   storeGroup: StoreGroupI;
   groupType: GroupTypes;
 }
 
+const optionPopoverStyles: CSSProperties = {
+  maxWidth: '180px',
+  margin: 0,
+  borderRadius: '8px',
+  borderColor: ocean_blue_400,
+  marginTop: '-6.5px'
+};
+
 const StoreGroupCardView: FC<Props> = ({ storeGroup, groupType }) => {
+  const dispatch = useDispatch();
   const { isOpen, onToggle, onClose } = useDisclosure();
   const {
-    isOpen: ctxPopViewIsOpen,
-    onToggle: ctxPopViewOnToggle,
-    onClose: ctxPopViewOnClose
+    isOpen: IsMoreOptionOpen,
+    onToggle: onMoreOptionToggle,
+    onClose: OnMoreOptionClose
   } = useDisclosure();
   const [isEdit, setIsEdit] = useState(false);
-  const dispatch = useDispatch();
+
+  const accessType = useAccessType(MenuItems.GROUP_CONFIGURATION);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
+
+  const onCardHoverHandler = () => {
+    setIsEdit((prev) => !prev);
+    OnMoreOptionClose();
+  };
 
   const onEditHandler = () => {
-    setIsEdit((prev) => !prev);
+    const store =
+      groupType === GroupTypesEnum.STORE ? GroupTypesEnum.STORE : GroupTypesEnum.WAREHOUSE;
+    dispatch(setSelectedStore({ storeGroup: storeGroup, groupType: store }));
+    dispatch(toggleEditDrawer());
   };
 
   const onViewGroup = (activeStep: 0 | 1) => {
@@ -54,7 +80,7 @@ const StoreGroupCardView: FC<Props> = ({ storeGroup, groupType }) => {
       getLabelsRequest({ labelTypes: ['location', 'product', 'anchor', 'predictor', 'store'] })
     );
     dispatch(resetGroupFilter());
-    dispatch(setSelectedStore(storeGroup));
+    dispatch(setSelectedStore({ storeGroup: storeGroup, groupType: 'store' }));
     dispatch(getFilterCountRequest({ whFlag: 0 }));
     dispatch(toggleViewGroupConfigDrawer({ state: true, activeStep }));
     setTimeout(() => {
@@ -62,52 +88,24 @@ const StoreGroupCardView: FC<Props> = ({ storeGroup, groupType }) => {
     }, 1000);
   };
 
-  const onCancelEditHandler = (groupKey: number) => {
-    setIsEdit(false);
-    dispatch(
-      cancelEditMode({
-        groupKey,
-        groupType
-      })
-    );
-  };
-
-  const onChangeHandler = (groupKey: number) => {
-    dispatch(setActiveStatus({ groupType, groupKey }));
-  };
-
   const onDeleteHandler = (groupKey: number) => {
+    if (groupType === GroupTypesEnum.STORE) dispatch(resetStoreGroup());
     dispatch(deleteGroupRequest({ groupKey, groupType }));
     onClose();
   };
 
-  const onSaveHandler = (groupKey: number, forecastHorizon: number, groupName: string) => {
-    dispatch(editGroupRequest({ groupKey, forecastHorizon, groupName, groupType }));
-    setIsEdit(false);
-  };
-
   const deleteConfirmationPrompt = useCallback(() => {
-    const renderBody = () => {
-      return (
-        <>
-          <AppText size="usm">{`You are about to delete Group ${storeGroup.groupDesc} permanently.`}</AppText>
-          <AppText size="usm" mt={2}>
-            Are you sure you want to continue?
-          </AppText>
-        </>
-      );
-    };
-
     return (
-      <AppUserInputPrompt
+      <AppPopup
         isOpen={isOpen}
         onClose={onClose}
-        leftBtnName="NO"
-        rightBtnName="YES"
-        title="Delete Group"
-        onConfirmHandler={() => onDeleteHandler(storeGroup.groupKey)}
-        onCloseHandler={onClose}
-        children={renderBody()}
+        leftBtnName="Cancel"
+        rightBtnName="Delete"
+        title="Delete Changes"
+        infoMessage={`Are you sure you with to delete this group? (This action is not reversible)`}
+        onConfirmHandler={onClose}
+        onCloseHandler={() => onDeleteHandler(storeGroup.groupKey)}
+        icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
       />
     );
   }, [isOpen]);
@@ -121,182 +119,156 @@ const StoreGroupCardView: FC<Props> = ({ storeGroup, groupType }) => {
     }
   };
 
+  const onClickDelete = () => {
+    onToggle();
+  };
+
+  const onClickStoreOption = (option: number) => {
+    if (option === 0) onViewGroup(0);
+    else if (option === 1) onViewGroup(1);
+    else if (option === 2) onEditHandler();
+    else onClickDelete();
+  };
+
+  const onClickWarehouseOption = (option: number) => {
+    if (option === 0) onEditHandler();
+    else onClickDelete();
+  };
+
+  const onResolveMoreOption =
+    groupType === GroupTypesEnum.STORE ? onClickStoreOption : onClickWarehouseOption;
+
   return (
     <>
       {deleteConfirmationPrompt()}
-      <Box w="350px">
-        {!isEdit ? (
-          <VStack
-            bg={ocean_blue_500}
-            w="full"
-            justify="space-between"
-            h="210px"
-            maxW="350px"
-            px="20px"
-            py="20px"
-            alignContent="center"
-            borderRadius="7px"
-          >
-            <VStack w="full" align="start">
-              <HStack justify="space-between" w="full">
-                <AppText
-                  fontSize="16px"
-                  fontWeight={600}
-                  lineHeight="24px"
-                  color={neutral_200}
-                  noOfLines={1}
+      <Box
+        minW="350px"
+        flex={1}
+        onMouseEnter={onCardHoverHandler}
+        onMouseLeave={onCardHoverHandler}
+      >
+        <VStack
+          bg={ocean_blue_500}
+          w="full"
+          h="210px"
+          px="14px"
+          py="14px"
+          borderRadius="8px"
+          gap={'8px'}
+        >
+          <HStack justify="space-between" w="full">
+            <AppText
+              w="full"
+              fontSize="16px"
+              fontWeight={600}
+              lineHeight="24px"
+              color={white}
+              noOfLines={1}
+            >
+              {storeGroup.groupDesc.length > 12 ? (
+                <AppTooltip
+                  label={`${storeGroup.groupKey} - ${storeGroup.groupDesc}`}
+                  placement="auto-start"
                 >
-                  {storeGroup.groupDesc.length > 12 ? (
-                    <AppTooltip
-                      label={`${storeGroup.groupKey} - ${storeGroup.groupDesc}`}
-                      placement="auto-start"
-                    >
-                      <span>{`${storeGroup.groupKey} - ${formatText(storeGroup.groupDesc)}`}</span>
-                    </AppTooltip>
-                  ) : (
-                    <span>{`${storeGroup.groupKey} - ${storeGroup.groupDesc}`}</span>
-                  )}
-                </AppText>
-                <HStack justify="end">
-                  {!!storeGroup.currentEnabledStatus ? (
-                    <Tag bg={ocean_blue_400}>
-                      <AppText
-                        fontSize="12px"
-                        fontWeight={400}
-                        color={green_500}
-                        letterSpacing={0.5}
-                      >
-                        ACTIVE
-                      </AppText>
-                    </Tag>
-                  ) : (
-                    <Tag bg={ocean_blue_400}>
-                      <AppText fontSize="12px" fontWeight={400} color={red_500} letterSpacing={0.5}>
-                        IN ACTIVE
-                      </AppText>
-                    </Tag>
-                  )}
+                  <span>{`${storeGroup.groupKey} - ${formatText(storeGroup.groupDesc)}`}</span>
+                </AppTooltip>
+              ) : (
+                <span>{`${storeGroup.groupKey} - ${storeGroup.groupDesc}`}</span>
+              )}
+            </AppText>
+            <HStack justify="end">
+              {!!storeGroup.currentEnabledStatus ? (
+                <Tag bg={green_100_t20}>
+                  <AppText size={'body2'} fontWeight={400} color={green_600}>
+                    Active
+                  </AppText>
+                </Tag>
+              ) : (
+                <Tag bg={red_500_t28}>
+                  <AppText fontSize="body2" fontWeight={400} color={red_400}>
+                    Inactive
+                  </AppText>
+                </Tag>
+              )}
+            </HStack>
+          </HStack>
+          <HStack w={'full'} spacing={'75px'}>
+            <VStack w={'50%'} align="start">
+              <AppText size="body3" fontWeight={400} color={'#57809A'} mt={'2px !important'}>
+                Anchor-locations
+              </AppText>
+              <AppText size="body2" fontWeight={400} color={white} mt={'2px !important'}>
+                {storeGroup.anchorCount}
+              </AppText>
+            </VStack>
 
-                  {groupType === 'store' && (
+            <VStack w={'50%'} align="start">
+              <AppText size="body3" fontWeight={400} color={'#57809A'} mt={'2px !important'}>
+                SKU-locations
+              </AppText>
+              <AppText size="body2" fontWeight={400} color={white} mt={'2px !important'}>
+                {storeGroup.skuCount}
+              </AppText>
+            </VStack>
+          </HStack>
+          <VStack w="full" align="start">
+            <VStack align="start">
+              <AppText size="body3" fontWeight={400} color={'#57809A'} mt={'2px !important'}>
+                Forecasting Freq
+              </AppText>
+              <AppText size="body2" fontWeight={400} color={white} mt={'2px !important'}>
+                {storeGroup.forecastingFrequency}
+              </AppText>
+            </VStack>
+            <HStack justify="space-between" w="full">
+              <HStack justify={'space-between'} w="full">
+                <HStack>
+                  <VStack align="start">
+                    <AppText size="body3" fontWeight={400} color={'#57809A'} mt={'2px !important'}>
+                      Horizon
+                    </AppText>
+                    <AppText size="body2" fontWeight={400} color={white} mt={'2px !important'}>
+                      {storeGroup.forecastingHorizon}
+                    </AppText>
+                  </VStack>
+                </HStack>
+                {isEdit && (
+                  <HStack>
                     <AppPopover
-                      isOpen={ctxPopViewIsOpen}
-                      onClose={ctxPopViewOnClose}
+                      isOpen={IsMoreOptionOpen}
+                      onClose={OnMoreOptionClose}
                       trigger="click"
                       children={
-                        <AppIconChakra
-                          name="vSpread"
-                          fill={ocean_blue_50}
-                          onClick={ctxPopViewOnToggle}
-                          fontSize="20px"
+                        <AppIconButton
+                          aria-label="resolve"
+                          icon={
+                            <AppIcon
+                              transition="transform 0.25s ease"
+                              name={'ellipsis'}
+                              fill={blue_500}
+                            />
+                          }
+                          variant="secondary"
+                          size="iconMedium"
+                          onClick={onMoreOptionToggle}
+                          bg={ocean_blue_600}
+                          isDisabled={accessNotAllowed}
                         />
                       }
                       content={
-                        <VStack
-                          bg={ocean_blue_500}
-                          borderRadius="6px"
-                          p="5px"
-                          boxShadow="0px 12px 20px 0px #001019"
-                        >
-                          <AppText
-                            fontSize="13px"
-                            fontWeight={400}
-                            lineHeight="22px"
-                            color={ocean_blue_50}
-                            cursor="pointer"
-                            onClick={() => onViewGroup(0)}
-                            width={'100%'}
-                          >
-                            Anchor Locations
-                          </AppText>
-                          <AppText
-                            fontSize="13px"
-                            fontWeight={400}
-                            lineHeight="22px"
-                            color={ocean_blue_50}
-                            cursor="pointer"
-                            onClick={() => onViewGroup(1)}
-                            width={'100%'}
-                          >
-                            Influencing Factors
-                          </AppText>
-                          <AppText
-                            fontSize="13px"
-                            fontWeight={400}
-                            lineHeight="22px"
-                            color={ocean_blue_50}
-                            cursor="pointer"
-                            onClick={onEditHandler}
-                            width={'100%'}
-                          >
-                            Edit
-                          </AppText>
-                          <AppText
-                            fontSize="13px"
-                            fontWeight={400}
-                            lineHeight="22px"
-                            color={ocean_blue_50}
-                            cursor="pointer"
-                            onClick={onToggle}
-                            width={'100%'}
-                          >
-                            Delete
-                          </AppText>
-                        </VStack>
+                        <MoreOptionContent
+                          onResolveMoreOption={onResolveMoreOption}
+                          groupType={groupType}
+                        />
                       }
-                      contentStyles={{ width: 200 }}
+                      contentStyles={optionPopoverStyles}
                     />
-                  )}
-                </HStack>
+                  </HStack>
+                )}
               </HStack>
-              <HStack>
-                <AppText fontSize="14px" fontWeight={400} lineHeight="22px" color={ocean_blue_50}>
-                  Anchor-locations :
-                </AppText>
-                <AppText fontSize="14px" fontWeight={400} lineHeight="22px" color={neutral_200}>
-                  {storeGroup.anchorCount}
-                </AppText>
-              </HStack>
-              <HStack>
-                <AppText fontSize="14px" fontWeight={400} lineHeight="22px" color={ocean_blue_50}>
-                  SKU-locations :
-                </AppText>
-                <AppText fontSize="14px" fontWeight={400} lineHeight="22px" color={neutral_200}>
-                  {storeGroup.skuCount}
-                </AppText>
-              </HStack>
-            </VStack>
-            <VStack w="full" align="start">
-              <HStack>
-                <AppText fontSize="14px" fontWeight={400} lineHeight="22px" color={ocean_blue_50}>
-                  Forecasting Freq :
-                </AppText>
-                <AppText fontSize="14px" fontWeight={400} lineHeight="22px" color={neutral_200}>
-                  {storeGroup.forecastingFrequency}
-                </AppText>
-              </HStack>
-              <HStack justify="space-between" w="full">
-                <HStack>
-                  <AppText fontSize="14px" fontWeight={400} lineHeight="22px" color={ocean_blue_50}>
-                    Horizon :
-                  </AppText>
-                  <AppText fontSize="14px" fontWeight={400} lineHeight="22px" color={neutral_200}>
-                    {storeGroup.forecastingHorizon}
-                  </AppText>
-                </HStack>
-              </HStack>
-            </VStack>
+            </HStack>
           </VStack>
-        ) : (
-          <StoreGroupCardEdit
-            onCloseHandler={onCancelEditHandler}
-            activeStatus={!!storeGroup.currentEnabledStatus}
-            groupKey={storeGroup.groupKey}
-            onChangeHandler={onChangeHandler}
-            storeGroup={storeGroup}
-            onSaveHandler={onSaveHandler}
-            groupType={groupType}
-          />
-        )}
+        </VStack>
       </Box>
     </>
   );

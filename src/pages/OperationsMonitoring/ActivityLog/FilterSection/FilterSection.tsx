@@ -73,7 +73,7 @@ const FilterSection: FC<FilterSectionProps> = () => {
   return (
     <>
       {sortedFilteredItemList.length > 0 && (
-        <HStack userSelect="none" >
+        <HStack userSelect="none">
           <AppText size="body2" color={ocean_blue_100} transition="all 0.2s ease">
             Filters :
           </AppText>

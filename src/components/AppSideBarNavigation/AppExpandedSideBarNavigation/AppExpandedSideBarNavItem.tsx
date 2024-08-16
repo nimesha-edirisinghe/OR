@@ -16,6 +16,7 @@ import AppText from 'components/newTheme/AppText/AppText';
 import { ocean_blue_100 } from 'theme/colors';
 import { useNavigate } from 'react-router-dom';
 import AppTooltip from 'components/AppTooltip/AppTooltip';
+import { storeInLocal } from 'utils/localStorage';
 
 interface Props extends BoxProps {
   leftMenu: LeftMenu;
@@ -39,6 +40,7 @@ const AppExpandedSideBarNavItem: FC<Props> = ({
   const activeMenuItem = leftMenuState.activeMenuItem;
   const activeSubMenuItem = leftMenuState.activeSubMenuItem;
   const [isSubMenuActive, setIsSubmenuActive] = useState<boolean>(false);
+  const isClickedMenu = activeMenuItem ? activeMenuItem === displayName : isSubMenuActive;
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -61,7 +63,9 @@ const AppExpandedSideBarNavItem: FC<Props> = ({
     if (menuItem.subMenu) {
       dispatch(setActiveMenuItem({ menuItem: menuName }));
     } else {
+      dispatch(setActiveMenuItem({ menuItem: menuName }));
       dispatch(setActiveSubMenuItem({ subMenuItem: menuItem.path! }));
+      storeInLocal('activeSubMenuItem', menuItem.path!);
       menuItem.path && navigate(menuItem.path);
     }
   };
@@ -79,7 +83,7 @@ const AppExpandedSideBarNavItem: FC<Props> = ({
         color: neutral_300
       }}
       pr={activeMenuItem ? 'auto' : '12px'}
-      bg={isSubMenuActive ? ocean_blue_500 : ''}
+      bg={isClickedMenu ? ocean_blue_500 : ''}
       transition=".6s"
       onClick={onMenuItemClick}
       {...rest}
@@ -105,11 +109,18 @@ const AppExpandedSideBarNavItem: FC<Props> = ({
             transition=".6s"
             style={{ wordBreak: 'break-all' }}
           >
-            {menuItem.displayName?.length>27? 
-             <AppTooltip label={menuItem.displayName} noOfLines={1} placement="bottom-end" zIndex={1}>
-                {menuItem.displayName?.substring(0,26)+"..."}
-              </AppTooltip> 
-               :menuItem.displayName}
+            {menuItem.displayName?.length > 27 ? (
+              <AppTooltip
+                label={menuItem.displayName}
+                noOfLines={1}
+                placement="bottom-end"
+                zIndex={1}
+              >
+                {menuItem.displayName?.substring(0, 26) + '...'}
+              </AppTooltip>
+            ) : (
+              menuItem.displayName
+            )}
           </AppText>
         </HStack>
       )}

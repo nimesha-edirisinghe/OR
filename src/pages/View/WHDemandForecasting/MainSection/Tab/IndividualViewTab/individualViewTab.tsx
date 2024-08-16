@@ -10,25 +10,28 @@ import { useDispatch, useSelector } from 'react-redux';
 import AppText from 'components/newTheme/AppText/AppText';
 import { neutral_500, ocean_blue_500, ocean_blue_600 } from 'theme/colors';
 import { scrollbarYStyles } from 'theme/styles';
-import useNavigator from 'hooks/useNavigator';
+import { Navigator } from 'hooks/useNavigator';
 import MaximizedGraphPanel from '../../MaximizedGraphPanel/MaximizedGraphPanel';
 import ChartPanel from '../../ChartPanel/ChartPanel';
 import GridPanel from '../../GridPanel/GridPanel';
 import ForecastChartNavigator from 'pages/View/DemandForecastChart/ForecastChartNavigator';
 import ControlPanel from '../../ControlPanel/ControlPanel';
+import { DemandForecastSkuListItem } from 'types/responses/viewResponses';
 
 interface IndividualViewTabProps {
   skuMaximized: boolean;
+  graphNavigator: Navigator<DemandForecastSkuListItem>;
 }
 
-const IndividualViewTab: FC<IndividualViewTabProps> = () => {
+const IndividualViewTab: FC<IndividualViewTabProps> = ({ graphNavigator }) => {
   const [graphMaximized, setGraphMaximized] = useState<boolean>(false);
   const [scroll, setScroll] = useState<string>('hidden');
   const dfViewState: IWhDFView = useSelector(whDfViewSliceSelector);
   const selectedSkuList = dfViewState.selectedSkuList;
   const dispatch = useDispatch();
-  const graphNavigator = useNavigator(selectedSkuList);
   const previousSelectedSkuList = usePrevious(selectedSkuList);
+  const isAllSkuSelected = dfViewState.dfViewLocalScope.globalSkuSelected;
+  const totalSkuCount = dfViewState.skuListData?.totalCount;
 
   const onMaxMinHandler = () => {
     setGraphMaximized((prev) => !prev);
@@ -64,7 +67,11 @@ const IndividualViewTab: FC<IndividualViewTabProps> = () => {
       <ControlPanel isGraphPanelOpen={false} onMaxMinHandler={onMaxMinHandler} />
       {dfViewState.selectedSkuList.length > 0 && (
         <HStack w="full" bg={ocean_blue_500} minH={'52px'} p={'12px'} borderTopRadius="8px">
-          <ForecastChartNavigator graphNavigator={graphNavigator} />
+          <ForecastChartNavigator
+            graphNavigator={graphNavigator}
+            isAllSkuSelected={isAllSkuSelected}
+            totalSkuCount={totalSkuCount!}
+          />
           <Box h="28px" w="1px" bg={'rgba(26, 52, 69, 1)'}></Box>
           <AppText size="h4Semibold">
             {`${dfViewState.selectedSku?.sku} | ${dfViewState.selectedSku?.store}`}

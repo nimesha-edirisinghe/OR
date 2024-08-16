@@ -12,7 +12,6 @@ import {
   VStack
 } from '@chakra-ui/react';
 import { neutral_500, ocean_blue_500, ocean_blue_600, red_500 } from 'theme/colors';
-
 import AppText from 'components/newTheme/AppText/AppText';
 import ControlPanel from './ControlPanel/ControlPanel';
 import ChartPanel from './ChartPanel/ChartPanel';
@@ -27,7 +26,7 @@ const ViewAndEditForecast: FC<Props> = ({}) => {
   const alertType = alertState.AlertType;
 
   return (
-    <Modal onClose={() => {}} size={'full'} isOpen={isGraphModalOpen}>
+    <Modal onClose={() => {}} size="full" isOpen={isGraphModalOpen}>
       <ModalOverlay />
       <ModalContent bg="rgba(0, 0, 0, 0.60)" p="20px" w="full" h="full">
         <Box bg={ocean_blue_600} h="full" borderRadius="8px">
@@ -43,7 +42,7 @@ const ViewAndEditForecast: FC<Props> = ({}) => {
               {alertState.selectedSku && <ControlPanel />}
               {alertState.selectedSku && alertState.selectedSku?.forecastKey && (
                 <Skeleton isLoaded={alertState.loading.graphDataLoading} w="full">
-                  <Box h={'calc(100vh - 175px)'} minW="full">
+                  <Box h="calc(100vh - 175px)" minW="full">
                     <VStack
                       w="full"
                       spacing="10px"
@@ -55,9 +54,9 @@ const ViewAndEditForecast: FC<Props> = ({}) => {
                     >
                       {alertState?.graphData.length !== 0 ? (
                         <>
-                          <HStack w="full" h={'26px'} justify={'start'}>
+                          <HStack w="full" h="26px" justify="start">
                             {alertType.alertTypeDisplayName?.map((item) => (
-                              <HStack bg={'#F4312A1A'} borderRadius={'28px'} px={'12px'} py={'4px'}>
+                              <HStack bg={'#F4312A1A'} borderRadius="28px" px="12px" py="4px">
                                 <AppText
                                   size={'body3'}
                                   fontWeight={400}

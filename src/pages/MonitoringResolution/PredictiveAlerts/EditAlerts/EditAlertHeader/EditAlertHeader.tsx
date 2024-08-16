@@ -25,8 +25,9 @@ import { showErrorToast } from 'state/toast/toastState';
 import AppPopup from 'components/newTheme/AppPopup/AppPopup';
 import { ERROR_MESSAGES } from 'constants/messages';
 import { getSelectedAnchorCount } from 'state/pages/advancedConfiguration/groupConfiguration/stateHelpers/stH_groupConfigurations';
+import { updateRightPanelRetainDataList } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
 
-interface Props { }
+interface Props {}
 
 const EditAlertHeader: FC<Props> = () => {
   const navigate = useNavigate();
@@ -35,6 +36,9 @@ const EditAlertHeader: FC<Props> = () => {
   const groupConfigurationState: IGroupConfigurationSlice = useSelector(
     groupConfigurationSliceSelector
   );
+  const rightPanelRetainPrevDataList =
+    groupConfigurationState.groupFilter.filterLocalScope.beforeEditFilterOptionsLevel1;
+
   const defaultAlertTypes = alertState.defaultAlertTypes;
   const {
     isOpen: isOpenCancelPrompt,
@@ -48,7 +52,7 @@ const EditAlertHeader: FC<Props> = () => {
   };
 
   const onEditPageSave = () => {
-    const skuLocationCount  = getSelectedAnchorCount(groupConfigurationState.groupFilter, 'sku', 1);
+    const skuLocationCount = getSelectedAnchorCount(groupConfigurationState.groupFilter, 'sku', 1);
     if (!skuLocationCount) {
       showErrorToast(ERROR_MESSAGES.SKU_LOCATION_SELECTION_REQUIRED);
       return;
@@ -74,6 +78,8 @@ const EditAlertHeader: FC<Props> = () => {
     } else {
       dispatch(setAlertDefinitionSearchKey(''));
       dispatch(setAlertDefinitionPaginationPageNo(1));
+      dispatch(updateRightPanelRetainDataList(rightPanelRetainPrevDataList || []));
+
       backNavigation();
     }
   };
@@ -127,9 +133,9 @@ const EditAlertHeader: FC<Props> = () => {
           />
         </HStack>
         <HStack spacing="12px">
-            <AppButton variant="secondary" size="medium" onClick={onCancelEdit} px="14px">
-              Cancel
-            </AppButton>
+          <AppButton variant="secondary" size="medium" onClick={onCancelEdit} px="14px">
+            Restore
+          </AppButton>
           <AppButton variant="primary" size="medium" onClick={onEditPageSave} px="14px">
             Save Changes
           </AppButton>

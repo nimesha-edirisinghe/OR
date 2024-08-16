@@ -8,7 +8,9 @@ import {
   getPredictorsRequest,
   updateSkuListSelectedStatus,
   setSelectedSkuAction,
-  setAggregateOption
+  setAggregateOption,
+  getAlertTypeRequest,
+  updateTabType
 } from 'state/pages/view/demandForecastView/dfViewPageState';
 import { useDispatch, useSelector } from 'react-redux';
 import { layoutSliceSelector } from 'state/layout/layoutState';
@@ -22,12 +24,9 @@ import ForecastingHeader from '../ForecastingHeader/ForecastingHeader';
 import { ForecastType } from 'utils/enum';
 import {
   IGroupConfigurationSlice,
-  groupConfigurationSliceSelector,
-  updateGroupFilter
+  groupConfigurationSliceSelector
 } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
-import { addOrRemoveItemHelper } from 'pages/MonitoringResolution/PredictiveAlerts/CreateAlerts/AlertCreationSteps/AnchorLocationFilter/FilterItemsSelectionDrawer/Helpers/addOrRemoveItemHelper';
 import { KeyValueI } from 'types/responses/insightResponses';
-import { produce } from 'immer';
 
 interface MainSectionProps {
   skuMaximized: boolean;
@@ -52,6 +51,7 @@ const MainSection: FC<MainSectionProps> = ({
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
   const groupFilter = groupConfigState.groupFilter;
+  const isAggregated = dfViewState.aggregateOption.selectedAggregateOption === 'aggregate';
 
   const skuSelectorWidth = useCallback(() => {
     if (skuMaximized) return 'full';
@@ -61,13 +61,16 @@ const MainSection: FC<MainSectionProps> = ({
   }, [leftMenuOpen, skuMaximized]);
 
   const requestViewForecastChart = (currentStepIndex?: number) => {
+    const graphNav = graphNavigator.currentStepIndex < 0 ? 0 : graphNavigator.currentStepIndex;
+    dispatch(setSelectedSkuAction(currentStepIndex !== undefined ? currentStepIndex : graphNav));
     dispatch(
-      setSelectedSkuAction(
-        currentStepIndex !== undefined ? currentStepIndex : graphNavigator.currentStepIndex
-      )
+      demandForecastChartRequest({ chartType: dfViewState.aggregateOption.selectedAggregateOption })
     );
-    dispatch(demandForecastChartRequest({ chartType: dfViewState.selectedChartType }));
-    dispatch(getPredictorsRequest());
+
+    if (!isAggregated) {
+      dispatch(getAlertTypeRequest());
+      dispatch(getPredictorsRequest());
+    }
   };
 
   useEffect(() => {
@@ -81,7 +84,22 @@ const MainSection: FC<MainSectionProps> = ({
     }
   }, [graphNavigator.currentStepIndex]);
 
+  useEffect(() => {
+    const tabName = selectedTab === ForecastType.INDIVIDUAL ? 'sku' : 'aggregate';
+    if (selectedTab === ForecastType.INDIVIDUAL && selectedSkuList.length > 0) {
+      dispatch(getAlertTypeRequest());
+      dispatch(getPredictorsRequest());
+    }
+    dispatch(
+      setAggregateOption({
+        type: '',
+        item: tabName
+      })
+    );
+  }, [selectedTab]);
+
   const onChangeAllHandler = (isSelected: boolean, id: number) => {
+    graphNavigator.resetNavigator();
     dispatch(
       updateSkuListSelectedStatus({
         id: 1,
@@ -95,34 +113,6 @@ const MainSection: FC<MainSectionProps> = ({
       })
     );
     !isSelectedAll && requestViewForecastChart();
-    updateFilter();
-  };
-
-  const updateFilter = () => {
-    const skuProdKeys: KeyValueI[] =
-      tableDataList?.map((item) => {
-        return { key: item.anchorProdKey.toString(), value: '' };
-      }) || [];
-
-    const _groupFilter = produce(groupFilter, (draft) => {
-      const filteredItem = draft.filterLocalScope.rightPanelRetainDataList.find(
-        (item) => item.code === 1 && item.type === 'sku'
-      );
-      if (filteredItem) {
-        filteredItem.selectedItems = isSelectedAll ? [] : skuProdKeys;
-      } else {
-        const ft = {
-          code: 1,
-          isSelectAll: false,
-          search: null,
-          selectedItems: skuProdKeys,
-          outOfCount: 0,
-          type: 'sku'
-        };
-        draft.filterLocalScope.rightPanelRetainDataList.push(ft);
-      }
-    });
-    dispatch(updateGroupFilter(_groupFilter));
   };
 
   const updateSelectedListAndSkuStates = (
@@ -147,19 +137,23 @@ const MainSection: FC<MainSectionProps> = ({
         updateSelectedListAndSkuStates(isSelected, id, _selectedSku);
         graphNavigator.setCurrentStepIndex(selectedSkuList.length);
         requestViewForecastChart(selectedSkuList.length);
-        addOrRemoveItemHelper(1, 'sku', true, item, groupFilter, dispatch);
       } else {
         const idx = selectedSkuList.findIndex(
           (skuListItem) => skuListItem.anchorProdKey === _selectedSku?.anchorProdKey
         );
         graphNavigator.removeStep(idx);
-        if (id === selectedSkuForChart?.anchorProdKey && selectedSkuList.length > 1) {
+        if (isAggregated) {
+          graphNavigator.setCurrentStepIndex(selectedSkuList.length - 2);
           updateSelectedListAndSkuStates(isSelected, id, _selectedSku);
-          requestViewForecastChart(idx === 0 ? 0 : idx - 1);
+          requestViewForecastChart(selectedSkuList.length - 2);
         } else {
-          updateSelectedListAndSkuStates(isSelected, id, _selectedSku);
+          if (id === selectedSkuForChart?.anchorProdKey && selectedSkuList.length > 1) {
+            updateSelectedListAndSkuStates(isSelected, id, _selectedSku);
+            requestViewForecastChart(idx === 0 ? 0 : idx - 1);
+          } else {
+            updateSelectedListAndSkuStates(isSelected, id, _selectedSku);
+          }
         }
-        addOrRemoveItemHelper(1, 'sku', false, item, groupFilter, dispatch);
       }
     } catch (e) {
       console.log('Sku list update error ', e);
@@ -167,14 +161,8 @@ const MainSection: FC<MainSectionProps> = ({
   };
 
   const onSelectTabHandler = (index: number) => {
-    const tabName = index === ForecastType.INDIVIDUAL ? 'sku' : 'aggregate';
     setSelectedTab(index);
-    dispatch(
-      setAggregateOption({
-        type: '',
-        item: tabName
-      })
-    );
+    dispatch(updateTabType(index));
   };
 
   return (
@@ -197,7 +185,12 @@ const MainSection: FC<MainSectionProps> = ({
               tabs={[
                 {
                   label: 'Individual',
-                  content: <IndividualViewTab skuMaximized={skuMaximized} />
+                  content: (
+                    <IndividualViewTab
+                      skuMaximized={skuMaximized}
+                      graphNavigator={graphNavigator}
+                    />
+                  )
                 },
                 { label: 'Aggregate', content: <AggregateViewTab skuMaximized={skuMaximized} /> }
               ]}

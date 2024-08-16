@@ -3,13 +3,19 @@ import { TableHeader } from '../viewResponses';
 
 export interface AccuracyDataI {
   heading: string;
-  value: string;
+  values: string;
 }
 
-export interface AccuracyResponseI {
+export interface AccuracyI {
   overallAccuracy: AccuracyDataI;
   averageAccuracy: AccuracyDataI;
   averageDeviation: AccuracyDataI;
+}
+
+export interface AccuracyResponseI {
+  accuracy: AccuracyI;
+  accuracyDistribution: AccuracyDistributionResponseI;
+  exclusionCriteria: ExclusionCriteriaResponseI;
 }
 
 export interface IndividualGraphResponseI {
@@ -28,9 +34,11 @@ export interface AggregatedGraphResponseI {
 }
 
 export interface ExclusionCriteriaResponseI {
-  name: string;
-  alerted: boolean;
-  value: number | null;
+  peaksAndDrops: number;
+  zeroSales: number;
+  outOfStock: number;
+  discountDiff: number;
+  newProduct: number;
 }
 
 export interface PlannedActualResponseI {

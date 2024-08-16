@@ -1,3 +1,5 @@
+import { GroupFilterI } from 'types/requests/groupConfigRequests';
+import { GetAlertList } from 'types/responses/alertConfigResponse';
 import {
   ReplenishmentPlanDetailsResI,
   ReplenishmentPlanDetailsStateI,
@@ -15,7 +17,8 @@ export interface PlanTableHeader {
 
 export const orderQtyTblHeader: PlanTableHeader[] = [
   { displayValue: 'Order Date', key: 'order_date', w: 150 },
-  { displayValue: 'Quantity', key: 'quantity', w: 150 },
+  { displayValue: 'Order Qty (Selling Units)', key: 'sellingUom', w: 150 },
+  { displayValue: 'Order Qty (Buying Units)', key: 'buyingUOM', w: 150 },
   { displayValue: 'Value', key: 'value', w: 150 },
   { displayValue: 'ETA', key: 'delivery_date', w: 150 }
 ];
@@ -31,13 +34,13 @@ const orderQtyListFormatter = (orderQtyData: RplOrderQtyDetailsI[]) => {
   return formatterOrderQtyList;
 };
 
-const stockMovementHeaderFormatter = (stockMovementData: RplStockMovementI[]): TableHeader[] => {
+const stockMovementHeaderFormatter = (stockMovementData: RplStockMovementI[],defaultWidth:number = 150): TableHeader[] => {
   const stockMovementTblHeader: TableHeader[] = [
     { displayValue: '', key: 'order_date', w: 150 },
     ...(stockMovementData || []).map((item) => ({
       displayValue: item.date,
       key: item.date,
-      w: 150
+      w: defaultWidth
     }))
   ];
 
@@ -78,7 +81,7 @@ const stockMovementListFormatter = (stockMovementData: RplStockMovementI[]) => {
     });
     list.push({
       id: 7,
-      row: ['Inventory Days', ...stockMovementData.map((i) => i.closing_inventory_days)]
+      row: ['Inventory Days', ...stockMovementData.map((i) => i.closing_inv_days_for_future_demand)]
     });
     list.push({
       id: 8,
@@ -89,7 +92,7 @@ const stockMovementListFormatter = (stockMovementData: RplStockMovementI[]) => {
   return list;
 };
 
-export const replenishmentViewReFormatter = (data: ReplenishmentPlanDetailsResI) => {
+export const replenishmentViewReFormatter = (data: ReplenishmentPlanDetailsResI,columWidth:number) => {
   const formatterOrderQtyList = orderQtyListFormatter(data?.orderQtyDetails!);
   const formattedResponse: ReplenishmentPlanDetailsStateI = {
     orderPlan: data?.orderPlan,
@@ -99,11 +102,44 @@ export const replenishmentViewReFormatter = (data: ReplenishmentPlanDetailsResI)
       defaultList: formatterOrderQtyList
     },
     stockMovement: {
-      headers: stockMovementHeaderFormatter(data?.stockMovement),
+      headers: stockMovementHeaderFormatter(data?.stockMovement,columWidth),
       list: stockMovementListFormatter(data?.stockMovement)
     },
     anchor_prod_key: data?.anchor_prod_key,
     isEdited: data?.isEdited!
   };
   return formattedResponse;
+};
+
+export const generateGroupFilters = (
+  filters: GroupFilterI[],
+  isSelectedAll: boolean,
+  selectedSKUList: GetAlertList[] | [],
+  searchKey?: string
+): GroupFilterI[] => {
+  let groupFilters = filters.filter((filter) => !(filter.code === 1 && filter.type === 'group'));
+
+  if (isSelectedAll) {
+    const additionalBody: GroupFilterI = {
+      code: 2,
+      isSelectAll: true,
+      search: searchKey || '',
+      selectedItems: [],
+      type: 'sku'
+    };
+
+    groupFilters = [...groupFilters, additionalBody];
+  } else if (selectedSKUList.length > 0) {
+    const additionalBody: GroupFilterI = {
+      code: 1,
+      isSelectAll: false,
+      search: searchKey || '',
+      selectedItems: selectedSKUList.map((sku) => sku.anchorProdKey.toString()),
+      type: 'sku'
+    };
+
+    groupFilters = [...groupFilters, additionalBody];
+  }
+
+  return groupFilters;
 };

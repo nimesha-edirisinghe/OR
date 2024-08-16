@@ -7,6 +7,7 @@ export interface RPLWHViewLoadingI {
   planDetailTotalCount: boolean;
   rplWhBulkEditDownload: boolean;
   rplWhHistoryTableLoading: boolean;
+  editDetail:boolean
 }
 
 export interface ReplenishmentWHSkuListItem {

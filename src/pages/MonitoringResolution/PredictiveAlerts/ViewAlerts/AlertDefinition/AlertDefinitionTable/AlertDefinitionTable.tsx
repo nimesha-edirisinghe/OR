@@ -1,6 +1,6 @@
 import { FC, useState, useRef } from 'react';
 import { Box, Skeleton } from '@chakra-ui/react';
-import { scrollbarXYStyles, scrollbarYStyles } from 'theme/styles';
+import { customScrollbarXYStyles, scrollbarXYStyles } from 'theme/styles';
 import { isEmpty } from 'utils/utility';
 import { IAlert, alertSliceSelector } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import { useSelector } from 'react-redux';
@@ -8,6 +8,7 @@ import AlertDefinitionTableRow from './AlertDefinitionTableRow';
 import AlertTableHeader from './AlertTableHeader';
 import AlertDefinitionDefaultTable from './AlertDefinitionDefaultTable';
 import { AlertTableViewTypeEnum } from 'utils/enum';
+import AppNoDataAvailablePanel from 'components/newTheme/AppNoDataAvailablePanel/AppNoDataAvailablePanel';
 
 interface AlertDefinitionTableProps {
   enableAlertDetection?: boolean;
@@ -23,6 +24,7 @@ const AlertDefinitionTable: FC<AlertDefinitionTableProps> = ({
   const [onTableHover, setOnTableHover] = useState<boolean>(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const [isResolveOptionEnabled, setResolveOption] = useState<boolean>(false);
 
   const handleScroll = (scrollTarget: string) => {
     const targetRef = scrollTarget === 'header' ? headerRef : bodyRef;
@@ -41,24 +43,20 @@ const AlertDefinitionTable: FC<AlertDefinitionTableProps> = ({
   };
 
   return (
-    <Box
-      w="full"
-      minH={enableAlertDetection ? 'calc(100vh - 285px)' : 'calc(100vh - 460px)'}
-      mt="5px"
-      borderRadius="8px"
-    >
+    <Box w="full" minH="calc(100vh - 470px)" mt="5px" borderRadius="8px">
       <Skeleton
         isLoaded={!alertState.loading.data}
         w="full"
         h="full"
-        minH={enableAlertDetection ? 'calc(100vh - 285px)' : 'calc(100vh - 370px)'}
         borderRadius="8px"
+        minH="calc(100vh - 470px)"
       >
         <Box
           position="relative"
           onMouseEnter={() => setOnTableHover(true)}
           onMouseLeave={() => setOnTableHover(false)}
           borderRadius="8px"
+          w={'full'}
         >
           <Box
             overflowY={'clip'}
@@ -67,37 +65,40 @@ const AlertDefinitionTable: FC<AlertDefinitionTableProps> = ({
             transition="all .2s ease-in"
             ref={headerRef}
             onScroll={handleHeaderScroll}
-            __css={scrollbarYStyles}
+            __css={customScrollbarXYStyles('0px', '0px')}
             borderTopRadius="8px"
+            p={0}
+            w={'full'}
           >
             <AlertTableHeader alertTableHeaders={alertTableData.headers} tableType={tableType} />
           </Box>
-          <Box
-            overflow={onTableHover ? 'auto' : 'hidden'}
-            maxH={'calc(100vh - 245px)'}
-            transition="all .2s ease-in"
-            __css={scrollbarXYStyles}
-            ref={bodyRef}
-            onScroll={handleBodyScroll}
-            sx={{
-              paddingRight: '50px'
-            }}
-            borderBottomRadius="8px"
-          >
-            {!isEmpty(alertTableData?.list) ? (
-              alertTableData?.list?.map((dataItem, index) => (
+          {!isEmpty(alertTableData?.list) ? (
+            <Box
+              overflow={onTableHover ? 'auto' : 'hidden'}
+              maxH={'calc(100vh - 245px)'}
+              transition="all .2s ease-in"
+              __css={scrollbarXYStyles}
+              ref={bodyRef}
+              onScroll={handleBodyScroll}
+              borderBottomRadius="8px"
+              minH={isResolveOptionEnabled ? '220px' : '0px'}
+            >
+              {alertTableData?.list?.map((dataItem, index) => (
                 <AlertDefinitionTableRow
                   key={index}
                   data={dataItem}
                   alertTableHeaders={alertTableData.headers}
                   enableAlertDetection={enableAlertDetection}
                   tableType={tableType}
+                  setResolveOption={setResolveOption}
                 />
-              ))
-            ) : (
-              <AlertDefinitionDefaultTable />
-            )}
-          </Box>
+              ))}
+            </Box>
+          ) : (
+            <Box w="full" h="calc(100vh - 430px)">
+              <AppNoDataAvailablePanel />
+            </Box>
+          )}
         </Box>
       </Skeleton>
     </Box>

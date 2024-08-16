@@ -18,6 +18,8 @@ import { getSelectedChartName, getTableColumnWidth } from './stateHelpers/stH_Df
 import { InfluencingFactorTypes } from 'types/groupConfig';
 import { format } from 'date-fns';
 import { TrainingSummaryDataResponseI } from 'types/responses/trainingSummaryResponse';
+import { AlertTypeI } from 'types/alertConfig';
+import { AlertGraphRequestBodyI } from 'types/requests/viewRequests';
 
 export interface IDFView {
   isLoading: boolean;
@@ -35,6 +37,7 @@ export interface IDFView {
     predictorType: InfluencingFactorTypes | null;
   };
   selectedChartType: demandForecastChartType;
+  selectedTabType: number;
   dfViewLocalScope: dfViewLocalScopeI;
   dfTable: DemandForecastChartTable | null;
   predictorList: DFPredictorI | null;
@@ -43,6 +46,8 @@ export interface IDFView {
   trainingSummaryData: TrainingSummaryDataResponseI | null;
   isGraphPanelOpen: boolean;
   isTrainingSummaryPanelOpen: boolean;
+  AlertType: AlertTypeI;
+  isTableEditable: boolean;
 }
 
 export const DFViewSlice = createSlice({
@@ -66,6 +71,7 @@ export const DFViewSlice = createSlice({
       predictorType: null
     },
     selectedChartType: 'sku',
+    selectedTabType: 0,
     graphData: [],
     graphDateRange: null,
     dfViewLocalScope: {
@@ -82,7 +88,14 @@ export const DFViewSlice = createSlice({
     trainingSummaryData: null,
     isGraphPanelOpen: false,
     isTrainingSummaryPanelOpen: false,
-    gridSkuListData:null
+    gridSkuListData: null,
+    AlertType: {
+      alertType: null,
+      alertTypeDisplayName: null,
+      anchorProdKey: null,
+      groupKey: null
+    },
+    isTableEditable: false
   } as IDFView,
   reducers: {
     downloadForecastReportRequest: (state) => {
@@ -114,7 +127,7 @@ export const DFViewSlice = createSlice({
 
       let dfTable: DemandForecastChartTable = {
         headers: [{ displayValue: '', key: 'Label', w: 150 }],
-        skuForecast: state.selectedChartType !== 'aggregate' ? ['SKU Forecast'] : [],
+        skuForecast: state.selectedChartType !== 'aggregate' ? ['Sales'] : [],
         compareForecast: [_selectedCName]
       };
       action.payload.forEach((graphData) => {
@@ -254,7 +267,8 @@ export const DFViewSlice = createSlice({
       state.graphDateRange = action.payload;
     },
     resetViewForecastRightPanel: (state) => {
-      state.aggregateOption.selectedAggregateOption = 'sku';
+      const isAggregate = state.aggregateOption.selectedAggregateOption === 'aggregate';
+      state.aggregateOption.selectedAggregateOption = isAggregate ? 'aggregate' : 'sku';
       state.selectedSku = null;
       state.selectedSkuList = [];
       state.graphData = [];
@@ -267,6 +281,8 @@ export const DFViewSlice = createSlice({
     getPredictorsFailure: (state) => {},
     getDemandForecastSkuListRequest: (state, action: PayloadAction<{ searchKey?: string }>) => {
       state.loading.skuDataLoading = true;
+      state.dfViewLocalScope.globalSkuSelected = false;
+      state.isTableEditable = false;
       state.selectedSkuList = [];
     },
     getDemandForecastSkuListSuccess: (
@@ -292,6 +308,11 @@ export const DFViewSlice = createSlice({
     getDemandForecastSkuListFailure: (state) => {
       state.loading.skuDataLoading = false;
     },
+    getAlertTypeRequest: (state) => {},
+    getAlertTypeSuccess: (state, action: PayloadAction<AlertTypeI>) => {
+      state.AlertType = action.payload;
+    },
+    getAlertTypeFailure: (state) => {},
     bulkEditFileUploadRequest: (
       state,
       action: PayloadAction<{
@@ -310,6 +331,7 @@ export const DFViewSlice = createSlice({
       state,
       action: PayloadAction<{
         fileName: string;
+        groupKey: string;
         searchKey?: string;
       }>
     ) => {
@@ -356,6 +378,9 @@ export const DFViewSlice = createSlice({
     downloadBulkForecastEditResultFailure: (state) => {
       state.loading.download = false;
     },
+    editForecastDataRequest: (state, action: PayloadAction<AlertGraphRequestBodyI>) => {},
+    editForecastDataRequestSuccess: (state) => {},
+    editForecastDataRequestFailure: (state) => {},
     setUploadHistorySearchKey: (state, action: PayloadAction<string>) => {
       state.dfViewLocalScope.uploadHistorySearchKey = action.payload;
     },
@@ -381,6 +406,36 @@ export const DFViewSlice = createSlice({
     },
     toggleTrainingSummaryPanel: (state) => {
       state.isTrainingSummaryPanelOpen = !state.isTrainingSummaryPanelOpen;
+    },
+
+    downloadBulkEditForecastZipFileRequest: (
+      state,
+      action: PayloadAction<{
+        fileName: string;
+      }>
+    ) => {
+      state.loading.bulkEditDownload = true;
+    },
+    downloadBulkEditForecastZipFileRequestSuccess: (state) => {
+      state.loading.bulkEditDownload = false;
+    },
+    downloadBulkEditForecastZipFileRequestFailure: (state) => {
+      state.loading.bulkEditDownload = false;
+    },
+    toggleGlobalSkuSelection: (state) => {
+      state.dfViewLocalScope.globalSkuSelected = false;
+    },
+    setTableStatus: (state, action: PayloadAction<boolean>) => {
+      state.isTableEditable = action.payload;
+    },
+    updateForecastTableData: (state, action: { payload: { index: number; value: number } }) => {
+      const { index, value } = action.payload;
+      if (state.dfTable && state.dfTable.skuForecast) {
+        state.dfTable.skuForecast[index] = value;
+      }
+    },
+    updateTabType: (state, action: { payload: number }) => {
+      state.selectedTabType = action.payload;
     }
   }
 });
@@ -436,7 +491,20 @@ export const {
   resetUploadHistoryData,
   updateShouldReloadData,
   toggleGraphPanel,
-  toggleTrainingSummaryPanel
+  toggleTrainingSummaryPanel,
+  downloadBulkEditForecastZipFileRequest,
+  downloadBulkEditForecastZipFileRequestSuccess,
+  downloadBulkEditForecastZipFileRequestFailure,
+  toggleGlobalSkuSelection,
+  getAlertTypeRequest,
+  getAlertTypeSuccess,
+  getAlertTypeFailure,
+  setTableStatus,
+  updateForecastTableData,
+  editForecastDataRequest,
+  editForecastDataRequestSuccess,
+  editForecastDataRequestFailure,
+  updateTabType
 } = DFViewSlice.actions;
 
 export default DFViewSlice.reducer;

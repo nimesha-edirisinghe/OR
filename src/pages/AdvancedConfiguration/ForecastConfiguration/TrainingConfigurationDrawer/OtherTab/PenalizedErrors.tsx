@@ -25,9 +25,12 @@ export interface PenalizedError {
   upperLimit: number;
   penalty: number;
 }
-interface Props {}
 
-const PenalizedErrors: FC<Props> = () => {
+interface Props {
+  isDisabled?: boolean;
+}
+
+const PenalizedErrors: FC<Props> = ({ isDisabled = false }) => {
   const dispatch = useDispatch();
   const trainingConfigData = useSelector(fcConfigPageSliceSelector).trainingConfigData;
   const penalizedErrorRadioChecked =
@@ -36,11 +39,15 @@ const PenalizedErrors: FC<Props> = () => {
   const penalizedErrorList = trainingConfigData.algorithmSettings.penalized_error.weight_matrix;
 
   const onAddPenalizedError = () => {
-    dispatch(addNewPenalizedError());
+    if (!isDisabled) {
+      dispatch(addNewPenalizedError());
+    }
   };
 
   const onRemovePenalizedError = (index: number) => {
-    dispatch(removePenalizedError(index));
+    if (!isDisabled) {
+      dispatch(removePenalizedError(index));
+    }
   };
 
   const onUpdatePenalizedError = (
@@ -48,7 +55,9 @@ const PenalizedErrors: FC<Props> = () => {
     index: number,
     value: string
   ) => {
-    dispatch(updatePenalizedError({ field, index, value }));
+    if (!isDisabled) {
+      dispatch(updatePenalizedError({ field, index, value }));
+    }
   };
 
   return (
@@ -78,7 +87,7 @@ const PenalizedErrors: FC<Props> = () => {
               fontWeight={400}
               bg={ocean_blue_500}
               color={ocean_blue_300}
-              isDisabled={!penalizedErrorRadioChecked}
+              isDisabled={!penalizedErrorRadioChecked || isDisabled}
               onChange={(e) => onUpdatePenalizedError('lower_limit', key, e.target.value)}
             />
           </VStack>
@@ -97,7 +106,7 @@ const PenalizedErrors: FC<Props> = () => {
               color={ocean_blue_300}
               bg={ocean_blue_500}
               _disabled={{ backgroundColor: ocean_blue_500 }}
-              isDisabled={!penalizedErrorRadioChecked}
+              isDisabled={!penalizedErrorRadioChecked || isDisabled}
               onChange={(e) => onUpdatePenalizedError('upper_limit', key, e.target.value)}
             />
           </VStack>
@@ -116,7 +125,7 @@ const PenalizedErrors: FC<Props> = () => {
               value={penalizedError.penalty}
               fontSize="13px"
               fontWeight={400}
-              isDisabled={!penalizedErrorRadioChecked}
+              isDisabled={!penalizedErrorRadioChecked || isDisabled}
               onChange={(e) => onUpdatePenalizedError('penalty', key, e.target.value)}
             />
           </VStack>
@@ -129,7 +138,8 @@ const PenalizedErrors: FC<Props> = () => {
                 p="8px"
                 borderRadius="8px"
                 bg={ocean_blue_600}
-                onClick={() => onRemovePenalizedError(key)}
+                cursor={isDisabled ? 'not-allowed' : 'pointer'}
+                onClick={() => !isDisabled && onRemovePenalizedError(key)}
               >
                 <AppIcon name="minus" fill={blue_500} w="full" h="1.67px" />
               </Box>
@@ -140,7 +150,7 @@ const PenalizedErrors: FC<Props> = () => {
 
       {penalizedErrorRadioChecked && (
         <HStack
-          cursor="pointer"
+          cursor={isDisabled ? 'not-allowed' : 'pointer'}
           w="544px"
           h="36px"
           borderRadius="8px"

@@ -23,12 +23,13 @@ import {
 import { GroupFilterI } from 'types/requests/groupConfigRequests';
 import { ApiResponse } from 'types/api';
 import {
+  AlertReplenishmentResponseI,
   GetUploadHistoryResponseI,
   ReplenishmentPlanDetailsResI,
   ReplenishmentPlanDetailsStateI,
   ReplenishmentSkuListResI
 } from 'types/responses/viewResponses';
-import { replenishmentViewApi } from 'api';
+import { demandForecastApi, replenishmentViewApi } from 'api';
 import { responseValidator } from 'state/helpers/validateHelper';
 
 import { downloadFile } from 'utils/fileDownloadUtils';
@@ -45,6 +46,10 @@ import {
   getReplenishmentWHSkuDataSuccess,
   getRplWHPlanDetailsFailure,
   getRplWHPlanDetailsSuccess,
+  rplWHAlertTypeFailure,
+  rplWHAlertTypeSuccess,
+  rplWHEditFailure,
+  rplWHEditSuccess,
   rplWHBulkEditFileUploadFailure,
   rplWHBulkEditFileUploadSuccess,
   rplWHDownloadBulkEditForecastFailure,
@@ -60,6 +65,8 @@ import { AxiosProgressEvent } from 'axios';
 import { DOWNLOAD_SUCCESS_MESSAGE } from 'constants/messages';
 import { showErrorToast, showSuccessToast } from 'state/toast/toastState';
 import { BULK_EDIT_HISTORY_TABLE_PAGE_SIZE } from 'utils/constants';
+import { AlertTypeI, ForecastAlertType } from 'types/alertConfig';
+import { ReplenishmentI } from 'types/requests/alertConfigRequest';
 
 function* getReplenishmentWhSkuDataRequestSaga(action: PayloadAction<{ searchKey?: string }>) {
   try {
@@ -266,7 +273,7 @@ function* downloadRplWhReportRequestSaga(action: PayloadAction<{ fileName: strin
       );
 
       if (response) {
-        const downloadFileName = `${fileName}.csv`;
+        const downloadFileName = `${fileName}.zip`;
         const success: boolean = yield call(downloadFile, response, downloadFileName);
         if (success) {
           yield put(downloadRplWHReportSuccess());
@@ -312,7 +319,8 @@ function* getRplWhPlanDetailsRequestSaga() {
 
     if (response) {
       const formattedData: ReplenishmentPlanDetailsStateI = replenishmentViewReFormatter(
-        response.data
+        response.data,
+        110
       );
       yield put(getRplWHPlanDetailsSuccess(formattedData));
     } else {
@@ -328,12 +336,6 @@ function* rplBulkEditFileUploadRequestSaga(
 ) {
   try {
     const { file, uploadPercentageCallback } = action.payload;
-    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
-    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
-    const selectedGroupName = sharedGroupState?.groupList?.list?.find(
-      (item) => item.key === selectedGroupKey
-    )?.value;
-
     let previousUploadProgressHandler: ((progressEvent: AxiosProgressEvent) => void) | null = null;
     const uploadProgressHandler = async (progressEvent: AxiosProgressEvent) => {
       const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total!);
@@ -341,13 +343,8 @@ function* rplBulkEditFileUploadRequestSaga(
     };
     previousUploadProgressHandler = uploadProgressHandler;
 
-    const reqBody: BulkEditFileUploadBodyI = {
-      groupKey: selectedGroupKey!,
-      groupDesc: selectedGroupName!
-    };
-
     const response: ApiResponse<any> = yield call(() =>
-      replenishmentViewApi.rplBulkEditFileUploadRequest(reqBody, file, uploadProgressHandler)
+      replenishmentViewApi.rplBulkEditFileUploadRequest(file, uploadProgressHandler)
     );
 
     if (response) {
@@ -364,10 +361,10 @@ function* rplBulkEditFileUploadRequestSaga(
 }
 
 function* rplDownloadBulkEditForecastRequestSaga(
-  action: PayloadAction<{ fileName: string; searchKey?: string }>
+  action: PayloadAction<{ groupKey: string; fileName: string; searchKey?: string }>
 ) {
   try {
-    const { fileName, searchKey } = action.payload;
+    const { fileName, searchKey, groupKey } = action.payload;
     const userState: IUser = yield select(userSliceSelector);
     const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
     const orgKey = userState.selectedOrg.orgKey;
@@ -382,63 +379,61 @@ function* rplDownloadBulkEditForecastRequestSaga(
     const rplViewState: IRPLWhView = yield select(rplWHViewSliceSelector);
     const selectedSKUList = rplViewState.rplWhSelectedSkuList;
     const isSelectedAll = rplViewState.rplWhViewLocalScope.globalRplWhSkuSelected;
+    const search = rplViewState.rplWhViewLocalScope.rplWhSkuSearchKey;
+    const isSearchEmpty = search.length === 0;
 
     const queryParams: DownloadBulkEditQueryParamI = {
       fileName,
-      groupKey: Number(selectedGroupKey!),
+      groupKey: Number(groupKey!),
       orgKey,
       search: searchKey,
       whFlag: 1
     };
 
-    if (selectedGroupKey) {
-      let requestBody: GroupFilterI[] = filters.filter(
-        (filter) => !(filter.code === 1 && filter.type === 'group')
-      );
+    let requestBody: GroupFilterI[] = filters.filter(
+      (filter) => !(filter.code === 1 && filter.type === 'group')
+    );
 
-      if (isSelectedAll) {
-        const additionalBody: GroupFilterI = {
-          code: 1,
-          isSelectAll: true,
-          search: '',
-          selectedItems: [],
-          type: 'sku'
-        };
+    if (isSelectedAll && isSearchEmpty) {
+      const additionalBody: GroupFilterI = {
+        code: 1,
+        isSelectAll: true,
+        search: '',
+        selectedItems: [],
+        type: 'sku'
+      };
 
-        requestBody = [...requestBody, additionalBody];
-      } else if (selectedSKUList.length > 0) {
-        const additionalBody: GroupFilterI = {
-          code: 1,
-          isSelectAll: false,
-          search: '',
-          selectedItems: selectedSKUList.map((sku) => {
-            return String(sku.anchorProdKey);
-          }),
-          type: 'sku'
-        };
+      requestBody = [...requestBody, additionalBody];
+    } else if (selectedSKUList.length > 0) {
+      const additionalBody: GroupFilterI = {
+        code: 1,
+        isSelectAll: false,
+        search: '',
+        selectedItems: selectedSKUList.map((sku) => {
+          return String(sku.anchorProdKey);
+        }),
+        type: 'sku'
+      };
 
-        requestBody = [...requestBody, additionalBody];
-      }
+      requestBody = [...requestBody, additionalBody];
+    }
 
-      const response: GeneralResponse = yield call(() =>
-        replenishmentViewApi.rplDownloadBulkEditForecastRequest(requestBody, queryParams)
-      );
+    const response: GeneralResponse = yield call(() =>
+      replenishmentViewApi.rplDownloadBulkEditForecastRequest(requestBody, queryParams)
+    );
 
-      if (response) {
-        const downloadFileName = `${fileName}.csv`;
-        const success: boolean = yield call(downloadFile, response, downloadFileName);
+    if (response) {
+      const downloadFileName = `${groupKey}_${fileName}.csv`;
+      const success: boolean = yield call(downloadFile, response, downloadFileName);
 
-        if (success) {
-          yield put(rplWHDownloadBulkEditForecastSuccess());
-          yield call(showSuccessToast, DOWNLOAD_SUCCESS_MESSAGE);
-        } else {
-          yield put(rplWHDownloadBulkEditForecastFailure());
-        }
+      if (success) {
+        yield put(rplWHDownloadBulkEditForecastSuccess());
+        yield call(showSuccessToast, DOWNLOAD_SUCCESS_MESSAGE);
       } else {
         yield put(rplWHDownloadBulkEditForecastFailure());
       }
     } else {
-      yield call(showErrorToast, 'Please select a Group');
+      yield put(rplWHDownloadBulkEditForecastFailure());
     }
   } catch (error) {
     console.error('error in request ', error);
@@ -466,7 +461,6 @@ function* getUploadHistoryDataRequestSaga(
       );
       const requestBody: GetUploadHistoryReqBodyI = {
         filters: appliedFilters,
-        groupKey: Number(selectedGroupKey),
         limit: BULK_EDIT_HISTORY_TABLE_PAGE_SIZE,
         page: pageNumber || 1,
         search: searchKey || '',
@@ -532,6 +526,65 @@ function* downloadBulkForecastEditResultRequestSaga(
   }
 }
 
+function* rplEditRequestSaga(action: PayloadAction<ReplenishmentI>) {
+  try {
+    const replWhView: IRPLWhView = yield select(rplWHViewSliceSelector);
+    const response: ApiResponse<AlertReplenishmentResponseI> = yield call(() =>
+      demandForecastApi.alertReplenishmentRequest(action.payload as any)
+    );
+
+    if (!responseValidator(response, true)) {
+      return;
+    }
+    const message = response.message;
+    if (response) {
+      yield call(showSuccessToast, message);
+      yield put(rplWHEditSuccess());
+    } else {
+      yield call(showErrorToast, message);
+      yield put(rplWHEditFailure());
+    }
+  } catch (error) {
+    console.error('error in request ', error);
+  }
+}
+
+function* getRPLAlertTypesRequestSaga() {
+  try {
+    const rplViewState: IRPLWhView = yield select(rplWHViewSliceSelector);
+    const sharedGrpConf: IGroupConfig = yield select(groupConfigSliceSelector);
+
+    const anchorProdKey = rplViewState.rplWhSelectedSku?.anchorProdKey!;
+    const anchorProdModelKey = rplViewState.rplWhSelectedSku?.anchorProdModelKey!;
+    const groupKey = +sharedGrpConf?.selectedGroupKey!;
+    const forecastKey = rplViewState.rplWhSelectedSku?.forecastKey!;
+
+    const requestBody: ForecastAlertType = {
+      alertType: 'outofstock',
+      anchorProdKey,
+      anchorProdModelKey,
+      groupKey,
+      forecastKey
+    };
+
+    const response: ApiResponse<AlertTypeI> = yield call(() =>
+      demandForecastApi.getAlertTypeRequest(requestBody)
+    );
+
+    if (!responseValidator(response, true)) {
+      return;
+    }
+
+    if (response) {
+      yield put(rplWHAlertTypeSuccess(response.data));
+    } else {
+      yield put(rplWHAlertTypeFailure());
+    }
+  } catch (error) {
+    console.error('error in request ', error);
+  }
+}
+
 function* rplWhViewSaga() {
   yield takeLatest(
     'rplWhView/getReplenishmentWHSkuDataRequest',
@@ -553,6 +606,8 @@ function* rplWhViewSaga() {
     'rplWhView/rplWHDownloadBulkForecastEditResultRequest',
     downloadBulkForecastEditResultRequestSaga
   );
+  yield takeLatest('rplWhView/rplWHEditRequest', rplEditRequestSaga);
+  yield takeLatest('rplWhView/rplWHAlertTypeRequest', getRPLAlertTypesRequestSaga);
 }
 
 export default rplWhViewSaga;

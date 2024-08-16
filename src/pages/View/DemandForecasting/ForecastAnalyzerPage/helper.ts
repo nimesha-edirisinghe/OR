@@ -27,9 +27,12 @@ export const transformSkuObjectToArray = (
 
 export const transformAccDistributionObj = (obj: { [key: string]: number } | null) => {
   if (!obj) return [];
+  const sortedOrder = ['High', 'Avg', 'Low'];
 
-  return Object.entries(obj)?.map(([key, value]) => ({
-    name: key === 'high' ? 'High' : key === 'average' ? 'Avg' : 'Low',
-    value: value
-  }));
+  return Object.entries(obj)
+    .map(([key, value]) => ({
+      name: key === 'high' ? 'High' : key === 'average' ? 'Avg' : 'Low',
+      value: value
+    }))
+    .sort((a, b) => sortedOrder.indexOf(a.name) - sortedOrder.indexOf(b.name));
 };

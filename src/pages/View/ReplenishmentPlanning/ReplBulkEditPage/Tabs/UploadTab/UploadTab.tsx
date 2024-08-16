@@ -17,7 +17,6 @@ import {
   rplSetUploadHistorySearchKey,
   rplViewSliceSelector
 } from 'state/pages/view/replenishmentView/rplViewPageState';
-import { useNavigate } from 'react-router-dom';
 
 interface Props {}
 

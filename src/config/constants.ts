@@ -38,23 +38,7 @@ export const REACT_APP_OR_GEN_AI_API_BASE_URL =
   (window._env_ && window._env_.REACT_APP_OR_GEN_AI_API_BASE_URL) ||
   process.env.REACT_APP_OR_GEN_AI_API_BASE_URL;
 
-export const REACT_APP_OR_VL_LANDING_URL =
-  // @ts-ignore
-  (window._env_ && window._env_.REACT_APP_OR_VL_LANDING_URL) ||
-  process.env.REACT_APP_OR_VL_LANDING_URL;
 export const REACT_APP_VIEW_FORECAST_SKU_PAGE_SIZE =
   // @ts-ignore
   (window._env_ && window._env_.REACT_APP_VIEW_FORECAST_SKU_PAGE_SIZE) ||
   process.env.REACT_APP_VIEW_FORECAST_SKU_PAGE_SIZE;
-export const REACT_APP_TABLEAU_DASHBOARD_BASE_URL =
-  // @ts-ignore
-  (window._env_ && window._env_.REACT_APP_TABLEAU_DASHBOARD_BASE_URL) ||
-  process.env.REACT_APP_TABLEAU_DASHBOARD_BASE_URL;
-export const REACT_APP_TABLEAU_DASHBOARD_SALES_URL =
-  // @ts-ignore
-  (window._env_ && window._env_.REACT_APP_TABLEAU_DASHBOARD_SALES_URL) ||
-  process.env.REACT_APP_TABLEAU_DASHBOARD_SALES_URL;
-export const REACT_APP_TABLEAU_DASHBOARD_INVENTORY_URL =
-  // @ts-ignore
-  (window._env_ && window._env_.REACT_APP_TABLEAU_DASHBOARD_INVENTORY_URL) ||
-  process.env.REACT_APP_TABLEAU_DASHBOARD_INVENTORY_URL;

@@ -16,9 +16,14 @@ import {
   EditAlertQueryParamI,
   GetAlertBodyI,
   GetAlertConfigsQueryParamI,
+  GetAlertedGroupDetailsQueryI,
   GetAlertsQueryParamI
 } from 'types/requests/alertConfigRequest';
-import { GetAlertSummaryI, GetAlertsData } from 'types/responses/alertConfigResponse';
+import {
+  AlertedGroupDetailsResponseI,
+  GetAlertSummaryI,
+  GetAlertsData
+} from 'types/responses/alertConfigResponse';
 import {
   IAlert,
   alertSliceSelector,
@@ -48,13 +53,21 @@ import {
   getAlertTypeFailure,
   alertReplenishmentSuccess,
   alertReplenishmentFailure,
-  toggleReplenishmentPanel
+  toggleReplenishmentPanel,
+  getAlertedGroupDetailsRequestSuccess,
+  getAlertedGroupDetailsRequestFailure,
+  updateSuccessStatus,
+  alertDownloadBulkEditForecastRequestSuccess,
+  alertDownloadBulkEditForecastRequestFailure,
+  alertRplDownloadBulkEditForecastRequestSuccess,
+  alertRplDownloadBulkEditForecastRequestFailure
 } from './alertState';
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
   IGroupConfigurationSlice,
   groupConfigurationSliceSelector,
-  alertDefinitionFilterDataRequestSuccess
+  alertDefinitionFilterDataRequestSuccess,
+  updateRightRetainDataListAndCount
 } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
 import { rightSidePanelFormatForRequest } from 'state/pages/advancedConfiguration/groupConfiguration/sagaHelpers/sgH_groupConfigurations';
 import { GeneralResponse } from 'state/rootSaga';
@@ -63,7 +76,7 @@ import { downloadFile } from 'utils/fileDownloadUtils';
 import { ALERT_VIEW_PAGE_SIZE } from 'utils/constants';
 import { responseValidator } from 'state/helpers/validateHelper';
 import { getSelectedAnchorCount } from 'state/pages/advancedConfiguration/groupConfiguration/stateHelpers/stH_groupConfigurations';
-import { FilterDataApiResponseI } from 'types/groupConfig';
+import { FilterDataApiResponseI, RightFilterItemContentI } from 'types/groupConfig';
 import {
   AlertForecastChartRequestParamI,
   AlertForecastChartResponseDataI,
@@ -73,18 +86,24 @@ import {
   AlertTypePayloadI,
   AlertTypesT
 } from 'types/alertConfig';
-import { SUCCESS_MESSAGES } from 'constants/messages';
+import { DOWNLOAD_SUCCESS_MESSAGE, SUCCESS_MESSAGES } from 'constants/messages';
 import { getAlertCardData } from './sagaHelpers/sgH_alert';
 import { format } from 'date-fns';
 import { GetTrainingSummaryDataReqBodyI } from 'types/requests/trainingSummaryRequests';
 import { TrainingSummaryDataResponseI } from 'types/responses/trainingSummaryResponse';
-import { GetRplDetailsReqQueryI } from 'types/requests/viewRequests';
+import { DownloadBulkEditQueryParamI, GetRplDetailsReqQueryI } from 'types/requests/viewRequests';
 import {
   AlertReplenishmentResponseI,
   ReplenishmentPlanDetailsResI,
   ReplenishmentPlanDetailsStateI
 } from 'types/responses/viewResponses';
 import { replenishmentViewReFormatter } from 'state/pages/view/demandForecastView/sagaHelpers/sgH_DfView';
+import { GroupFilterI } from 'types/requests/groupConfigRequests';
+import {
+  IGroupConfig,
+  groupConfigSliceSelector
+} from 'state/pages/shared/groupConfig/groupConfigState';
+import { rplDownloadBulkEditForecastFailure } from 'state/pages/view/replenishmentView/rplViewPageState';
 
 export const ALERT_FORECAST_PREDICTOR_LIMIT = 50;
 
@@ -264,10 +283,35 @@ function* downloadAlertRequestSaga(
     const orgKey = userState.selectedOrg.orgKey;
     const selectedViewAlertObj = alertState.alertLocalScope.selectedViewAlertObj!;
     const selectedAlertTypeObj = alertState.alertLocalScope.selectedAlertTypeObj;
+    const isSelectedAll = alertState.alertLocalScope.globalSkuSelected;
+    const selectedSKUList = alertState.selectedSkuList;
+    const searchKey = alertState.alertLocalScope.skuSearchKey;
 
-    const formattedFilterOptions = rightSidePanelFormatForRequest(
+    let formattedFilterOptions = rightSidePanelFormatForRequest(
       groupFilter.filterLocalScope.rightPanelRetainDataList
     );
+
+    if (isSelectedAll) {
+      const additionalBody: GroupFilterI = {
+        code: 2,
+        isSelectAll: true,
+        search: searchKey ?? '',
+        selectedItems: [],
+        type: 'sku'
+      };
+
+      formattedFilterOptions = [...formattedFilterOptions, additionalBody];
+    } else if (selectedSKUList.length > 0) {
+      const additionalBody: GroupFilterI = {
+        code: 1,
+        isSelectAll: false,
+        search: '',
+        selectedItems: selectedSKUList.map((sku) => sku.anchorProdKey.toString()),
+        type: 'sku'
+      };
+
+      formattedFilterOptions = [...formattedFilterOptions, additionalBody];
+    }
 
     const selectedAlertType_ = selectedAlertType
       ? selectedAlertType
@@ -358,26 +402,40 @@ function* getAlertDefinitionRequestSaga() {
 
       if (response) {
         yield put(getAlertDefinitionRequestSuccess(response.data));
-        const _response: ApiResponse<FilterDataApiResponseI> = yield call(() =>
-          groupConfigApi.getFilterDataRequest(
-            {
-              code: 1,
-              filters: response.data.filters || [],
-              orgKey: orgKey,
-              pageNumber: 1,
-              pageSize: 1000,
-              type: 'sku'
-            },
-            {}
-          )
-        );
+        const isSelectAll = response.data.filters?.find(
+          (filter) => filter.code == 1 && filter.type == 'sku'
+        )?.isSelectAll;
+        if (!isSelectAll) {
+          const _response: ApiResponse<FilterDataApiResponseI> = yield call(() =>
+            groupConfigApi.getFilterDataRequest(
+              {
+                code: 1,
+                filters: response.data.filters || [],
+                orgKey: orgKey,
+                pageNumber: 1,
+                pageSize: 1000,
+                type: 'sku'
+              },
+              {}
+            )
+          );
 
-        if (!responseValidator(_response, true)) {
-          return;
-        }
+          if (!responseValidator(_response, true)) {
+            return;
+          }
 
-        if (_response) {
-          yield put(alertDefinitionFilterDataRequestSuccess(_response.data.list));
+          if (_response) {
+            yield put(alertDefinitionFilterDataRequestSuccess(_response.data));
+          }
+        } else {
+          const rightSidePanel: RightFilterItemContentI = {
+            code: 1,
+            type: 'sku',
+            isSelectAll: true,
+            selectedItems: []
+          };
+          const skuCount = response.data.skuLocationCount || 0;
+          yield put(updateRightRetainDataListAndCount({ list: [rightSidePanel], count: skuCount }));
         }
       }
     }
@@ -398,6 +456,12 @@ function* updateAlertRequestSaga(action: PayloadAction<CallbackAction>) {
     const formattedFilterOptions = rightSidePanelFormatForRequest(
       groupFilter.filterLocalScope.rightPanelRetainDataList
     );
+    const parentFilters = alertState.alertDefinition?.filters?.filter(
+      (filter) => !(filter.code === 1 && filter.type === 'sku')
+    );
+    const updatedFormattedFilter = parentFilters
+      ? [...formattedFilterOptions, ...parentFilters]
+      : formattedFilterOptions;
     const anchorCount = getSelectedAnchorCount(groupFilter, 'sku', 1)!; // get sku location count
     const selectedViewAlertObj = alertState.alertLocalScope.selectedViewAlertObj!;
 
@@ -406,7 +470,7 @@ function* updateAlertRequestSaga(action: PayloadAction<CallbackAction>) {
 
     const requestBody: EditAlertPayloadI = {
       alertName: alertState.alertName,
-      filters: formattedFilterOptions,
+      filters: updatedFormattedFilter,
       alertKey: selectedViewAlertObj.alertKey,
       orgKey,
       responseTimeGranularity: userState.selectedOrg.responseTimeGranularity,
@@ -506,7 +570,7 @@ function* getPredictorsRequestSaga() {
   }
 }
 
-function* AlertForecastChartRequestSaga() {
+function* alertForecastChartRequestSaga() {
   try {
     const userState: IUser = yield select(userSliceSelector);
     const alertSate: IAlert = yield select(alertSliceSelector);
@@ -599,6 +663,7 @@ function* editAlertDataRequestSaga() {
 
     if (response) {
       yield put(editAlertDataRequestSuccess());
+      yield put(updateSuccessStatus(true));
       yield call(showSuccessToast, response.message);
     } else {
       yield put(editAlertDataRequestFailure());
@@ -637,7 +702,8 @@ function* getRplPlanDetailsRequestSaga() {
 
     if (response) {
       const formattedData: ReplenishmentPlanDetailsStateI = replenishmentViewReFormatter(
-        response.data
+        response.data,
+        150
       );
       yield put(getRplPlanDetailsSuccess(formattedData));
     } else {
@@ -705,9 +771,227 @@ function* editReplenishmentDataRequestSaga() {
     if (response) {
       yield put(alertReplenishmentSuccess());
       yield call(showSuccessToast, response.message);
-      yield put(toggleReplenishmentPanel());     
+      yield put(toggleReplenishmentPanel());
+      yield put(updateSuccessStatus(true));
     } else {
       yield put(alertReplenishmentFailure());
+    }
+  } catch (error) {
+    console.error('error in request ', error);
+  }
+}
+
+function* getAlertedGroupDetailsRequestSaga(
+  action: PayloadAction<{
+    alertOnly: number;
+  }>
+) {
+  try {
+    const userState: IUser = yield select(userSliceSelector);
+    const alertState: IAlert = yield select(alertSliceSelector);
+    const groupConfigurationState: IGroupConfigurationSlice = yield select(
+      groupConfigurationSliceSelector
+    );
+    const groupFilter = groupConfigurationState.groupFilter;
+    const { alertOnly } = action.payload;
+    const selectedViewAlertObj = alertState.alertLocalScope.selectedViewAlertObj!;
+    const selectedAlertTypeObj = alertState.alertLocalScope.selectedAlertTypeObj;
+    const isSelectedAll = alertState.alertLocalScope.globalSkuSelected;
+    const selectedSKUList = alertState.selectedSkuList;
+    const searchKey = alertState.alertLocalScope.skuSearchKey;
+
+    let formattedFilterOptions = rightSidePanelFormatForRequest(
+      groupFilter.filterLocalScope.rightPanelRetainDataList
+    );
+
+    if (isSelectedAll) {
+      const additionalBody: GroupFilterI = {
+        code: 2,
+        isSelectAll: true,
+        search: searchKey || '',
+        selectedItems: [],
+        type: 'sku'
+      };
+
+      formattedFilterOptions = [...formattedFilterOptions, additionalBody];
+    } else if (selectedSKUList.length > 0) {
+      const additionalBody: GroupFilterI = {
+        code: 1,
+        isSelectAll: false,
+        search: searchKey || '',
+        selectedItems: selectedSKUList.map((sku) => sku.anchorProdKey.toString()),
+        type: 'sku'
+      };
+
+      formattedFilterOptions = [...formattedFilterOptions, additionalBody];
+    }
+
+    const queryParams: GetAlertedGroupDetailsQueryI = {
+      alertKey: selectedViewAlertObj.alertKey,
+      alertOnly
+    };
+    const requestBody: GetAlertBodyI = {
+      filters: formattedFilterOptions,
+      types: [selectedAlertTypeObj.alertType]
+    };
+
+    if (userState && userState.keyCloakInfo) {
+      const response: ApiResponse<AlertedGroupDetailsResponseI> = yield call(() =>
+        alertConfigApi.getAlertedGroupDetailsRequest(queryParams, requestBody)
+      );
+      if (response) {
+        yield put(getAlertedGroupDetailsRequestSuccess(response.data));
+      } else {
+        yield put(getAlertedGroupDetailsRequestFailure());
+      }
+    }
+  } catch (error) {
+    console.error('error in delete alert request ', error);
+  }
+}
+function* alertDownloadBulkEditForecastRequestSaga(
+  action: PayloadAction<{ fileName: string; groupKey: string; searchKey?: string }>
+) {
+  try {
+    const { fileName, searchKey, groupKey } = action.payload;
+    const userState: IUser = yield select(userSliceSelector);
+    const alertState: IAlert = yield select(alertSliceSelector);
+    const orgKey = userState.selectedOrg.orgKey;
+    const groupConfigurationState: IGroupConfigurationSlice = yield select(
+      groupConfigurationSliceSelector
+    );
+    const groupFilter = groupConfigurationState.groupFilter;
+    const selectedSkuList = alertState.selectedSkuList;
+    const search = alertState.alertLocalScope.skuSearchKey;
+    const isSearchEmpty = search.length === 0;
+    const filters = rightSidePanelFormatForRequest(
+      groupFilter.filterLocalScope.rightPanelRetainDataList
+    );
+    const globalSkuSelected = alertState.alertLocalScope.globalSkuSelected;
+    const queryParams: DownloadBulkEditQueryParamI = {
+      fileName,
+      groupKey: Number(groupKey),
+      orgKey,
+      search: searchKey
+    };
+
+    let additionalFilter: GroupFilterI = {
+      code: 1,
+      isSelectAll: false,
+      search: '',
+      selectedItems: [],
+      type: 'sku'
+    };
+
+    if (globalSkuSelected && isSearchEmpty) {
+      additionalFilter = { ...additionalFilter, isSelectAll: true };
+    } else {
+      additionalFilter = {
+        ...additionalFilter,
+        selectedItems: selectedSkuList.map((sku) => {
+          return sku.anchorProdKey.toString();
+        })
+      };
+    }
+
+    let requestBody: GroupFilterI[] = filters.filter(
+      (filter) => !(filter.code === 1 && filter.type === 'group')
+    );
+
+    requestBody = [...requestBody, additionalFilter];
+
+    const response: GeneralResponse = yield call(() =>
+      demandForecastApi.downloadBulkEditForecastRequest(requestBody, queryParams)
+    );
+
+    if (response) {
+      const downloadFileName = `${groupKey}_${fileName}.csv`;
+      const success: boolean = yield call(downloadFile, response, downloadFileName);
+
+      if (success) {
+        yield put(alertDownloadBulkEditForecastRequestSuccess());
+        yield call(showSuccessToast, DOWNLOAD_SUCCESS_MESSAGE);
+      } else {
+        yield put(alertDownloadBulkEditForecastRequestFailure());
+      }
+    } else {
+      yield put(alertDownloadBulkEditForecastRequestFailure());
+    }
+  } catch (error) {
+    console.error('error in request ', error);
+  }
+}
+function* alertRplDownloadBulkEditForecastRequestSaga(
+  action: PayloadAction<{ fileName: string; searchKey?: string; groupKey: string }>
+) {
+  try {
+    const { fileName, searchKey, groupKey } = action.payload;
+    const userState: IUser = yield select(userSliceSelector);
+    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
+    const alertState: IAlert = yield select(alertSliceSelector);
+    const orgKey = userState.selectedOrg.orgKey;
+    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
+    const groupConfigurationState: IGroupConfigurationSlice = yield select(
+      groupConfigurationSliceSelector
+    );
+    const groupFilter = groupConfigurationState.groupFilter;
+    const filters = rightSidePanelFormatForRequest(
+      groupFilter.filterLocalScope.rightPanelRetainDataList
+    );
+    const selectedSkuList = alertState.selectedSkuList;
+    const globalSkuSelected = alertState.alertLocalScope.globalSkuSelected;
+    const search = alertState.alertLocalScope.skuSearchKey;
+    const isSearchEmpty = search.length === 0;
+
+    const queryParams: DownloadBulkEditQueryParamI = {
+      fileName,
+      groupKey: Number(groupKey!),
+      orgKey,
+      search: searchKey,
+      whFlag: 0
+    };
+
+    let additionalFilter: GroupFilterI = {
+      code: 1,
+      isSelectAll: false,
+      search: '',
+      selectedItems: [],
+      type: 'sku'
+    };
+
+    if (globalSkuSelected && isSearchEmpty) {
+      additionalFilter = { ...additionalFilter, isSelectAll: true };
+    } else {
+      additionalFilter = {
+        ...additionalFilter,
+        selectedItems: selectedSkuList.map((sku) => {
+          return sku.anchorProdKey.toString();
+        })
+      };
+    }
+
+    let requestBody: GroupFilterI[] = filters.filter(
+      (filter) => !(filter.code === 1 && filter.type === 'group')
+    );
+
+    requestBody = [...requestBody, additionalFilter];
+
+    const response: GeneralResponse = yield call(() =>
+      replenishmentViewApi.rplDownloadBulkEditForecastRequest(requestBody, queryParams)
+    );
+
+    if (response) {
+      const downloadFileName = `${groupKey}_${fileName}.csv`;
+      const success: boolean = yield call(downloadFile, response, downloadFileName);
+
+      if (success) {
+        yield put(alertRplDownloadBulkEditForecastRequestSuccess());
+        yield call(showSuccessToast, DOWNLOAD_SUCCESS_MESSAGE);
+      } else {
+        yield put(alertRplDownloadBulkEditForecastRequestFailure());
+      }
+    } else {
+      yield put(alertRplDownloadBulkEditForecastRequestFailure());
     }
   } catch (error) {
     console.error('error in request ', error);
@@ -723,12 +1007,21 @@ function* userSaga() {
   yield takeEvery('alert/deleteAlertRequest', deleteAlertRequestSaga);
   yield takeEvery('alert/updateAlertRequest', updateAlertRequestSaga);
   yield takeLatest('alert/getPredictorsRequest', getPredictorsRequestSaga);
-  yield takeLatest('alert/AlertForecastChartRequest', AlertForecastChartRequestSaga);
+  yield takeLatest('alert/alertForecastChartRequest', alertForecastChartRequestSaga);
   yield takeLatest('alert/getTrainingSummaryDataRequest', getTrainingSummaryDataRequestSaga);
   yield takeLatest('alert/getRplPlanDetailsRequest', getRplPlanDetailsRequestSaga);
   yield takeLatest('alert/getAlertTypeRequest', getAlertTypesRequestSaga);
   yield takeEvery('alert/editAlertDataRequest', editAlertDataRequestSaga);
   yield takeEvery('alert/alertReplenishmentRequest', editReplenishmentDataRequestSaga);
+  yield takeEvery('alert/getAlertedGroupDetailsRequest', getAlertedGroupDetailsRequestSaga);
+  yield takeEvery(
+    'alert/alertDownloadBulkEditForecastRequest',
+    alertDownloadBulkEditForecastRequestSaga
+  );
+  yield takeEvery(
+    'alert/alertRplDownloadBulkEditForecastRequest',
+    alertRplDownloadBulkEditForecastRequestSaga
+  );
 }
 
 export default userSaga;

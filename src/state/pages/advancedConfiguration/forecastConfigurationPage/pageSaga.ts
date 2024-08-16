@@ -18,7 +18,8 @@ import {
   executeRunNowFailure,
   executeRunNowSuccess,
   getEstimatedTimeSuccess,
-  getEstimatedTimeFailure
+  getEstimatedTimeFailure,
+  getTableDataRequest
 } from './pageState';
 import { forecastConfigApi } from 'api';
 import { IUser, userSliceSelector, getUserFailure } from 'state/user/userState';
@@ -44,6 +45,7 @@ import { produce } from 'immer';
 import { SUCCESS_MESSAGES } from 'constants/messages';
 import { JobExecutionTypesEnum } from 'utils/enum';
 import { responseValidator } from 'state/helpers/validateHelper';
+import { CustomConfigT } from 'pages/AdvancedConfiguration/ForecastConfiguration/TrainingConfigurationDrawer/drawerHelpers';
 
 // Define Forecast Configuration table data Action interface
 interface FCActionI {
@@ -133,8 +135,11 @@ function* trainingConfigDrawerDataFetch(action: FCSettingActionI) {
   }
 }
 
-function* forecastConfigurationSave(action: PayloadAction<{ isDefault: boolean }>) {
+function* forecastConfigurationSave(
+  action: PayloadAction<{ isDefault: boolean; customConfig: CustomConfigT }>
+) {
   try {
+    const { isDefault, customConfig } = action.payload;
     let groupKey: number | undefined;
     const pageState: IPage = yield select(fcConfigPageSliceSelector); // get page state from reducer
     const userState: IUser = yield select(userSliceSelector);
@@ -194,14 +199,14 @@ function* forecastConfigurationSave(action: PayloadAction<{ isDefault: boolean }
       });
     }
     requestBody = produce(requestBody, (draft) => {
-      draft.algorithmSettings.algorithm_selection.default = action.payload.isDefault;
+      draft.algorithmSettings.algorithm_selection.default = isDefault;
     });
 
     // Restructure the query parameters
     const queryParams = {
       orgKey: orgKey,
       groupKey: groupKey,
-      configStatus: 'Custom' // TODO: hove to add configStatus. possible values are 'Custom' | 'Default'
+      configStatus: customConfig
     };
 
     // Make the get Forecast config data API call using yield call
@@ -211,9 +216,10 @@ function* forecastConfigurationSave(action: PayloadAction<{ isDefault: boolean }
 
     if (response) {
       yield put(saveTrainingConfigSettingsSuccess('')); // Update success state with payload
-      yield call(showSuccessToast, SUCCESS_MESSAGES.SUCCESSFULLY_SAVED); // Trigger success toast message action
+      yield call(showSuccessToast, SUCCESS_MESSAGES.SUCCESSFULLY_SAVED);
+      yield put(getTableDataRequest({ groupName: '', pageNo: 1 }));
     } else {
-      yield put(saveTrainingConfigSettingsFailure('')); // Update success state
+      yield put(saveTrainingConfigSettingsFailure(''));
     }
   } catch (error) {
     console.error(error);
@@ -222,7 +228,7 @@ function* forecastConfigurationSave(action: PayloadAction<{ isDefault: boolean }
 
 function* getAnchorPredictorsConfig(action: any) {
   try {
-    const pageState: IPage = yield select(fcConfigPageSliceSelector); // get page state from reducer
+    const pageState: IPage = yield select(fcConfigPageSliceSelector);
     const userState: IUser = yield select(userSliceSelector);
 
     if (pageState.tableData) {
@@ -408,6 +414,7 @@ function* executeRunNowRequest(
     );
 
     if (!responseValidator(response, true)) {
+      yield put(executeRunNowFailure());
       return;
     }
     if (response) {

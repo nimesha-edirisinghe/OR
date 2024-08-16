@@ -30,7 +30,7 @@ import {
 import { TableHeader } from 'types/responses/viewResponses';
 import { GroupLabelTypes } from 'types/requests/groupConfigRequests';
 import { produce } from 'immer';
-import { removeAllSelectedItems } from 'pages/MonitoringResolution/PredictiveAlerts/CreateAlerts/AlertCreationSteps/AnchorLocationFilter/FilterItemsSelectionDrawer/Helpers/addOrRemoveItemHelper';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 
 interface SkuSelectionPanelProps {
   maximized: boolean;
@@ -64,9 +64,18 @@ const SkuSelectionPanel: FC<SkuSelectionPanelProps> = ({
 
   useEffect(() => {
     if (skuData === null && selectedGroupKey) {
+      console.log('Render 1..');
       dispatch(getDemandForecastSkuListRequest({ searchKey }));
+    } else if (shouldReloadData) {
+      console.log('Render 2..');
+      dispatch(resetViewForecastRightPanel());
+      if (maximized) {
+        dispatch(getDemandForecastDataRequest({ searchKey }));
+      } else {
+        dispatch(getDemandForecastSkuListRequest({ searchKey }));
+      }
     }
-  }, [selectedGroupKey]);
+  }, [selectedGroupKey, filterAppliedIndicator, shouldReloadData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -82,7 +91,6 @@ const SkuSelectionPanel: FC<SkuSelectionPanelProps> = ({
       } else {
         dispatch(getDemandForecastDataRequest({ searchKey }));
       }
-      removeAllSelectedItems(1, 'sku', groupFilter, dispatch);
     }
   };
 
@@ -159,17 +167,6 @@ const SkuSelectionPanel: FC<SkuSelectionPanelProps> = ({
     }
   }, [sharedGroupState.selectedGroupKey]);
 
-  useEffect(() => {
-    if (shouldReloadData) {
-      dispatch(resetViewForecastRightPanel());
-      if (maximized) {
-        dispatch(getDemandForecastDataRequest({ searchKey }));
-      } else {
-        dispatch(getDemandForecastSkuListRequest({ searchKey }));
-      }
-    }
-  }, [filterAppliedIndicator, shouldReloadData]);
-
   return (
     <Skeleton
       w="full"
@@ -192,22 +189,24 @@ const SkuSelectionPanel: FC<SkuSelectionPanelProps> = ({
             height="36px"
             onKeyDown={handleSearchFieldPress}
           />
-          <HStack spacing="0px">
-            <AppIconButton
-              aria-label="filter"
-              icon={<AppIcon transition="transform 0.25s ease" name="filter" fill={blue_500} />}
-              variant="secondary"
-              size="iconMedium"
-              onClick={() => onFilterClick()}
-              bg={ocean_blue_600}
-            />
-          </HStack>
+          <AppTooltip label={'Filter'} noOfLines={1} placement="bottom-start">
+            <HStack spacing="0px">
+              <AppIconButton
+                aria-label="filter"
+                icon={<AppIcon transition="transform 0.25s ease" name="filter" fill={blue_500} />}
+                variant="secondary"
+                size="iconMedium"
+                onClick={() => onFilterClick()}
+                bg={ocean_blue_600}
+              />
+            </HStack>
+          </AppTooltip>
         </HStack>
         <Box w="full" h={'calc(100vh - 230px)'}>
           {renderSimpleGrid()}
         </Box>
         <Box w="full" h="18px">
-          <SkuSelectionFooter totalItems={totalSkuCount!} currentPage={1} />
+          <SkuSelectionFooter totalItems={totalSkuCount!} currentPage={1} footerLabel="Forecasts" />
         </Box>
       </VStack>
     </Skeleton>

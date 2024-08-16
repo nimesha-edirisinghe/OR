@@ -68,7 +68,7 @@ const AppCollapsedSideBarNavItem: FC<Props> = ({
   };
 
   const onSubMenuSelect = (subMenu: MenuItem) => {
-    dispatch(setActiveSubMenuItem({ subMenuItem: subMenu.path! }));
+    dispatch(setActiveSubMenuItem({ subMenuItem: subMenu?.path! }));
     navigate(subMenu.path!);
     onMouseLeaveMenu();
     storeInLocal('activeSubMenuItem', subMenu.path!);
@@ -77,7 +77,7 @@ const AppCollapsedSideBarNavItem: FC<Props> = ({
   const createSubMenu = () => {
     if (activeMenuItem) {
       const mainMenu = leftMenu[activeMenuItem];
-      const subMenuList = leftMenu[activeMenuItem].subMenu!;
+      const subMenuList = leftMenu[activeMenuItem]?.subMenu!;
 
       if (!subMenuList) {
         return null;
@@ -99,11 +99,21 @@ const AppCollapsedSideBarNavItem: FC<Props> = ({
     setCurrentTarget(currentTargetRect);
   };
 
+  const filterIsOpen = (obj: any) => {
+    if ('isOpen' in obj) {
+      const { isOpen, ...filteredData } = obj;
+      return filteredData;
+    } else {
+      return obj;
+    }
+  };
+
   useEffect(() => {
     if (activeMenuItem) {
       setYPos(null);
-      const subMenuList = leftMenu[activeMenuItem].subMenu!;
-      const subMenuHeight = (subMenuList && Object.keys(subMenuList).length * 56) || 0;
+      const subMenuList = leftMenu[activeMenuItem]?.subMenu!;
+      const filteredSubMenuList = subMenuList && filterIsOpen(subMenuList);
+      const subMenuHeight = (subMenuList && Object.keys(filteredSubMenuList).length * 56) || 0;
       const _yPos = currentTarget?.top!;
 
       const totalHeightRequired = _yPos + subMenuHeight;

@@ -10,6 +10,9 @@ import {
   updateJobScheduleState
 } from 'state/pages/shared/jobScheduling/jobSchedulingState';
 import { closeRplDrawer } from 'state/pages/advancedConfiguration/replenishmentConfigurationPage/rplConfigPageState';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface ReplenishmentPlanningTabProps {}
 
@@ -67,6 +70,9 @@ const ReplenishmentPlanningTab: FC<ReplenishmentPlanningTabProps> = () => {
     dispatch(removeScheduleJobRequest());
   };
 
+  const accessType = useAccessType(MenuItems.REPLENISHMENT_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.SCHEDULE]);
+
   return (
     <VStack pt="41px" spacing="20px" align="start">
       <AppScheduling
@@ -75,6 +81,7 @@ const ReplenishmentPlanningTab: FC<ReplenishmentPlanningTabProps> = () => {
         onChangeDay={onChangeTrainingDay}
         onDeleteHandler={onRemoveSchedule}
         setEsEnabledHandler={setEsEnabledHandler}
+        isDisabled={accessNotAllowed}
       />
     </VStack>
   );

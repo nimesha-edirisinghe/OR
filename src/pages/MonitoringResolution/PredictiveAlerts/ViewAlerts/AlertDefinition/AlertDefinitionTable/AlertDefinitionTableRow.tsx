@@ -13,13 +13,16 @@ import { neutral_100, neutral_200, ocean_blue_350, ocean_blue_400, red_400 } fro
 import AppCheckbox from 'components/newTheme/AppCheckbox/AppCheckbox';
 import { useDispatch, useSelector } from 'react-redux';
 import AlertResolveOption from './AlertResolveOption';
-import { AlertTableViewTypeEnum } from 'utils/enum';
+import { AccessPermissionEnum, AlertTableViewTypeEnum, MenuItems } from 'utils/enum';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
 
 interface Props {
   data: GetAlertList;
   alertTableHeaders: IAlert['alertDataList']['headers'];
   enableAlertDetection?: boolean;
   tableType: AlertTableViewTypeEnum;
+  setResolveOption: (status: boolean) => void;
 }
 
 const AlertDefinitionTableRow: FC<Props> = ({
@@ -27,6 +30,7 @@ const AlertDefinitionTableRow: FC<Props> = ({
   alertTableHeaders,
   enableAlertDetection = false,
   tableType,
+  setResolveOption,
   ...props
 }) => {
   const alertState: IAlert = useSelector(alertSliceSelector);
@@ -40,6 +44,9 @@ const AlertDefinitionTableRow: FC<Props> = ({
   const [isResolvePopUpOpen, setResolvePopUp] = useState<boolean>(false);
   const cellBgColor = isRowSelected ? ocean_blue_350 : ocean_blue_400;
   const dispatch = useDispatch();
+
+  const accessType = useAccessType(MenuItems.PREDICTIVE_ALERTS);
+  const isDisabled = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const updateSelectedListAndSkuStates = (
     anchorProdModelKey: number,
@@ -67,6 +74,7 @@ const AlertDefinitionTableRow: FC<Props> = ({
 
   const onResolvePopUp = (flag: boolean) => {
     setResolvePopUp(flag);
+    setResolveOption(flag);
   };
 
   return (
@@ -118,12 +126,13 @@ const AlertDefinitionTableRow: FC<Props> = ({
               minW="180px"
               key={key}
               borderLeft={isRowAlerted ? `1px solid ${red_400}` : 'none'}
+              flex={1}
             >
               <AppText
                 size="body2"
                 color={neutral_200}
                 noOfLines={1}
-                style={{ wordBreak: 'break-all' }}
+                style={{ wordBreak: 'break-all', userSelect: 'text' }}
               >
                 {dataTxt?.length > 20 ? (
                   <AppTooltip label={dataTxt} placement="auto-start">
@@ -142,9 +151,10 @@ const AlertDefinitionTableRow: FC<Props> = ({
           {isResolveOptionEnabled && isResolveCellHovered && (
             <AlertResolveOption
               groupKey={data.groupCode}
-              id={data.anchorProdKey}
+              anchorProdModelKey={data.anchorProdModelKey}
               onMouseLeave={onMouseLeave}
               onResolvePopUp={onResolvePopUp}
+              isDisabled={isDisabled}
             />
           )}
         </HStack>

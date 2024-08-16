@@ -13,7 +13,7 @@ export interface JobScheduleConfigurationI {
   previousEnableStatus: 0 | 1;
   currentEnableStatus: null | 0 | 1;
   executionDetails: FCRunNowReqPayloadI | null;
-  scheduleType: ScheduleType;
+  scheduleType: string | null;
   startDate: number | null;
   scheduleBatchId: string | null;
   additionalConfig: { etlValidation: boolean };

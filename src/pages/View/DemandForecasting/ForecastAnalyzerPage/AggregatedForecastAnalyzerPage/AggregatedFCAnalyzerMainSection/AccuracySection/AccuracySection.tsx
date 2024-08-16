@@ -1,10 +1,10 @@
 import { HStack } from '@chakra-ui/react';
 import { FC } from 'react';
 import AccuracyCard from '../../../FCAnalyzerCommonComponents/AccuracyCard/AccuracyCard';
-import { AccuracyResponseI } from 'types/responses/view/forecastAnalyzer';
+import { AccuracyI } from 'types/responses/view/forecastAnalyzer';
 
 interface Props {
-  accuracyData: AccuracyResponseI | null;
+  accuracyData: AccuracyI | null;
 }
 
 const AccuracySection: FC<Props> = ({ accuracyData }) => {
@@ -17,17 +17,17 @@ const AccuracySection: FC<Props> = ({ accuracyData }) => {
       <AccuracyCard
         name="Overall Accuracy"
         heading={overallAccuracy?.heading}
-        value={overallAccuracy?.value}
+        value={overallAccuracy?.values}
       />
       <AccuracyCard
         name="Average Accuracy"
         heading={averageAccuracy?.heading}
-        value={averageAccuracy?.value}
+        value={averageAccuracy?.values}
       />
       <AccuracyCard
         name="Average Deviation"
         heading={averageDeviation?.heading}
-        value={averageDeviation?.value}
+        value={averageDeviation?.values}
       />
     </HStack>
   );

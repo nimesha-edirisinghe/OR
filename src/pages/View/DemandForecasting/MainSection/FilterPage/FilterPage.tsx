@@ -19,6 +19,8 @@ import {
 } from 'state/pages/shared/groupConfig/groupConfigState';
 import {
   resetSelectedSkuList,
+  resetViewForecastRightPanel,
+  toggleGlobalSkuSelection,
   updateShouldReloadData
 } from 'state/pages/view/demandForecastView/dfViewPageState';
 import { resetFcAnalyzerData } from 'state/pages/view/forecastAnalyzer/forecastAnalyzerState';
@@ -56,6 +58,8 @@ const FilterPage: FC<Props> = () => {
     dispatch(updateShouldReloadData(true));
     navigate('/app/demand-forecast/view');
     dispatch(resetSelectedSkuList());
+    dispatch(resetViewForecastRightPanel());
+    dispatch(toggleGlobalSkuSelection());
   };
 
   const onClickClear = () => {
@@ -81,7 +85,12 @@ const FilterPage: FC<Props> = () => {
           the required SKU-locations by applying filters below.
         </AppText>
       </VStack>
-      <FilterTypeItemList maxH="full" loadTo="page" filterHierarchy={viewForecastFilterHierarchy} />
+      <FilterTypeItemList
+        maxH="full"
+        loadTo="page"
+        filterHierarchy={viewForecastFilterHierarchy}
+        showWarning
+      />
       <HStack justify="space-between" w="full">
         <HStack spacing="4px">
           <AppText size="body3">Total SKU-locations:</AppText>

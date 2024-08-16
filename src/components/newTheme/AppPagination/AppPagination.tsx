@@ -4,6 +4,7 @@ import React, { FC } from 'react';
 import AppIconButton from '../AppIconButton/AppIconButton';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import { numberWithCommaSeparator } from 'utils/utility';
+import { neutral_200 } from 'theme/colors';
 
 interface Props {
   currentPage?: number;
@@ -35,9 +36,10 @@ const AppPagination: FC<Props> = ({ currentPage = 1, totalPages, onPageChange })
             width="8px"
             height="10px"
             fill={
-              currentPage === 1
-                ? 'pagination.primary._default.nav.icon'
-                : 'pagination.primary._default.nav.icon'
+              neutral_200
+              // currentPage === 1
+              //   ? 'pagination.primary._default.nav.icon'
+              //   : 'pagination.primary._default.nav.icon'
             }
             cursor={currentPage === 1 ? 'not-allowed' : 'pointer'}
           />
@@ -179,9 +181,10 @@ const AppPagination: FC<Props> = ({ currentPage = 1, totalPages, onPageChange })
             width="8px"
             height="10px"
             fill={
-              currentPage === totalPages
-                ? 'pagination.primary._default.nav.icon'
-                : 'pagination.primary._default.nav.icon'
+              neutral_200
+              // currentPage === totalPages
+              //   ? 'pagination.primary._default.nav.icon'
+              //   : 'pagination.primary._default.nav.icon'
             }
           />
         }

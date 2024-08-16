@@ -1,3 +1,4 @@
+import BulkEditAlertsPage from 'pages/MonitoringResolution/PredictiveAlerts/BulkEditAlertsPage/BulkEditAlertsPage';
 import CreateAlerts from 'pages/MonitoringResolution/PredictiveAlerts/CreateAlerts/CreateAlerts';
 import EditAlerts from 'pages/MonitoringResolution/PredictiveAlerts/EditAlerts/EditAlerts';
 import PredictiveAlerts from 'pages/MonitoringResolution/PredictiveAlerts/PredictiveAlerts';
@@ -26,6 +27,10 @@ export const predictiveAlertRoutes = {
     {
       path: 'view-all',
       element: <ViewAll />
+    },
+    {
+      path: 'bulk-edit',
+      element: <BulkEditAlertsPage />
     }
   ]
 };

@@ -31,8 +31,8 @@ const ReplenishmentConfigurationPage: FC<Props> = () => {
   const dispatch = useDispatch();
   const selectedOrgKey = userState.selectedOrg && userState.selectedOrg.orgKey;
   const [searchKey, setSearchKey] = useState<string>('');
-  const estimatedTime = rplPageState.estimatedTime;
-  const planningRunNowDrawer=rplConfigPageState.rplPlanningConfigLocalScope.planningRunNowDrawer
+  const estimatedTime = rplPageState?.estimatedTime!;
+  const planningRunNowDrawer = rplConfigPageState.rplPlanningConfigLocalScope.planningRunNowDrawer;
   const {
     isOpen: isPromptOpen,
     onToggle: onPromptToggle,
@@ -119,25 +119,25 @@ const ReplenishmentConfigurationPage: FC<Props> = () => {
     onDrawerClose();
   };
 
-  useEffect(()=>{
-    if(planningRunNowDrawer)
-      onPromptToggle()
-    },[planningRunNowDrawer]);
+  useEffect(() => {
+    if (planningRunNowDrawer) onPromptToggle();
+  }, [planningRunNowDrawer]);
 
   return (
     <>
       <PlanningConfigDrawer
         isOpen={rplConfigPageState.rplPlanningConfigLocalScope.planningConfigDrawer}
       />
-       <AppPopup
+      <AppPopup
         isOpen={isPromptOpen}
         onClose={onDrawerClose}
         leftBtnName="NO"
         rightBtnName="YES"
-        title="Confirmation"
-        infoMessage={`Replenishing planning for ${rplPageState.rplPlanningConfigLocalScope.selectedPlaningObj?.skuCount} SKUs is estimated to take approximately ${estimatedTime?.estimated_time_hour} hours ${estimatedTime?.estimated_time_min} minutes and ${estimatedTime?.estimated_time_sec} seconds. This process cannot be interrupted`}
+        title="Are you sure?"
+        infoMessage={`Replenishing planning for ${rplPageState.rplPlanningConfigLocalScope.selectedPlaningObj?.skuCount} anchors is estimated to take approximately ${estimatedTime?.estimated_time_hour} hours ${estimatedTime?.estimated_time_min} minutes ${estimatedTime?.estimated_time_sec} seconds`}
         onConfirmHandler={onDrawerClose}
         onCloseHandler={onRunNowHandler}
+        confirmationMessage="Are you sure you want to proceed?"
         icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
       />
       <PlanningScheduleDrawer

@@ -5,7 +5,7 @@ import AlertConfigurationItem from './AlertConfigurationItem';
 import { IAlert, alertSliceSelector } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { neutral_200 } from 'theme/colors';
+import { neutral_200, white } from 'theme/colors';
 
 interface AlertConfigurationProps {}
 
@@ -24,10 +24,10 @@ const AlertConfiguration: FC<AlertConfigurationProps> = () => {
       animate={{ opacity: 1 }}
       transition="1s"
     >
-      <AppText size="body3" textAlign="center" color={neutral_200}>
+      <AppText fontSize="12px" fontWeight={400} textAlign="center" color={white}>
         Select the alert types you wish to configure for for the SKU location list.
       </AppText>
-      <VStack h="auto" w="636px" spacing="8px" pt="20px">
+      <VStack h="auto" w="full" spacing="8px" pt="20px">
         {defaultAlertTypes.map((alertType) => (
           <AlertConfigurationItem alertTypeData={alertType} key={alertType.type} />
         ))}

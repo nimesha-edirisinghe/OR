@@ -41,11 +41,19 @@ import orderParameterReducer, {
 } from './pages/replenishmentRecommendation/orderParameter/orderParameterState';
 import commonReducer, { ICommon } from './pages/common/commonState';
 import dashboardReducer, { IDashboard } from './pages/dashboard/dashboardState';
-import storeNewActivationReducer, { IStoreNewActivationView } from './pages/stores/newActivation/storeNewActivationState';
-import productNewActivationReducer,{ IProductNewActivationView } from './pages/product/newActivation/productNewActivationState';
+import storeNewActivationReducer, {
+  IStoreNewActivationView
+} from './pages/stores/newActivation/storeNewActivationState';
+import productNewActivationReducer, {
+  IProductNewActivationView
+} from './pages/product/newActivation/productNewActivationState';
 import forecastAnalyzerReducer, {
   IForecastAnalyzer
 } from './pages/view/forecastAnalyzer/forecastAnalyzerState';
+import homeReducer, { IHome } from './pages/home/homeState';
+import systemConfigurationReducer, {
+  ISystemConfiguration
+} from './pages/systemConfiguration/systemConfigurationState';
 
 export interface IRootState {
   user: IUser;
@@ -65,12 +73,14 @@ export interface IRootState {
   chatWithMaya: IChatWithMayaSlice;
   dataIngestionSummaryView: IDataIngestionSummaryView;
   promotionSummaryView: IPromotionSummaryView;
-  storeNewActivation:IStoreNewActivationView;
+  storeNewActivation: IStoreNewActivationView;
   orderParameter: IOrderParameter;
   common: ICommon;
   dashboard: IDashboard;
-  productNewActivation:IProductNewActivationView;
+  productNewActivation: IProductNewActivationView;
   forecastAnalyzer: IForecastAnalyzer;
+  home: IHome;
+  systemConfigurations: ISystemConfiguration;
 }
 
 export const rootReducer = combineReducers({
@@ -97,5 +107,7 @@ export const rootReducer = combineReducers({
   orderParameter: orderParameterReducer,
   dashboard: dashboardReducer,
   productNewActivation: productNewActivationReducer,
-  forecastAnalyzer: forecastAnalyzerReducer
+  forecastAnalyzer: forecastAnalyzerReducer,
+  home: homeReducer,
+  systemConfigurations: systemConfigurationReducer
 });

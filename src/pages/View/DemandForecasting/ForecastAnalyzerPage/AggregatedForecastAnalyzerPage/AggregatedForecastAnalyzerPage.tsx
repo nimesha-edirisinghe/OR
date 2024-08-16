@@ -9,9 +9,7 @@ import FCAnalyzerMainSection from './AggregatedFCAnalyzerMainSection/AggregatedF
 import {
   IForecastAnalyzer,
   clearPercentage,
-  fetchAccuracyDistributionDataRequest,
   fetchAggregatedGraphDataRequest,
-  fetchExclusionCriteriaRequest,
   fetchKpiAccuracyRequest,
   fetchSkuDetailsDataRequest,
   forecastAnalyzerSliceSelector
@@ -31,7 +29,7 @@ const AggregatedForecastAnalyzerPage: FC<Props> = () => {
   const progressPercentage = fcAnalyzerState.progressPercentage;
   const kpiAccuracyData = fcAnalyzerState.kpiAccuracyData;
 
-  const readyToShowPage = progressPercentage.length === 5;
+  const readyToShowPage = progressPercentage.length === 3;
   const [showPage, setShowPage] = useState(false);
 
   useEffect(() => {
@@ -44,11 +42,9 @@ const AggregatedForecastAnalyzerPage: FC<Props> = () => {
     try {
       const abortController = new AbortController();
       dispatch(clearPercentage());
-      dispatch(fetchKpiAccuracyRequest({ type: FCAnalyzerTypeEnum.AGGREGATED }));
-      dispatch(fetchAggregatedGraphDataRequest({ type: FCAnalyzerTypeEnum.AGGREGATED }));
-      dispatch(fetchExclusionCriteriaRequest({ type: FCAnalyzerTypeEnum.AGGREGATED }));
+      dispatch(fetchKpiAccuracyRequest());
+      dispatch(fetchAggregatedGraphDataRequest());
       dispatch(fetchSkuDetailsDataRequest({ type: FCAnalyzerTypeEnum.AGGREGATED }));
-      dispatch(fetchAccuracyDistributionDataRequest({ type: FCAnalyzerTypeEnum.AGGREGATED }));
       return () => {
         abortController.abort();
       };
@@ -82,7 +78,7 @@ const AggregatedForecastAnalyzerPage: FC<Props> = () => {
             <FCAnalyzerMainSection />
           </>
         ) : (
-          <InprogressSection progress={progressPercentage} dataLength={5} />
+          <InprogressSection progress={progressPercentage} dataLength={3} />
         )}
       </VStack>
     );

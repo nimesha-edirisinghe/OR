@@ -1,4 +1,5 @@
 import { JobScheduleTypes } from './requests/jobScheduleRequest';
+import { JobScheduleConfigurationI } from './responses/jobScheduleResponses';
 
 export interface FCStartOnI {
   dateTime: string;
@@ -25,5 +26,6 @@ export interface WeekDay {
 
 export interface JobScheduleLocalScopeI {
   selectedJobScheduleType: JobScheduleTypes;
+  selectedJobSchedulingData: JobScheduleConfigurationI;
   currentEnableStatus: null | 0 | 1;
 }

@@ -26,10 +26,16 @@ const ReplenishmentConfigGroupNameCellDataMap: FC<ReplenishmentConfigGroupNameCe
 }) => {
   return (
     <GeneralCellLayout
-    {...rest}
+      {...rest}
       rowId={'0'}
       mainLabel={
-        <AppText whiteSpace="nowrap" fontSize="13px" color={neutral_200} fontWeight={400}>
+        <AppText
+          whiteSpace="nowrap"
+          fontSize="13px"
+          color={neutral_200}
+          fontWeight={400}
+          style={{ userSelect: 'text' }}
+        >
           {cellData?.groupDisplayName}
         </AppText>
       }

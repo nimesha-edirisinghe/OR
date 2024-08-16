@@ -22,30 +22,39 @@ interface ProductActivationSummaryViewHeaderProps {}
 const ProductActivationSummaryViewHeader: FC<ProductActivationSummaryViewHeaderProps> = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const viewState: ISelectProductView = useSelector(newProductActivationSliceSelector).productActivationView;
-  const selectionState= viewState.selection;
+  const viewState: ISelectProductView = useSelector(
+    newProductActivationSliceSelector
+  ).productActivationView;
+  const selectionState = viewState.selection;
   const totalSelected = selectionState.selectedCount;
   const lastUpdateDataTime = viewState.data.lastUpdated!;
-
 
   const refreshHandler = () => {
     dispatch(resetSelectionData());
     // dispatch(getStoreNewActivationRequest());
-    dispatch(getProductNewActivationRequest({pageNumber: viewState.data.pageNumber, pageSize: STORE_ACTIVATION_PAGE_SIZE, filter: [],searchKey: ''}));
+    dispatch(
+      getProductNewActivationRequest({
+        pageNumber: viewState.data.pageNumber,
+        pageSize: STORE_ACTIVATION_PAGE_SIZE,
+        filter: [],
+        searchKey: ''
+      })
+    );
   };
 
   const onConfigureClick = () => {
-
     if (totalSelected == 0) {
       showErrorToast('Please select at least one Product');
       return;
     }
 
-    dispatch(setConfigMode({ 
-      mode: totalSelected == 1 ? 'single' : 'multiple', 
-      id: totalSelected == 1 ? selectionState.activeSelection.anchorProdKey: '' 
-    }));
-    navigate("/app/products/new-activation/location-selection");
+    dispatch(
+      setConfigMode({
+        mode: totalSelected == 1 ? 'single' : 'multiple',
+        id: totalSelected == 1 ? selectionState.activeSelection.anchorProdKey : ''
+      })
+    );
+    navigate('/app/products/new-activation/location-selection');
   };
 
   return (
@@ -56,7 +65,7 @@ const ProductActivationSummaryViewHeader: FC<ProductActivationSummaryViewHeaderP
             <HStack h="full" w="full" justify="flex-start" spacing="20px">
               <Box bg={yellow_500_t28} p="4px 8px" borderRadius="8px">
                 <AppText size="body2" color={yellow_500} transition="all 0.2s ease">
-                  {totalSelected} Store{totalSelected === 1 ? '' : 's'} selected
+                  {totalSelected} Product{totalSelected === 1 ? '' : 's'} selected
                 </AppText>
               </Box>
             </HStack>
@@ -103,12 +112,7 @@ const ProductActivationSummaryViewHeader: FC<ProductActivationSummaryViewHeaderP
               size="iconMedium"
               bg={ocean_blue_600}
             />
-            <AppButton
-              variant="secondary"
-              size="medium"
-              onClick={onConfigureClick}
-              px="14px"
-            >
+            <AppButton variant="secondary" size="medium" onClick={onConfigureClick} px="14px">
               <AppText size="body2" color={blue_500}>
                 Configure
               </AppText>

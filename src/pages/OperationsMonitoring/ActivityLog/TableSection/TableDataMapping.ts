@@ -6,6 +6,7 @@ import {
   getActivityLogSummaryRequest
 } from 'state/pages/operationAndMonitoring/activityLog/activityLogState';
 import store from 'state/store';
+import { TableHeader } from 'types/responses/viewResponses';
 
 export type ActivityLogActionsT = 'sorting' | 'summaryPopUp';
 
@@ -25,7 +26,7 @@ const getSummaryRequest = (rowId: number | undefined) => {
 };
 
 // TODO: have to implement onclick actions
-const onIconClick = (action: ActivityLogActionsT, rowId?: number) => {
+export const onIconClick = (action: ActivityLogActionsT, rowId?: number) => {
   switch (action) {
     case 'sorting':
       store.dispatch(
@@ -42,7 +43,7 @@ const onIconClick = (action: ActivityLogActionsT, rowId?: number) => {
   }
 };
 
-const onLeaveAction = () => {
+export const onLeaveAction = () => {
   store.dispatch(clearActivityLogSummary());
 };
 
@@ -76,18 +77,18 @@ export const tableDataMap: TableMapDataI[] = [
     key: 'jobGroupId',
     cellType: 'generalCell',
     styles: {
-      width: '60px'
+      width: '67px'
     }
   },
   {
     id: 2,
     header: {
-      headerName: 'Group Name'
+      headerName: 'Group'
     },
     key: 'groupName',
     cellType: 'generalCell',
     styles: {
-      width: '315px'
+      width: '137px'
     }
   },
   {
@@ -98,7 +99,7 @@ export const tableDataMap: TableMapDataI[] = [
     key: 'activity',
     cellType: 'generalCell',
     styles: {
-      width: '200px'
+      width: '216px'
     }
   },
   {
@@ -109,7 +110,24 @@ export const tableDataMap: TableMapDataI[] = [
     key: 'execType',
     cellType: 'generalCell',
     styles: {
-      width: '180px'
+      width: '155px'
+    }
+  },
+  {
+    id: 7,
+    header: {
+      headerName: 'Status'
+    },
+    key: 'status',
+    cellType: 'operationCell',
+    styles: {
+      width: '155px'
+    },
+    action: {
+      actionName: 'summaryPopUp',
+      iconName: 'iIcon',
+      onIconClick,
+      onLeaveAction
     }
   },
   {
@@ -121,36 +139,19 @@ export const tableDataMap: TableMapDataI[] = [
     cellType: 'generalCell',
     format: 'dateTime',
     styles: {
-      width: '180px'
+      width: '155px'
     }
   },
   {
     id: 6,
     header: {
-      headerName: 'Execution Time'
+      headerName: 'Elapsed Time'
     },
     key: 'elapsedTime',
     cellType: 'generalCell',
     format: 'time',
     styles: {
-      width: '180px'
-    }
-  },
-  {
-    id: 7,
-    header: {
-      headerName: 'Status'
-    },
-    key: 'status',
-    cellType: 'operationCell',
-    styles: {
-      width: '180px'
-    },
-    action: {
-      actionName: 'summaryPopUp',
-      iconName: 'iIcon',
-      onIconClick,
-      onLeaveAction
+      width: '155px'
     }
   },
   {
@@ -162,7 +163,7 @@ export const tableDataMap: TableMapDataI[] = [
     cellType: 'generalCell',
     format: 'noZero',
     styles: {
-      width: '180px'
+      width: '155px'
     }
   },
   {
@@ -173,7 +174,7 @@ export const tableDataMap: TableMapDataI[] = [
     key: 'skuLocations',
     cellType: 'generalCell',
     styles: {
-      width: '180px'
+      width: '155px'
     }
   },
   {
@@ -184,7 +185,71 @@ export const tableDataMap: TableMapDataI[] = [
     key: 'user',
     cellType: 'generalCell',
     styles: {
-      width: '200px'
+      width: '155px'
     }
+  }
+];
+
+export const algorithmTableDataMap: TableHeader[] = [
+  {
+    key: '1',
+    w: 67,
+    displayValue: 'ID',
+    cellType: 'generalCell'
+  },
+  {
+    key: '2',
+    w: 13,
+    displayValue: 'Group',
+    cellType: 'generalCell'
+  },
+  {
+    key: '3',
+    w: 216,
+    displayValue: 'Activity',
+    cellType: 'generalCell'
+  },
+  {
+    key: '4',
+    w: 155,
+    displayValue: 'Execution Type',
+    cellType: 'generalCell'
+  },
+  {
+    key: '7',
+    w: 155,
+    displayValue: 'Status',
+    cellType: 'operationCell',
+    actionIcons: ['iIcon']
+  },
+  {
+    key: '5',
+    w: 155,
+    displayValue: 'Start Time',
+    cellType: 'generalCell'
+  },
+  {
+    key: '6',
+    w: 155,
+    displayValue: 'Elapsed Time',
+    cellType: 'generalCell'
+  },
+  {
+    key: '8',
+    w: 155,
+    displayValue: 'Anchor Locations',
+    cellType: 'generalCell'
+  },
+  {
+    key: '9',
+    w: 155,
+    displayValue: 'SKU Locations',
+    cellType: 'generalCell'
+  },
+  {
+    key: '10',
+    w: 155,
+    displayValue: 'User',
+    cellType: 'generalCell'
   }
 ];

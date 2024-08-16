@@ -26,12 +26,14 @@ import {
   setOriginPage,
   setSelectedAnalyzerType
 } from 'state/pages/view/forecastAnalyzer/forecastAnalyzerState';
-import { FCAnalyzerTypeEnum } from 'utils/enum';
-import { removeAllSelectedItems } from 'pages/MonitoringResolution/PredictiveAlerts/CreateAlerts/AlertCreationSteps/AnchorLocationFilter/FilterItemsSelectionDrawer/Helpers/addOrRemoveItemHelper';
+import { AccessPermissionEnum, FCAnalyzerTypeEnum, MenuItems } from 'utils/enum';
 import {
   IGroupConfigurationSlice,
   groupConfigurationSliceSelector
 } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import useTooltip from 'hooks/useTooltip';
 
 interface ForecastingHeaderProps {
   skuMaximized: boolean;
@@ -61,6 +63,10 @@ const ForecastingHeader: FC<ForecastingHeaderProps> = ({ maximizedHandler, skuMa
     aggregatedCount === 1
       ? `${aggregatedCount} Forecast Selected`
       : `${aggregatedCount} Forecasts Selected`;
+  const [isResolveTooltipOpen, handleResolveMouseEnter, handleResolveMouseLeave] = useTooltip();
+
+  const accessType = useAccessType(MenuItems.STORE_FORECASTS);
+  const isDisabled = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const moreOptionPopoverStyles: CSSProperties = {
     maxWidth: '180px',
@@ -76,13 +82,12 @@ const ForecastingHeader: FC<ForecastingHeaderProps> = ({ maximizedHandler, skuMa
     } else {
       dispatch(skuSearchAction(''));
       dispatch(resetViewForecastRightPanel());
-      removeAllSelectedItems(1, 'sku', groupFilter, dispatch);
       dispatch(getDemandForecastSkuListRequest({}));
     }
   };
 
   const fcAnalyzerHandler = () => {
-    navigate('/app/demand-forecast/aggregated-forecast-analyzer');
+    navigate('/app/demand-forecast/aggregated-forecast-analyser');
     if (skuMaximized) dispatch(setOriginPage('demandForecastGrid'));
     else dispatch(setOriginPage('df'));
     dispatch(setSelectedAnalyzerType(FCAnalyzerTypeEnum.AGGREGATED));
@@ -148,12 +153,12 @@ const ForecastingHeader: FC<ForecastingHeaderProps> = ({ maximizedHandler, skuMa
           <HStack>
             {aggregatedCount > 0 && !skuMaximized && (
               <HStack
-                h={'36px'}
-                borderRadius={'8px'}
-                px={'4px'}
-                py={'8px'}
-                bg={'rgba(255, 169, 20, 0.28)'}
-                justify={'center'}
+                h="36px"
+                borderRadius="8px"
+                px="8px"
+                py="8px"
+                bg="rgba(255, 169, 20, 0.28)"
+                justify="center"
               >
                 <AppText size="body2" color={yellow_500} noOfLines={1}>
                   {selectedForecastLabel}
@@ -236,33 +241,41 @@ const ForecastingHeader: FC<ForecastingHeaderProps> = ({ maximizedHandler, skuMa
                 />
               </Box>
             </AppTooltip>
-
-            <Box>
-              <AppPopover
-                isOpen={isOpenMoreOption}
-                onClose={onCloseMoreOption}
-                contentStyles={moreOptionPopoverStyles}
-                trigger="click"
-                children={
-                  <AppIconButton
-                    aria-label="moreOption"
-                    icon={
-                      <AppIcon
-                        transition="transform 0.25s ease"
-                        name="moreOption"
-                        fill={blue_500}
-                      />
-                    }
-                    variant="secondary"
-                    size="iconMedium"
-                    onClick={onToggleMoreOption}
-                    bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
-                    isDisabled={selectedSkuListLen === 0}
-                  />
-                }
-                content={<MoreOptionContent />}
-              />
-            </Box>
+            <AppTooltip
+              label={'More Option'}
+              noOfLines={1}
+              placement="bottom-start"
+              isOpen={isResolveTooltipOpen}
+              onClose={handleResolveMouseLeave}
+              display={isOpenMoreOption ? 'none' : 'block'}
+            >
+              <Box onMouseEnter={handleResolveMouseEnter} onMouseLeave={handleResolveMouseLeave}>
+                <AppPopover
+                  isOpen={isOpenMoreOption}
+                  onClose={onCloseMoreOption}
+                  contentStyles={moreOptionPopoverStyles}
+                  trigger="click"
+                  children={
+                    <AppIconButton
+                      aria-label="moreOption"
+                      icon={
+                        <AppIcon
+                          transition="transform 0.25s ease"
+                          name="moreOption"
+                          fill={blue_500}
+                        />
+                      }
+                      variant="secondary"
+                      size="iconMedium"
+                      onClick={onToggleMoreOption}
+                      bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
+                      isDisabled={selectedSkuListLen === 0 || isDisabled}
+                    />
+                  }
+                  content={<MoreOptionContent />}
+                />
+              </Box>
+            </AppTooltip>
           </HStack>
         </HStack>
       </HStack>

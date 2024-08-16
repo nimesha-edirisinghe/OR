@@ -48,23 +48,21 @@ const EditableCell: FC<Props> = ({
   const icon: any = actionIcons[0] === 'download' ? '' : actionIcons[0];
   const iconFlag: boolean = !!icon;
   const inputWidth: string = iconFlag ? '95%' : '100%';
-  const isCellEnabled = icon !== 'calenderWithDate';
+  const isCellEnabled = icon === 'calenderWithDate';
 
   const changeValue = (e: any) => {
-    if (isCellEnabled) {
+    if (!isCellEnabled) {
       const value = e.target.value;
       cellCallback(id || 0, index, value);
     }
   };
 
-  const onActionClickInternal = (
-    event: React.MouseEvent<SVGElement, MouseEvent>,
-    id?: string,
-    metaInfo?: string,
-    iconName?: iconName
-  ) => {
-    event.stopPropagation();
-    onEditActionHandler(inputRef, id!, index, inputRef.current.value, metaInfo, icon);
+  const iconActionHandler = () => {
+    if (iconFlag) onEditActionHandler(inputRef, id!, index, inputRef.current.value, metaInfo, icon);
+  };
+
+  const onActionClickInternal = (event: React.MouseEvent<SVGElement, MouseEvent>) => {
+    iconActionHandler();
   };
 
   return (
@@ -73,12 +71,12 @@ const EditableCell: FC<Props> = ({
         <Input
           // @ts-ignore
           ref={inputRef}
-          type={typeof displayValue}
-          value={displayValue}
+          min={0}
+          value={displayValue || ''}
           onChange={changeValue}
           noOfLines={1}
           textAlign={alignment}
-          style={{ wordBreak: 'break-all' }}
+          style={{ wordBreak: 'break-all', caretColor: !isCellEnabled ? 'auto' : 'transparent' }}
           outline="none"
           border="1px"
           borderColor={ocean_blue_300}
@@ -90,12 +88,15 @@ const EditableCell: FC<Props> = ({
           backgroundColor={ocean_blue_400}
           fontSize="13px"
           fontWeight="400"
+          // disabled={isCellEnabled}
+          _disabled={{ color: neutral_200, cursor: 'pointer' }}
+          onClick={iconActionHandler}
         />
       </Box>
       {iconFlag && (
         <Box>
           <AppIcon
-            onClick={(e) => onActionClickInternal(e, id!, metaInfo!, icon)}
+            onClick={(e) => onActionClickInternal(e)}
             cursor="pointer"
             transition="transform 0.25s ease"
             name={icon}

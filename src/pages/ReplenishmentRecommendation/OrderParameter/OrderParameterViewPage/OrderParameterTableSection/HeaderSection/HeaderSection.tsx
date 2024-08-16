@@ -1,5 +1,6 @@
 import { Box, HStack } from '@chakra-ui/react';
 import { AppIcon } from 'components/AppIcon/AppIcon';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import AppInputGroup from 'components/newTheme/AppInputGroup/AppInputGroup';
 import AppText from 'components/newTheme/AppText/AppText';
@@ -84,22 +85,26 @@ const HeaderSection: FC<Props> = ({ filterLabelTypes }) => {
           height="36px"
           onKeyDown={onSearchKeyDownHandler}
         />
-        <AppIconButton
-          aria-label="filter"
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name="filter"
-              width="14px"
-              height="14px"
-              fill={blue_500}
+        <AppTooltip label={'Filter'} noOfLines={1} placement="bottom-start">
+          <Box>
+            <AppIconButton
+              aria-label="filter"
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name="filter"
+                  width="14px"
+                  height="14px"
+                  fill={blue_500}
+                />
+              }
+              variant="secondary"
+              size="iconMedium"
+              onClick={onFilterHandler}
+              bg={ocean_blue_600}
             />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={onFilterHandler}
-          bg={ocean_blue_600}
-        />
+          </Box>
+        </AppTooltip>
       </HStack>
       <HStack w="auto">
         <AppText size="body3" color={ocean_blue_100} transition="all 0.2s ease">

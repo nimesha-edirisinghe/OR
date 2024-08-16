@@ -29,7 +29,7 @@ import {
 } from './sagaHelpers/sgH_ActivityLog';
 import { ActivityLogDataI, ActivityLogFilterT, ActivityLogSummaryDataI } from 'types/activityLog';
 import { PayloadAction } from '@reduxjs/toolkit';
-
+import { cloneDeep } from 'lodash';
 interface FilterDataActionI {
   payload: {
     filterType: ActivityLogFilterT;
@@ -100,6 +100,7 @@ function* getFilterDataRequest(action: FilterDataActionI) {
 
 function* getActivityLogListRequest(
   action: PayloadAction<{
+    search?: string;
     pageNumber?: number;
     ascendingSort?: boolean;
   }>
@@ -108,9 +109,21 @@ function* getActivityLogListRequest(
     const { pageNumber } = action.payload;
     let userState: IUser = yield select(userSliceSelector);
     const insightState: IActivityLogSlice = yield select(activityLogSliceSelector);
-    const dashboardFilter = insightState.dashboardFilter;
+    const activityLogState: IActivityLogSlice = yield select(activityLogSliceSelector);
+    const searchKey = activityLogState.localScope.searchKey;
+    const dashboardFilter = cloneDeep(insightState.dashboardFilter);
+
+    if (searchKey) {
+      dashboardFilter.filterLocalScope.rightPanelRetainDataList.activity.isSelectAll = true;
+    }
 
     const formattedFilterOptions: any = filterRequestFormatterForTable(dashboardFilter);
+    if (searchKey) {
+      formattedFilterOptions.activity.isSelectAll = insightState.dashboardFilter.filterLocalScope
+        .rightPanelRetainDataList.activity.isSelectAll
+        ? true
+        : false;
+    }
     const orgKey = userState.selectedOrg.orgKey;
 
     const queryParams: ActivityLogListQueryParmI = {

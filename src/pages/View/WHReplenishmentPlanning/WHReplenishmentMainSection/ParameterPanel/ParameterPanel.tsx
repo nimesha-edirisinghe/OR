@@ -15,7 +15,7 @@ const ParameterPanel: FC<ParameterPanelProps> = () => {
   const rplWhViewState: IRPLWhView = useSelector(rplWHViewSliceSelector);
   const [scroll, setScroll] = useState('hidden');
   const orderPlan = rplWhViewState.rplWhPlanDetails?.orderPlan;
-  const ubp = orderPlan?.unitPrice ? '' + orderPlan?.unitPrice : '';
+  const ubp = orderPlan?.unitPrice?.toString() || '';
   const parameterItemArr: RplParameterObjI[] = [
     {
       key: 'plannedOn',
@@ -43,6 +43,11 @@ const ParameterPanel: FC<ParameterPanelProps> = () => {
       value: orderPlan?.orderingFrequency.toString()!
     },
     {
+      key: 'shelfLife',
+      displayName: 'Shelf Life',
+      value: orderPlan?.shelfLife.toString()!
+    },
+    {
       key: 'unitBuyingPrice',
       displayName: 'Unit Buying Price',
       value: ubp
@@ -59,18 +64,19 @@ const ParameterPanel: FC<ParameterPanelProps> = () => {
     }
   ];
   return (
-    <HStack 
-      w="full" 
-      h="full" 
+    <HStack
+      w="full"
+      h="full"
       justify="start"
       gap="2px"
       overflow={scroll}
       __css={tableScrollbarXYStyles}
       onMouseEnter={() => setScroll('auto')}
-      onMouseLeave={() => setScroll('hidden')}>
-        {parameterItemArr.map((item) => (
-          <ParameterItem parameterObject={item} key={item.key} />
-        ))}
+      onMouseLeave={() => setScroll('hidden')}
+    >
+      {parameterItemArr.map((item) => (
+        <ParameterItem parameterObject={item} key={item.key} />
+      ))}
     </HStack>
   );
 };

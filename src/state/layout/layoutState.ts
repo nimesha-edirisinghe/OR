@@ -4,6 +4,7 @@ import { IRootState } from 'state/rootState';
 import { initialLeftMenuState } from 'utils/layouts';
 import { _updateCollapseTogglers } from './stateHelpers/stH_Layout';
 import { getFromLocal } from 'utils/localStorage';
+import { AccessType } from 'utils/permissions';
 
 export type MenuItem = {
   iconName?: string;
@@ -16,6 +17,7 @@ export type MenuItem = {
 export interface LeftMenu {
   [key: string]: {
     iconName?: iconName;
+    accessType?: AccessType;
     displayName: string;
     path?: string;
     isActive?: boolean;
@@ -23,6 +25,7 @@ export interface LeftMenu {
       [key: string]:
         | {
             displayName: string;
+            accessType?: AccessType;
             path?: string | null;
             iconName?: string;
             subMenu?: {
@@ -48,6 +51,7 @@ export interface ILayout {
   activeSubMenuItem: string | null;
   activePage: string | null;
   isLoading: boolean;
+  refreshToggle: boolean;
 }
 const initialActiveSubMenuItem = getFromLocal('activeSubMenuItem');
 
@@ -60,7 +64,8 @@ export const LayoutSlice = createSlice({
     leftMenuExpandAll: false,
     activeMenuItem: null,
     activeSubMenuItem: initialActiveSubMenuItem,
-    isLoading: false
+    isLoading: false,
+    refreshToggle: false
   } as ILayout,
   reducers: {
     updateLeftMenu: (state, action) => {
@@ -108,6 +113,7 @@ export const LayoutSlice = createSlice({
           state.isMayaActive = true;
         }
         state.leftMenu = action.payload;
+        state.refreshToggle = !state.refreshToggle;
       } catch (e) {
         console.error('Error occurred on menu fetching ', e);
       }

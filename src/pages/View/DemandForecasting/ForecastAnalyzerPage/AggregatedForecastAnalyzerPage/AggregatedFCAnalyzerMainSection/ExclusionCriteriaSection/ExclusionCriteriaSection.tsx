@@ -1,9 +1,9 @@
 import { FC } from 'react';
 import ExclusionCriteriaItem from '../../../FCAnalyzerCommonComponents/ExclusionCriteriaItem/ExclusionCriteriaItem';
-import { ExclusionCriteriaResponseI } from 'types/responses/view/forecastAnalyzer';
+import { ExclusionCriteriaI } from '../helper';
 
 interface ExclusionCriteriaSectionProps {
-  exCriteriaData: ExclusionCriteriaResponseI[] | null;
+  exCriteriaData: ExclusionCriteriaI[] | null;
 }
 
 const ExclusionCriteriaSection: FC<ExclusionCriteriaSectionProps> = ({ exCriteriaData }) => {

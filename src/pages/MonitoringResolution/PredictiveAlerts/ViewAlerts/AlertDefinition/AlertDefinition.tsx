@@ -1,6 +1,6 @@
 import { Box, HStack, VStack } from '@chakra-ui/react';
 import InsightsPageLayout from 'layouts/PageLayouts/InsightsPageLayout';
-import { FC, useCallback, useEffect } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { IUser, userSliceSelector } from 'state/user/userState';
 import {
@@ -9,7 +9,8 @@ import {
   getAlertsRequest,
   resetSelectedSkuList,
   setAlertDefinitionPaginationPageNo,
-  setAlertDefinitionSearchKey
+  setAlertDefinitionSearchKey,
+  updateSuccessStatus
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import AlertCardTab from './AlertCardTab/AlertCardTab';
 import ActionBar from './ActionBar/ActionBar';
@@ -32,36 +33,42 @@ import ViewAndEditReplenishment from './ViewAndEditReplenishment';
 interface Props {}
 
 const AlertDefinition: FC<Props> = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const userState: IUser = useSelector(userSliceSelector);
   const alertState: IAlert = useSelector(alertSliceSelector);
-  const selectedOrgKey = userState.selectedOrg && userState.selectedOrg.orgKey;
-  const alertSummaryList = alertState.alertSummaryList;
-  const selectedAlertType = alertState.alertLocalScope?.selectedAlertTypeObj?.alertType;
-
   const groupConfigurationState: IGroupConfigurationSlice = useSelector(
     groupConfigurationSliceSelector
   );
+  const selectedOrgKey = userState.selectedOrg && userState.selectedOrg.orgKey;
+  const alertSummaryList = alertState.alertSummaryList;
+  const selectedAlertType = alertState.alertLocalScope?.selectedAlertTypeObj?.alertType;
+  const shouldReloadAlertData = alertState.alertLocalScope?.shouldReloadAlertData;
   const filterAppliedIndicator = groupConfigurationState.groupFilter.filterAppliedIndicator;
-
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const [orgKey, setOrgKey] = useState<number>(selectedOrgKey);
 
   useEffect(() => {
-    dispatch(resetSelectedSkuList());
-  }, [selectedAlertType]);
+    shouldReloadAlertData && dispatch(resetSelectedSkuList());
+  }, [selectedAlertType, shouldReloadAlertData]);
 
   useEffect(() => {
     try {
       const abortController = new AbortController();
       if (selectedOrgKey) {
-        if (alertSummaryList.list) {
-          dispatch(resetFcAnalyzerData());
-          dispatch(setAlertDefinitionSearchKey(''));
-          dispatch(setAlertDefinitionPaginationPageNo(1));
-          dispatch(getAlertsRequest({ alertOnly: 1 }));
-        } else {
+        if (selectedOrgKey !== orgKey || alertSummaryList.list?.length === 0)
           navigate('/app/predictive-alerts');
+
+        if (alertSummaryList.list) {
+          if (shouldReloadAlertData) {
+            dispatch(resetFcAnalyzerData());
+            dispatch(setAlertDefinitionSearchKey(''));
+            dispatch(setAlertDefinitionPaginationPageNo(1));
+            dispatch(getAlertsRequest({ alertOnly: 1 }));
+          }
+          dispatch(updateSuccessStatus(false));
         }
+
+        setOrgKey(selectedOrgKey);
       }
       return () => {
         abortController.abort();
@@ -69,13 +76,13 @@ const AlertDefinition: FC<Props> = () => {
     } catch (error) {
       console.error('', error);
     }
-  }, [selectedOrgKey]);
+  }, [selectedOrgKey, shouldReloadAlertData]);
 
   useEffect(() => {
-    if (alertSummaryList.list) {
+    if (alertSummaryList.list && shouldReloadAlertData) {
       dispatch(getAlertsRequest({ alertOnly: 1 }));
     }
-  }, [filterAppliedIndicator]);
+  }, [filterAppliedIndicator, shouldReloadAlertData]);
 
   const alertDefinitionContent = useCallback(() => {
     return (
@@ -87,7 +94,7 @@ const AlertDefinition: FC<Props> = () => {
           <AlertDefinitionHeader />
         </HStack>
         <Box mt="20px" w="full" maxH="calc(100vh - 285px)">
-          <VStack w="full" borderRadius="10px" userSelect="none" spacing="20px" pb={'10px'}>
+          <VStack w="full" borderRadius="10px" userSelect="none" spacing="20px" pb="20px">
             <AlertCardTab />
             <ActionBar />
             <AlertDefinitionTable tableType={AlertTableViewTypeEnum.INDIVIDUAL} />
@@ -103,9 +110,11 @@ const AlertDefinition: FC<Props> = () => {
       <FilterDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenFilterDrawer}
         isGroupDisabled={true}
+        isOnAlertPage
       />
       <FilterItemsSelectionDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenItemSelectionDrawer}
+        isOnAlertPage
       />
       <InsightsPageLayout children={alertDefinitionContent()} />
     </>

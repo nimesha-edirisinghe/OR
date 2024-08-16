@@ -1,10 +1,11 @@
 import { apiClient } from 'api/axiosInstances';
-import { AxiosProgressEvent } from 'axios';
+import { AxiosProgressEvent, AxiosResponse } from 'axios';
 import { ApiResponse } from 'types/api';
 import { GroupFilterI } from 'types/requests/groupConfigRequests';
 import {
   BulkEditFileUploadBodyI,
   DownloadBulkEditQueryParamI,
+  DownloadBulkEditZipFileBodyI,
   DownloadEditResultRequestBodyI,
   GetRplDetailsReqQueryI,
   GetUploadHistoryReqBodyI,
@@ -90,17 +91,13 @@ export const getRplPlanTotalCountRequest = async (
 };
 
 export const rplBulkEditFileUploadRequest = async (
-  requestBody: BulkEditFileUploadBodyI,
   file: File,
   onUploadProgress?: (progressEvent: AxiosProgressEvent) => void
 ): Promise<FCApiResponse<any>> => {
   try {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append(
-      'groupDescDTO',
-      new Blob([JSON.stringify(requestBody)], { type: 'application/json' })
-    );
+
     const response: any = await apiClient.post('/replenishment/edit/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -129,6 +126,7 @@ export const rplDownloadBulkEditForecastRequest = async (
     throw error;
   }
 };
+
 export const rplGetUploadHistoryDataRequest = async (
   requestBody: GetUploadHistoryReqBodyI
 ): Promise<ApiResponse<GetUploadHistoryResponseI>> => {
@@ -145,6 +143,20 @@ export const rplDownloadBulkForecastEditResultRequest = async (
 ): Promise<any> => {
   try {
     const response = await apiClient.post('/replenishment/edit/download/result', requestBody, {
+      responseType: 'blob'
+    });
+    return response;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const rplDownloadBulkEditZipFileRequest = async (
+  requestBody: DownloadBulkEditZipFileBodyI
+): Promise<AxiosResponse<Blob>> => {
+  try {
+    const response = await apiClient.post('/replenishment/edit/download/zip', requestBody, {
       responseType: 'blob'
     });
     return response;

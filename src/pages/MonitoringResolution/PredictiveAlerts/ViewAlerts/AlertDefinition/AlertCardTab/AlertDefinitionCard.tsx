@@ -5,16 +5,26 @@ import { AlertNamesT } from 'types/alertConfig';
 import { useDispatch } from 'react-redux';
 import {
   getAlertsRequest,
+  resetSelectedSkuList,
   setAlertDefinitionPaginationPageNo,
   setAlertDefinitionSearchKey,
   setEnableEditAlertScrolling,
   setSelectedAlertTypeObject,
   setSelectedEditAlertType
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
-import { neutral_100, neutral_300, ocean_blue_400, ocean_blue_500 } from 'theme/colors';
+import {
+  blue_500,
+  neutral_100,
+  neutral_300,
+  ocean_blue_400,
+  ocean_blue_500,
+  ocean_blue_600
+} from 'theme/colors';
 import AppText from 'components/newTheme/AppText/AppText';
 import { getAlertColor } from 'utils/utility';
 import { useNavigate } from 'react-router-dom';
+import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
+import { AppIcon } from 'components/AppIcon/AppIcon';
 
 interface AlertDefinitionCardProps {
   alertType: AlertNamesT;
@@ -40,6 +50,7 @@ const AlertDefinitionCard: FC<AlertDefinitionCardProps> = ({
     dispatch(setAlertDefinitionSearchKey(''));
     dispatch(setAlertDefinitionPaginationPageNo(1));
     dispatch(getAlertsRequest({ alertOnly: 1 }));
+    dispatch(resetSelectedSkuList());
   };
 
   const onClickAddTypeHandler = (alertTypeObj: AlertDetailsI) => {
@@ -47,13 +58,16 @@ const AlertDefinitionCard: FC<AlertDefinitionCardProps> = ({
     dispatch(setSelectedAlertTypeObject(alertTypeObj));
     dispatch(setSelectedEditAlertType(cardIndex!));
     navigate('/app/predictive-alerts/edit');
+    dispatch(resetSelectedSkuList());
   };
 
-  const isEnabled:boolean= (alertDetails as any)?.enable;
+  const isEnabled: boolean = (alertDetails as any)?.enable;
 
   const alertTypeCardHandler = isAvailable ? onClickCardHandler : onClickAddTypeHandler;
 
   const alertColor = getAlertColor(alertDetails?.percentageChange!);
+
+  const growthAndDegrowthSuffix = ['Growth', 'Degrowth'].includes(alertType) ? ' (YoY)' : '';
 
   return (
     <VStack
@@ -64,7 +78,7 @@ const AlertDefinitionCard: FC<AlertDefinitionCardProps> = ({
       userSelect="none"
       spacing="0px"
       bg={ocean_blue_500}
-      justify={isAvailable&&isEnabled ? '' : 'center'}
+      justify={isAvailable && isEnabled ? '' : 'center'}
       align="center"
       cursor="pointer"
       onClick={() => alertTypeCardHandler(alertDetails!)}
@@ -75,12 +89,11 @@ const AlertDefinitionCard: FC<AlertDefinitionCardProps> = ({
       _hover={{
         bg: ocean_blue_400
       }}
-     
     >
-      {(isAvailable&&isEnabled) ? (
+      {isAvailable && isEnabled ? (
         <>
           <AppText size="body1" color={neutral_100}>
-            {alertType}
+            {alertType} {growthAndDegrowthSuffix}
           </AppText>
           <Box
             pos="absolute"
@@ -120,9 +133,30 @@ const AlertDefinitionCard: FC<AlertDefinitionCardProps> = ({
           )}
         </>
       ) : (
-        <AppText size="body1" color={neutral_100}>
-          {`Add ${alertType} Alert`}
-        </AppText>
+        <VStack>
+          <AppText size="body3" color={neutral_100}>
+            {`Add ${alertType} Alert`}
+          </AppText>
+          <AppIconButton
+            aria-label="next"
+            icon={
+              <AppIcon
+                transition="transform 0.25s ease"
+                name="plus"
+                width="14px"
+                height="14px"
+                fill={blue_500}
+              />
+            }
+            variant="iconPrimary"
+            size="iconLarge"
+            onClick={() => {}}
+            bg={ocean_blue_600}
+            _hover={{
+              bg: ''
+            }}
+          />
+        </VStack>
       )}
     </VStack>
   );

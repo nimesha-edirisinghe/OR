@@ -18,9 +18,14 @@ import { scrollbarYStyles } from 'theme/styles';
 interface Props {
   selectedRightSideItem: RightFilterItemContentI | undefined;
   addOrRemoveItem: (status: boolean, item: KeyValueI) => void;
+  isEnableSelectAll?: boolean;
 }
 
-const LeftPanel: FC<Props> = ({ selectedRightSideItem, addOrRemoveItem }) => {
+const LeftPanel: FC<Props> = ({
+  selectedRightSideItem,
+  addOrRemoveItem,
+  isEnableSelectAll = true
+}) => {
   const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
   const groupFilter = groupConfigState.groupFilter;
   const filterType = groupFilter?.filterType!;
@@ -30,15 +35,28 @@ const LeftPanel: FC<Props> = ({ selectedRightSideItem, addOrRemoveItem }) => {
   const dispatch = useDispatch();
   const viewOutOfCount = groupFilter.filterLocalScope.viewOutOfCount;
 
-  const createListItem = (item: any, key: any) => (
-    <CheckBoxWithLabel
-      key={key}
-      isChecked={!!item.isSelected}
-      label={item.value}
-      onChange={(e: any) => addOrRemoveItem(e.target.checked, item)}
-      isDisabled={!!selectedRightSideItem?.isSelectAll}
-    />
-  );
+  const createListItem = (item: any, key: any) => {
+    return (
+      <CheckBoxWithLabel
+        key={key}
+        isChecked={selectedRightSideItem?.isSelectAll ? true : !!item.isSelected}
+        label={item.value}
+        onChange={(e: any) => addOrRemoveItem(e.target.checked, item)}
+        isDisabled={!!selectedRightSideItem?.isSelectAll}
+      />
+    );
+  };
+
+  const getEnable = () => {
+    const hasSelectedItems = !!selectedRightSideItem?.selectedItems.length;
+    const isFilterListEmpty = filterItemListData.length === 0;
+
+    if (isEnableSelectAll) {
+      return hasSelectedItems || isFilterListEmpty;
+    }
+
+    return isFilterListEmpty;
+  };
 
   return (
     <AnimatePresence>
@@ -87,9 +105,7 @@ const LeftPanel: FC<Props> = ({ selectedRightSideItem, addOrRemoveItem }) => {
                   dispatch
                 )
               }
-              isDisabled={
-                !!selectedRightSideItem?.selectedItems.length || filterItemListData.length == 0
-              }
+              isDisabled={getEnable()}
             />
 
             {filterItemListData.map((item, key) => {

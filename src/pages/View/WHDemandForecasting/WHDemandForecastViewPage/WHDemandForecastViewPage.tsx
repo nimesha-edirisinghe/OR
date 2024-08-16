@@ -89,7 +89,7 @@ const WHDemandForecastViewPage: FC<Props> = () => {
             labelTypes: ['location', 'product', 'anchor', 'predictor', 'store', 'sku']
           })
         );
-        dispatch(skuSearchAction(''));
+        if (shouldReloadData) dispatch(skuSearchAction(''));
       }
       return () => {
         abortController.abort();
@@ -115,6 +115,7 @@ const WHDemandForecastViewPage: FC<Props> = () => {
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenFilterDrawer}
         filterHierarchy={viewForecastFilterHierarchy}
         whFlag={1}
+        showWarning
       />
       <FilterItemsSelectionDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenItemSelectionDrawer}

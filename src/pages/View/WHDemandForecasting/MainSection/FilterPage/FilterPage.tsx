@@ -17,6 +17,10 @@ import {
   IGroupConfig,
   selectGroupKey
 } from 'state/pages/shared/groupConfig/groupConfigState';
+import {
+  resetViewForecastRightPanel,
+  toggleGlobalSkuSelection
+} from 'state/pages/view/whDemandForecastView/whDfViewPageState';
 import { showErrorToast } from 'state/toast/toastState';
 import { neutral_100, ocean_blue_600 } from 'theme/colors';
 import { numberWithCommaSeparator } from 'utils/utility';
@@ -44,6 +48,8 @@ const FilterPage: FC<Props> = () => {
       showErrorToast('Please select a Group first');
       return;
     }
+    dispatch(toggleGlobalSkuSelection());
+    dispatch(resetViewForecastRightPanel());
     navigate('/app/wh-forecast/view');
   };
 
@@ -75,6 +81,7 @@ const FilterPage: FC<Props> = () => {
         loadTo="page"
         filterHierarchy={viewForecastFilterHierarchy}
         whFlag={1}
+        showWarning
       />
       <HStack justify="space-between" w="full">
         <HStack spacing="4px">

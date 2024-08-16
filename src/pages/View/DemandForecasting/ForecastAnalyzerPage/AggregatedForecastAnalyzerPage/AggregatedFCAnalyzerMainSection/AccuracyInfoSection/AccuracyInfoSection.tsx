@@ -12,7 +12,7 @@ const AccuracyInfoSection: FC<Props> = () => {
         Forecasts that exhibit any of these observations are not considered for accuracy evaluation.
       </AppText>
       <Box w="24px" h="full" alignContent="flex-start" pb="4px">
-        <AppIcon fill={ocean_blue_300} name="info" w="16px" h="16px" />
+        <AppIcon fill={ocean_blue_300} name="info" w="16px" h="16px" mb="10px" />
       </Box>
     </HStack>
   );

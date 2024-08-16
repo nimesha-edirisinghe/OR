@@ -37,7 +37,7 @@ const WHReplenishmentViewPage: FC<Props> = () => {
   );
   const sharedGroupState: IGroupConfig = useSelector(groupConfigSliceSelector);
   const viewReplenishmentFilterHierarchy = filterHierarchyGenerator('viewWhReplenishment');
-  
+
   const rplWhViewState: IRPLWhView = useSelector(rplWHViewSliceSelector);
   const isLoadWhData = rplWhViewState.isLoadWhData;
 
@@ -46,7 +46,7 @@ const WHReplenishmentViewPage: FC<Props> = () => {
       const abortController = new AbortController();
       if (selectedOrgKey) {
         dispatch(whRplResetUploadHistoryData());
-        if (isLoadWhData){
+        if (isLoadWhData) {
           dispatch(whRplSkuSearchAction(''));
         }
         dispatch(getGroupListRequest({ whFlag: 1 }));
@@ -90,6 +90,7 @@ const WHReplenishmentViewPage: FC<Props> = () => {
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenFilterDrawer}
         filterHierarchy={viewReplenishmentFilterHierarchy}
         whFlag={1}
+        showWarning
       />
       <FilterItemsSelectionDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenItemSelectionDrawer}

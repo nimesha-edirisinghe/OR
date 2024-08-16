@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
-import { ocean_blue_350, ocean_blue_50 } from 'theme/colors';
+import { ocean_blue_100, ocean_blue_200, ocean_blue_350, ocean_blue_50 } from 'theme/colors';
 import { getBarFillColor } from './helper';
 
 interface Props {
@@ -17,7 +17,31 @@ interface Props {
 }
 
 const AccuracyDistributionBarChart: FC<Props> = ({ data }) => {
-  const customFormatLabel = (value: any, entry: any, index: any) => {
+  const colors = [ocean_blue_50, ocean_blue_100, ocean_blue_200];
+
+  const customLabel = (props: any) => {
+    const { x, y, width, height, value, index } = props;
+    const fill = colors[(index as number) % colors.length];
+    if (value === 0) {
+      return null;
+    }
+
+    return (
+      <text
+        x={(x as number) + (width as number) + 2}
+        y={(y as number) + (height as number) / 2}
+        fill={fill}
+        dy={2}
+        textAnchor="start"
+        fontSize="12px"
+        fontWeight={600}
+      >
+        {value}
+      </text>
+    );
+  };
+
+  const customFormatLabel = (value: any) => {
     let customValue = value;
     if (value === 0) {
       customValue = '';
@@ -79,7 +103,7 @@ const AccuracyDistributionBarChart: FC<Props> = ({ data }) => {
               dataKey="value"
               position="right"
               formatter={customFormatLabel}
-              fill={ocean_blue_50}
+              content={customLabel}
             />
           </Bar>
         </BarChart>

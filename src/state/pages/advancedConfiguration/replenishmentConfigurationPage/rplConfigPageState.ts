@@ -105,16 +105,11 @@ export const ReplenishmentConfigPageSlice = createSlice({
     executePlanningRunNowFailure: (state) => {
       state.isLoading = false;
     },
-    getPlanningEstimatedTimeRequest: (state, action) => {
-      state.isLoading = true;
-    },
+    getPlanningEstimatedTimeRequest: (state, action) => {},
     getPlanningEstimatedTimeSuccess: (state, action) => {
       state.estimatedTime = action.payload.data;
-      state.isLoading = false;
     },
-    getPlanningEstimatedTimeFailure: (state) => {
-      state.isLoading = false;
-    },
+    getPlanningEstimatedTimeFailure: (state) => {},
     setRplConfigCurrentPage: (state, action: PayloadAction<number>) => {
       state.rplPlanningConfigLocalScope.currentPageNo = action.payload;
     }

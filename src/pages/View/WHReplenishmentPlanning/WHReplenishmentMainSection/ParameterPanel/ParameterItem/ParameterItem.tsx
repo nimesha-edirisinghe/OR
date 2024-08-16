@@ -13,7 +13,7 @@ const ParameterItem: FC<ParameterItemProps> = ({ parameterObject }) => {
     <VStack
       h="full"
       minW="102px"
-      w="calc(100vw - 1206px)"
+      w="full"
       borderRadius="4px"
       bg={ocean_blue_500}
       py="4px"

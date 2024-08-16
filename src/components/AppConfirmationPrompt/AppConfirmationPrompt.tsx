@@ -43,7 +43,9 @@ const AppConfirmationPrompt: React.FC<AppConfirmationPromptProps> = ({
         borderRadius="8px"
         border={'1px solid'}
         borderColor={ocean_blue_200}
-        boxShadow={'0px 2px 8px 0px rgba(40, 41, 61, 0.08), 0px 20px 32px 0px rgba(96, 97, 112, 0.24)'}
+        boxShadow={
+          '0px 2px 8px 0px rgba(40, 41, 61, 0.08), 0px 20px 32px 0px rgba(96, 97, 112, 0.24)'
+        }
       >
         <ModalHeader>
           <AppText>{title}</AppText>

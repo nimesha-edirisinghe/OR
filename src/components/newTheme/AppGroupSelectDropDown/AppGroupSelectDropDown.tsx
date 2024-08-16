@@ -10,9 +10,17 @@ import AppDropdown from '../AppDropdown/AppDropdown';
 interface Props extends BoxProps {
   onGroupSelect: (item: string) => void;
   height?: string;
+  lineMaxLength?: number;
+  handleToggle?: (isOpen: boolean) => void;
 }
 
-const AppGroupSelectDropDown: FC<Props> = ({ onGroupSelect, height = '36px', ...rest }) => {
+const AppGroupSelectDropDown: FC<Props> = ({
+  onGroupSelect,
+  height = '36px',
+  lineMaxLength = 18,
+  handleToggle,
+  ...rest
+}) => {
   const sharedGroupState: IGroupConfig = useSelector(groupConfigSliceSelector);
   const selectedGroupKey = sharedGroupState.selectedGroupKey;
   const groupValueList = sharedGroupState.groupList?.list?.map((obj) => obj.value);
@@ -29,6 +37,8 @@ const AppGroupSelectDropDown: FC<Props> = ({ onGroupSelect, height = '36px', ...
         selectedItem={_selectedItem!}
         isEnableSearch
         height={height}
+        lineMaxLength={lineMaxLength}
+        onToggle={handleToggle}
       />
     );
   }, [selectedGroupKey, sharedGroupState.groupList, height]);

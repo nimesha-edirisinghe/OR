@@ -35,7 +35,8 @@ const SelectedItem: FC<Props> = ({ item, addOrRemoveItem, ...rest }) => {
       minH="32px"
     >
       <AppText
-        size="body2"
+        fontSize="13px"
+        fontWeight={400}
         color={neutral_200}
         _groupHover={{ bg: ocean_blue_400 }}
         wordBreak={'break-all'}

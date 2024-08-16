@@ -1,7 +1,5 @@
 import { FC } from 'react';
 import { HStack, VStack } from '@chakra-ui/react';
-import { IAlert, alertSliceSelector } from 'state/pages/monitoringAndResolution/Alert/alertState';
-import { useDispatch, useSelector } from 'react-redux';
 import AppInput from 'components/AppInput/AppInput';
 import AppText from 'components/AppText/AppText';
 import AppButton from 'components/AppButton/AppButton';
@@ -10,10 +8,6 @@ import { neutral_400, neutral_500 } from 'theme/colors';
 interface Props {}
 
 const TitleSection: FC<Props> = () => {
-  const alertState: IAlert = useSelector(alertSliceSelector);
-
-  const dispatch = useDispatch();
-
   return (
     <VStack
       w="full"

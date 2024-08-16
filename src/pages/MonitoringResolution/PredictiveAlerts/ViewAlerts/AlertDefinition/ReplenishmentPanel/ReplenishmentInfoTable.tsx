@@ -9,12 +9,11 @@ interface ReplenishmentInfoTableProps {}
 const ReplenishmentInfoTable: FC<ReplenishmentInfoTableProps> = () => {
   const alertState: IAlert = useSelector(alertSliceSelector);
   const stockMovement = alertState.rplPlanDetails?.stockMovement;
-  const height: string = alertState.isReplenishmentEditable ? '38%' : '48%';
-
   const headers = stockMovement?.headers!;
   const formattedDataRow = stockMovement?.list!;
+
   return (
-    <Box h={height} w="full">
+    <Box h="full" w="full">
       <AppSimpleGrid
         headers={headers}
         rows={formattedDataRow}

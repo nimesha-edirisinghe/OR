@@ -1,11 +1,13 @@
 import { apiClient } from 'api/axiosInstances';
 import { ApiResponse } from 'types/api';
-import { ForecastAnalyzerReqBodyI } from 'types/requests/view/forecastAnalyzer';
 import {
-  AccuracyDistributionResponseI,
+  ForecastAnalyzerCommonReqBodyI,
+  ForecastAnalyzerReqBodyI,
+  ForecastAnalyzerSKUDetailsQueryParamI
+} from 'types/requests/view/forecastAnalyzer';
+import {
   AccuracyResponseI,
   AggregatedGraphResponseI,
-  ExclusionCriteriaResponseI,
   FCAnalyzerSkuResponseI,
   IndividualGraphResponseI,
   KPIResponseI,
@@ -13,7 +15,7 @@ import {
 } from 'types/responses/view/forecastAnalyzer';
 
 export const fetchKpiAccuracyRequest = async (
-  requestBody: ForecastAnalyzerReqBodyI
+  requestBody: ForecastAnalyzerCommonReqBodyI
 ): Promise<ApiResponse<AccuracyResponseI>> => {
   try {
     const response = await apiClient.post('/forecast/analyzer/kpi/accuracy', requestBody);
@@ -37,22 +39,10 @@ export const fetchIndividualGraphDataRequest = async (
 };
 
 export const fetchAggregatedGraphDataRequest = async (
-  requestBody: ForecastAnalyzerReqBodyI
+  requestBody: ForecastAnalyzerCommonReqBodyI
 ): Promise<ApiResponse<AggregatedGraphResponseI[]>> => {
   try {
     const response = await apiClient.post('/forecast/analyzer/aggregated/graph', requestBody);
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-
-export const fetchExclusionCriteriaRequest = async (
-  requestBody: ForecastAnalyzerReqBodyI
-): Promise<ApiResponse<ExclusionCriteriaResponseI[]>> => {
-  try {
-    const response = await apiClient.post('/forecast/analyzer/exclusion/criteria', requestBody);
     return response.data;
   } catch (error) {
     console.error(error);
@@ -85,21 +75,13 @@ export const fetchKpiDataRequest = async (
 };
 
 export const fetchSkuDetailsDataRequest = async (
-  requestBody: ForecastAnalyzerReqBodyI
+  requestBody: ForecastAnalyzerCommonReqBodyI,
+  queryParams: ForecastAnalyzerSKUDetailsQueryParamI
 ): Promise<ApiResponse<FCAnalyzerSkuResponseI>> => {
   try {
-    const response = await apiClient.post('/forecast/analyzer/sku/details', requestBody);
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-export const fetchAccuracyDistributionDataRequest = async (
-  requestBody: ForecastAnalyzerReqBodyI
-): Promise<ApiResponse<AccuracyDistributionResponseI>> => {
-  try {
-    const response = await apiClient.post('forecast/analyzer/accuracy/distribution', requestBody);
+    const response = await apiClient.post('/forecast/analyzer/sku/details', requestBody, {
+      params: queryParams
+    });
     return response.data;
   } catch (error) {
     console.error(error);

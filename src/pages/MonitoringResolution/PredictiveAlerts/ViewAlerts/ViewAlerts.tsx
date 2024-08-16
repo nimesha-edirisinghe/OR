@@ -9,7 +9,8 @@ import { scrollbarYStyles } from 'theme/styles';
 import {
   IAlert,
   alertSliceSelector,
-  getAlertConfigsRequest
+  getAlertConfigsRequest,
+  updateAlertShouldReloadData
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import ViewAlertHeader from './ViewAlertHeader/ViewAlertHeader';
 import { selectGroupKey } from 'state/pages/shared/groupConfig/groupConfigState';
@@ -18,13 +19,12 @@ import { resetGroupFilter } from 'state/pages/advancedConfiguration/groupConfigu
 interface Props {}
 
 const ViewAlerts: FC<Props> = () => {
+  const dispatch = useDispatch();
   const userState: IUser = useSelector(userSliceSelector);
   const alertState: IAlert = useSelector(alertSliceSelector);
   const selectedOrgKey = userState.selectedOrg && userState.selectedOrg.orgKey;
   const alertSummaryList = alertState.alertSummaryList;
   const isInitialAlertSummaryRequest = alertState.alertLocalScope.isInitialAlertSummaryRequest;
-
-  const dispatch = useDispatch();
 
   useEffect(() => {
     try {
@@ -33,6 +33,7 @@ const ViewAlerts: FC<Props> = () => {
         dispatch(selectGroupKey(null));
         dispatch(resetGroupFilter());
         dispatch(getAlertConfigsRequest({ initRequest: true }));
+        dispatch(updateAlertShouldReloadData(true));
       }
       return () => {
         abortController.abort();

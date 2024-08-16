@@ -11,7 +11,6 @@ import {
   VStack,
   useDisclosure
 } from '@chakra-ui/react';
-import AppButton from 'components/AppButton/AppButton';
 import AppText from 'components/AppText/AppText';
 import { FC, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -34,6 +33,7 @@ import { ScheduleType } from 'types/responses/jobScheduleResponses';
 import { groupDetailsValidator } from '../../StoreGroup/StoreGroupCreation/SaveGroup/Helpers/groupDetailsValidatorHelper';
 import { blue_500, ocean_blue_600, ocean_blue_100 } from 'theme/colors';
 import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
+import AppButton from 'components/newTheme/AppButton/AppButton';
 
 interface Props {
   isOpen: boolean;
@@ -169,8 +169,6 @@ const WarehouseGroupCreationDrawer: FC<Props> = ({ isOpen }) => {
           bg={ocean_blue_600}
           w="600px"
           maxW="600px"
-          border="1px solid"
-          borderColor={ocean_blue_100}
           borderRadius="12px 0px 0px 12px"
           boxShadow="0px 4px 4px rgba(0, 0, 0, 0.25)"
           pl="16px"
@@ -178,10 +176,10 @@ const WarehouseGroupCreationDrawer: FC<Props> = ({ isOpen }) => {
           pt="22px"
           userSelect="none"
         >
-          <DrawerCloseButton mt="10px" color="#F7CC45" />
+          <DrawerCloseButton mt="10px" color={blue_500} />
           <HStack>
             <VStack align="left">
-              <AppText lineHeight="28px" fontSize="20px" fontWeight="600" fontStyle="normal">
+              <AppText lineHeight="28px" size="body1" fontWeight="600" fontStyle="normal">
                 Create Group - Warehouse
               </AppText>
             </VStack>
@@ -201,22 +199,15 @@ const WarehouseGroupCreationDrawer: FC<Props> = ({ isOpen }) => {
               <Divider color="#595959" h="1px" mt="8px" mb="20px" />
               <HStack w="full" justify="end">
                 <AppButton
-                  variant="outline"
+                  variant="secondary"
+                  size="medium"
                   onClick={onOpenCancelPrompt}
-                  w="100px"
-                  h="35px"
+                  px="25px"
                   borderColor={blue_500}
                 >
                   Cancel
                 </AppButton>
-                <AppButton
-                  variant="primary"
-                  onClick={onOpenSavePrompt}
-                  w="100px"
-                  h="35px"
-                  borderRadius="100px"
-                  color="#000"
-                >
+                <AppButton variant="primary" size="medium" onClick={onOpenSavePrompt} px="25px">
                   Save
                 </AppButton>
               </HStack>

@@ -22,6 +22,9 @@ import { scrollbarYStyles } from 'theme/styles';
 import AppText from 'components/newTheme/AppText/AppText';
 import useScrollState from 'hooks/useScrollState';
 import { motion } from 'framer-motion';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 export type OtherConfigCheckBoxName =
   | 'cross_validation'
@@ -47,6 +50,9 @@ const OtherTab: FC<Props> = ({}) => {
   const trainingConfigLocalScope = trainingConfigState.trainingConfigLocalScope;
   const advanceConfiguration = trainingConfigData.algorithmSettings.advanced_configurations;
   const [scroll, handleMouseEnter, handleMouseLeave] = useScrollState();
+
+  const accessType = useAccessType(MenuItems.FORECASTING_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const onChangeOtherConfigurationCheckBox = (name: OtherConfigCheckBoxName, value: boolean) => {
     switch (name) {
@@ -97,6 +103,7 @@ const OtherTab: FC<Props> = ({}) => {
             onChangeOtherConfigurationCheckBox('cross_validation', checked)
           }
           py="0"
+          isDisabled={accessNotAllowed}
         />
         <AppCheckbox
           id={1}
@@ -106,6 +113,7 @@ const OtherTab: FC<Props> = ({}) => {
             onChangeOtherConfigurationCheckBox('outlier_detection', checked)
           }
           py="0"
+          isDisabled={accessNotAllowed}
         />
         <AppCheckbox
           id={2}
@@ -115,8 +123,9 @@ const OtherTab: FC<Props> = ({}) => {
             onChangeOtherConfigurationCheckBox('exemption_periods', checked)
           }
           py="0"
+          isDisabled={accessNotAllowed}
         />
-        <ExemptionPeriods />
+        <ExemptionPeriods isDisabled={accessNotAllowed} />
       </VStack>
 
       <VStack align="start" transition="all 0.05s ease" spacing="8px" w="full">
@@ -127,6 +136,7 @@ const OtherTab: FC<Props> = ({}) => {
           onChange={onChangeBestFitCriteriaRadio}
           name="RMSE"
           lineHeight="0px"
+          isDisabled={accessNotAllowed}
         />
         <RadioBoxWithText
           text="MAD"
@@ -134,6 +144,7 @@ const OtherTab: FC<Props> = ({}) => {
           onChange={onChangeBestFitCriteriaRadio}
           name="MAD"
           lineHeight="0px"
+          isDisabled={accessNotAllowed}
         />
         <RadioBoxWithText
           text="MAPE"
@@ -141,6 +152,7 @@ const OtherTab: FC<Props> = ({}) => {
           onChange={onChangeBestFitCriteriaRadio}
           name="MAPE"
           lineHeight="0px"
+          isDisabled={accessNotAllowed}
         />
         <RadioBoxWithText
           text="WMAD"
@@ -148,6 +160,7 @@ const OtherTab: FC<Props> = ({}) => {
           onChange={onChangeBestFitCriteriaRadio}
           name="WMAD"
           lineHeight="0px"
+          isDisabled={accessNotAllowed}
         />
         <RadioBoxWithText
           text="PENALIZED ERROR"
@@ -155,9 +168,10 @@ const OtherTab: FC<Props> = ({}) => {
           onChange={onChangeBestFitCriteriaRadio}
           name="PENALIZED_ERROR"
           lineHeight="0px"
+          isDisabled={accessNotAllowed}
         />
         <Box w="full" pr="2px">
-          <PenalizedErrors />
+          <PenalizedErrors isDisabled={accessNotAllowed} />
         </Box>
       </VStack>
 
@@ -167,6 +181,7 @@ const OtherTab: FC<Props> = ({}) => {
           label="Train Model from"
           onChange={onToggleTrainModelFromCheckBox}
           isChecked={trainingConfigLocalScope.trainModelFromCheckBoxChecked || false}
+          isDisabled={accessNotAllowed}
         />
         <VStack align="start">
           <AppText w="120px" fontSize="12px" fontWeight="400" color="#969696">
@@ -180,7 +195,9 @@ const OtherTab: FC<Props> = ({}) => {
               borderRadius="8px"
               p="10px 8px 10px 12px"
               bg={ocean_blue_500}
-              isDisabled={!trainingConfigLocalScope.trainModelFromCheckBoxChecked}
+              isDisabled={
+                !trainingConfigLocalScope.trainModelFromCheckBoxChecked || accessNotAllowed
+              }
               onChange={(e) => dispatch(updateTrainModelFrom(e.target.value))}
               value={trainingConfigData.algorithmSettings.start_date || ''}
             />
@@ -192,6 +209,7 @@ const OtherTab: FC<Props> = ({}) => {
                   }
                   children={<AppIconChakra name="calender" fill={blue_500} />}
                   prePos={{ x: -220, y: -280 }}
+                  isDisabled={accessNotAllowed}
                 />
               </Box>
             )}

@@ -14,26 +14,24 @@ import {
   forecastAnalyzerSliceSelector
 } from 'state/pages/view/forecastAnalyzer/forecastAnalyzerState';
 import { useSelector } from 'react-redux';
+import { exclusionCriteriaFormatter } from '../../AggregatedForecastAnalyzerPage/AggregatedFCAnalyzerMainSection/helper';
 
 interface Props {}
 
 const MainSection: FC<Props> = () => {
   const fcAnalyzerState: IForecastAnalyzer = useSelector(forecastAnalyzerSliceSelector);
-  const {
-    kpiAccuracyData,
-    exclusionCriteriaList,
-    skuDetails,
-    accuracyDistributionData,
-    kpiData,
-    individualGraphData,
-    plannedActualList
-  } = fcAnalyzerState;
+  const { kpiAccuracyData, skuDetails, kpiData, individualGraphData, plannedActualList } =
+    fcAnalyzerState;
+  const exclusionCriteria = kpiAccuracyData?.exclusionCriteria!;
+  const accuracyDistributionData = kpiAccuracyData?.accuracyDistribution!;
+  const accuracyObj = kpiAccuracyData?.accuracy!;
+  const formattedExclusiveCriteria = exclusionCriteriaFormatter(exclusionCriteria);
   return (
     <VStack h="941px" w="full" spacing="16px">
       <HStack h="653px" w="full" spacing="20px">
         <VStack flex={2.1} h="full" spacing="16px">
           <Box h="80px" w="full">
-            <AccuracySection accuracyData={kpiAccuracyData} />
+            <AccuracySection accuracyData={accuracyObj} />
           </Box>
           <Box h="393px" w="full">
             <IndividualChartSection chartData={individualGraphData} />
@@ -45,7 +43,7 @@ const MainSection: FC<Props> = () => {
         <VStack flex={1} h="full" spacing="16px">
           <VStack h="220px" w="full" spacing="8px">
             <VStack h="182px" w="full" spacing="8px">
-              <ExclusionCriteriaSection exCriteriaData={exclusionCriteriaList!} />
+              <ExclusionCriteriaSection exCriteriaData={formattedExclusiveCriteria!} />
             </VStack>
             <Box h="30px" w="full">
               <AccuracyInfoSection />

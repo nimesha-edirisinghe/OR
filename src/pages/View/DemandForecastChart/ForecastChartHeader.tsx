@@ -18,13 +18,15 @@ import {
   setOriginPage,
   setSelectedAnalyzerType
 } from 'state/pages/view/forecastAnalyzer/forecastAnalyzerState';
-import { FCAnalyzerTypeEnum } from 'utils/enum';
+import { AccessPermissionEnum, FCAnalyzerTypeEnum, MenuItems } from 'utils/enum';
 import { useNavigate } from 'react-router-dom';
 import AppPopover from 'components/AppPopover/AppPopover';
 import PopoverContent, {
   editedPopoverStyles
 } from '../DemandForecasting/MainSection/ControlPanel/PopoverContent';
 import MoreOptionContent from './MoreOptionContent';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
 
 const optionPopoverStyles: CSSProperties = {
   maxWidth: '180px',
@@ -53,9 +55,14 @@ const ForecastChartHeader: FC<ForecastChartHeaderProps> = ({
   const [isResolveTooltipOpen, handleResolveMouseEnter, handleResolveMouseLeave] = useTooltip();
   const { isOpen: isOpen, onToggle: onOpen, onClose: onClose } = useDisclosure();
   const isEdited = graphData?.some((item) => item.isEdited === 1) || false;
+  const isAllSkuSelected = dfViewState.dfViewLocalScope.globalSkuSelected;
+  const totalSkuCount = dfViewState.skuListData?.totalCount;
+
+  const accessType = useAccessType(MenuItems.STORE_FORECASTS);
+  const isDisabled = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const validateHandler = () => {
-    navigate('/app/demand-forecast/individual-forecast-analyzer');
+    navigate('/app/demand-forecast/individual-forecast-analyser');
     dispatch(setOriginPage('df'));
     dispatch(setSelectedAnalyzerType(FCAnalyzerTypeEnum.INDIVIDUAL));
     if (isGraphPanelOpen) dispatch(toggleGraphPanel());
@@ -63,7 +70,11 @@ const ForecastChartHeader: FC<ForecastChartHeaderProps> = ({
 
   return (
     <Flex p="12px" w="full" gap="8px" align="center">
-      <ForecastChartNavigator graphNavigator={graphNavigator} />
+      <ForecastChartNavigator
+        graphNavigator={graphNavigator}
+        isAllSkuSelected={isAllSkuSelected}
+        totalSkuCount={totalSkuCount!}
+      />
       <Box h="28px" w="1px" bg={'rgba(26, 52, 69, 1)'}></Box>
       <HStack justify="space-between" w="full">
         <HStack>
@@ -132,7 +143,7 @@ const ForecastChartHeader: FC<ForecastChartHeaderProps> = ({
           </Box>
         </AppTooltip>
         <AppTooltip
-          label="Resolve"
+          label="Options"
           placement="bottom-start"
           isOpen={isResolveTooltipOpen}
           onClose={handleResolveMouseLeave}
@@ -141,7 +152,7 @@ const ForecastChartHeader: FC<ForecastChartHeaderProps> = ({
           <Box
             onMouseEnter={handleResolveMouseEnter}
             onMouseLeave={handleResolveMouseLeave}
-            zIndex={12}
+            // zIndex={12}
           >
             <AppPopover
               isOpen={isOpen}
@@ -162,9 +173,11 @@ const ForecastChartHeader: FC<ForecastChartHeaderProps> = ({
                   }
                   variant="secondary"
                   size="iconMedium"
-                  onClick={() => {}}
+                  onClick={() => {
+                    onOpen();
+                  }}
                   bg={ocean_blue_600}
-                  isDisabled={!!!dfViewState.selectedSku?.isAnchorModel}
+                  isDisabled={!!!dfViewState.selectedSku?.isAnchorModel || isDisabled}
                 />
               }
               content={<MoreOptionContent />}

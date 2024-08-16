@@ -49,10 +49,13 @@ import {
   filterRequestFormatterForData,
   formatGroupLabels,
   formatPredictorConfiguration,
+  generateAlertFilterObject,
+  generateModifyAlertFilterObject,
   rightSidePanelFormatForRequest
 } from './sagaHelpers/sgH_groupConfigurations';
 import { FILTER_PAGE_SIZE, STORE_GROUP_PAGE_SIZE } from 'utils/constants';
 import { getResponseAnchorAndSkuCount } from './stateHelpers/stH_groupConfigurations';
+import { IAlert, alertSliceSelector } from 'state/pages/monitoringAndResolution/Alert/alertState';
 
 interface FilterDataActionI {
   payload: {
@@ -64,6 +67,8 @@ interface FilterDataActionI {
     onScroll?: boolean;
     whFlag?: 0 | 1 | 2;
     initialRequest?: boolean;
+    isAlertPage?: boolean;
+    isModifyAlertPage?: boolean;
   };
   type: string;
 }
@@ -258,6 +263,7 @@ function* createGroupRequestSaga(action: PayloadAction<{ isWarehouseGroup: boole
     );
 
     if (!responseValidator(response, true)) {
+      yield put(createGroupFailure());
       return;
     }
 
@@ -281,6 +287,7 @@ function* createGroupRequestSaga(action: PayloadAction<{ isWarehouseGroup: boole
 function* getFilterDataRequest(action: FilterDataActionI) {
   try {
     let userState: IUser = yield select(userSliceSelector);
+    const alertState: IAlert = yield select(alertSliceSelector);
     const groupConfigurationState: IGroupConfigurationSlice = yield select(
       groupConfigurationSliceSelector
     );
@@ -292,8 +299,14 @@ function* getFilterDataRequest(action: FilterDataActionI) {
     const searchKey = initialRequest ? '' : action.payload.searchKey;
     const orgKey = userState.selectedOrg.orgKey;
     const whFlag = action.payload.whFlag!;
+    const alertLocalScope = alertState.alertLocalScope;
+    const isGlobalSelected = alertLocalScope.globalSkuSelected;
+    const alertKey = alertLocalScope.selectedViewAlertObj?.alertKey!;
+    const selectedAlertType = alertLocalScope.selectedAlertTypeObj.alertType!;
+    const isAlertPage = action.payload.isAlertPage;
+    const isModifyAlertPage = action.payload.isModifyAlertPage;
 
-    const formattedFilterOptions: FilterDataReqPayloadI = filterRequestFormatterForData(
+    let formattedFilterOptions: FilterDataReqPayloadI = filterRequestFormatterForData(
       filterType,
       filterCode,
       orgKey,
@@ -303,6 +316,17 @@ function* getFilterDataRequest(action: FilterDataActionI) {
       whFlag,
       initialRequest
     );
+
+    if (isAlertPage) {
+      formattedFilterOptions = generateAlertFilterObject(
+        formattedFilterOptions,
+        isGlobalSelected,
+        alertKey,
+        selectedAlertType
+      );
+    } else if (isModifyAlertPage) {
+      formattedFilterOptions = generateModifyAlertFilterObject(formattedFilterOptions, alertState);
+    }
 
     const queryParams: FilterDataReqQueryParamI = {
       pageNumber: action.payload.pageNumber,
@@ -328,20 +352,37 @@ function* getFilterDataRequest(action: FilterDataActionI) {
   }
 }
 
-function* getFilterCountRequest(action: FilterDataActionI) {
+function* getFilterCountRequest(
+  action: PayloadAction<{ whFlag: 0 | 1 | 2; isAlertPage?: boolean }>
+) {
   try {
     let userState: IUser = yield select(userSliceSelector);
+    const alertState: IAlert = yield select(alertSliceSelector);
     const groupConfigurationState: IGroupConfigurationSlice = yield select(
       groupConfigurationSliceSelector
     );
     const groupFilter = groupConfigurationState.groupFilter;
     const orgKey = userState.selectedOrg.orgKey;
     const whFlag = action.payload.whFlag!;
-    const formattedFilterOptions: FilterCountReqPayloadI = filterRequestFormatterForCount(
+    const isAlertPage = action.payload.isAlertPage!;
+    const alertLocalScope = alertState.alertLocalScope;
+    const isGlobalSelected = alertLocalScope.globalSkuSelected;
+    const alertKey = alertLocalScope.selectedViewAlertObj?.alertKey!;
+    const selectedAlertType = alertLocalScope.selectedAlertTypeObj.alertType!;
+    let formattedFilterOptions: FilterCountReqPayloadI = filterRequestFormatterForCount(
       orgKey,
       groupFilter,
       whFlag
     );
+
+    if (isAlertPage) {
+      formattedFilterOptions = generateAlertFilterObject(
+        formattedFilterOptions,
+        isGlobalSelected,
+        alertKey,
+        selectedAlertType
+      );
+    }
 
     const queryParams: FilterCountReqQueryParamI = {};
 
@@ -392,7 +433,7 @@ function* groupDefinitionRequest() {
 }
 
 function* groupConfigurationSaga() {
-  yield takeLatest('groupConfiguration/getGroupListRequest', getGroupListRequestSaga);
+  yield takeEvery('groupConfiguration/getGroupListRequest', getGroupListRequestSaga);
   yield takeEvery('groupConfiguration/deleteGroupRequest', deleteGroupRequest);
   yield takeEvery('groupConfiguration/editGroupRequest', editGroupRequest);
   yield takeLatest('groupConfiguration/getLabelsRequest', getLabelsRequest);

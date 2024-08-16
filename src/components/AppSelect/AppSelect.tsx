@@ -38,7 +38,7 @@ const AppSelect: FC<Props> = ({
     onClose();
   };
 
-  const selectedValue = options.find((obj) => obj.key === selectedScheduleType)?.value;
+  const selectedValue = options.find((obj) => obj.key === selectedScheduleType)?.key.toLowerCase();
   const bgColor = ocean_blue_600;
   const textColor = isDisabled ? '#595959' : '#fff';
   const cursorStyle = isDisabled ? 'not-allowed' : 'pointer';
@@ -67,7 +67,9 @@ const AppSelect: FC<Props> = ({
             transition="color 0.3s"
             lineHeight="32px"
           >
-            {selectedValue ? selectedValue : 'Select'}
+            {selectedValue
+              ? selectedValue.charAt(0).toUpperCase().concat(selectedValue.slice(1))
+              : 'Select'}
           </AppText>
 
           <AppIconChakra
@@ -110,8 +112,13 @@ const AppSelect: FC<Props> = ({
                   onClick={() => onItemSelect(option)}
                   role="group"
                 >
-                  <AppText fontSize="14px" fontWeight={400} _hover={{ color: blue_500 }}>
-                    {option.value}
+                  <AppText
+                    fontSize="14px"
+                    fontWeight={400}
+                    _hover={{ color: blue_500 }}
+                    textTransform={'capitalize'}
+                  >
+                    {option.key.toLowerCase()}
                   </AppText>
                 </Box>
               ))}

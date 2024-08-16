@@ -8,7 +8,7 @@ import { CSSProperties, FC } from 'react';
 import { useSelector } from 'react-redux';
 import {
   IRPLView,
-  rplViewSliceSelector,
+  rplViewSliceSelector
 } from 'state/pages/view/replenishmentView/rplViewPageState';
 import { blue_500, ocean_blue_400, ocean_blue_600, yellow_500 } from 'theme/colors';
 import { ReplenishmentSkuListItem } from 'types/responses/viewResponses';
@@ -17,14 +17,24 @@ import AppPopover from 'components/AppPopover/AppPopover';
 import useTooltip from 'hooks/useTooltip';
 import MoreOptionContent from '../../ReplenishmentHeader/MoreOptionContent';
 import { storeReplSingleMoreOptionItemList } from 'utils/constants';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface ActionBarProps {
   onMaxMinHandler: () => void;
   navigator: Navigator<ReplenishmentSkuListItem>;
   isOpenPanel?: boolean;
+  callBack?: (data: any) => void;
 }
 
-const ActionBar: FC<ActionBarProps> = ({ onMaxMinHandler, navigator, isOpenPanel }) => {
+const ActionBar: FC<ActionBarProps> = ({
+  onMaxMinHandler,
+  navigator,
+  isOpenPanel,
+  callBack = (data: any) => {}
+}) => {
   const {
     isOpen: isOpenMoreOption,
     onToggle: onToggleMoreOption,
@@ -38,6 +48,15 @@ const ActionBar: FC<ActionBarProps> = ({ onMaxMinHandler, navigator, isOpenPanel
   const selectedSkuName =
     rplViewState.rplSelectedSku?.sku + ' | ' + rplViewState.rplSelectedSku?.location;
   const isEdited = !!rplViewState.rplPlanDetails?.isEdited;
+  const alertType = rplViewState.AlertType;
+  const options = storeReplSingleMoreOptionItemList.filter((option, index) => {
+    if (option.id !== 2) return option;
+    if (option.id === 2 && Object.keys(alertType).length > 0) return option;
+  });
+  const [isExpandTooltipOpen, handleExpandMouseEnter, handleExpandMouseLeave] = useTooltip();
+
+  const accessType = useAccessType(MenuItems.STORE_REPLENISHMENT_AND_DSD);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const moreOptionPopoverStyles: CSSProperties = {
     maxWidth: '277px',
@@ -47,7 +66,7 @@ const ActionBar: FC<ActionBarProps> = ({ onMaxMinHandler, navigator, isOpenPanel
     marginTop: '-6.5px',
     zIndex: 100
   };
-  
+
   return (
     <HStack h="full" w="full" p="12px" justify="space-between">
       <HStack>
@@ -71,41 +90,59 @@ const ActionBar: FC<ActionBarProps> = ({ onMaxMinHandler, navigator, isOpenPanel
         )}
       </HStack>
       <HStack>
-        <AppPopover
-          isOpen={isOpenMoreOption}
-          onClose={onCloseMoreOption}
-          contentStyles={moreOptionPopoverStyles}
-          trigger="click"
-          children={
+        <AppTooltip
+          label="Options"
+          placement="bottom-start"
+          isOpen={isExpandTooltipOpen}
+          onClose={handleExpandMouseLeave}
+          display={isOpenMoreOption ? 'none' : 'block'}
+        >
+          <Box onMouseEnter={handleExpandMouseEnter} onMouseLeave={handleExpandMouseLeave}>
+            <AppPopover
+              isOpen={isOpenMoreOption}
+              onClose={onCloseMoreOption}
+              contentStyles={moreOptionPopoverStyles}
+              trigger="click"
+              children={
+                <AppIconButton
+                  aria-label="moreOption"
+                  icon={<AppIcon transition="transform 0.25s ease" name="wrench" fill={blue_500} />}
+                  variant="secondary"
+                  size="iconMedium"
+                  onClick={onToggleMoreOption}
+                  bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
+                  isDisabled={(!isSelectAll && selectedSKUCount == 0) || accessNotAllowed}
+                  h="28px"
+                  w="28px"
+                  p="7px"
+                />
+              }
+              content={<MoreOptionContent options={options} callBack={callBack} />}
+            />
+          </Box>
+        </AppTooltip>
+        <AppTooltip label={isOpenPanel ? 'Minimize' : 'Maximize'} placement="bottom-start">
+          <Box>
             <AppIconButton
-              aria-label="moreOption"
+              aria-label="maximize"
               icon={
-                <AppIcon transition="transform 0.25s ease" name="wrench" fill={blue_500} />
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name={isOpenPanel ? 'collapse' : 'expand'}
+                  fill={blue_500}
+                />
               }
               variant="secondary"
               size="iconMedium"
-              onClick={onToggleMoreOption}
-              bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
-              isDisabled={!isSelectAll && selectedSKUCount == 0}
+              onClick={onMaxMinHandler}
+              bg={ocean_blue_600}
+              disabled
               h="28px"
               w="28px"
               p="7px"
             />
-          }
-          content={<MoreOptionContent options={storeReplSingleMoreOptionItemList}/>}
-        />
-        <AppIconButton
-          aria-label="maximize"
-          icon={<AppIcon transition="transform 0.25s ease" name={isOpenPanel ? "collapse" : "expand"} stroke={blue_500} />}
-          variant="secondary"
-          size="iconMedium"
-          onClick={onMaxMinHandler}
-          bg={ocean_blue_600}
-          disabled
-          h="28px"
-          w="28px"
-          p="7px"
-        />
+          </Box>
+        </AppTooltip>
       </HStack>
     </HStack>
   );

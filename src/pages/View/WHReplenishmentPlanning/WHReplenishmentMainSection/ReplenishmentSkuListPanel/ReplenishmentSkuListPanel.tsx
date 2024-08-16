@@ -29,6 +29,7 @@ import {
   whRplSkuSearchAction
 } from 'state/pages/view/whReplenishmentView/whRplViewState';
 import { produce } from 'immer';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 
 interface Props {
   onSkuListChange: (id: number) => void;
@@ -59,10 +60,15 @@ const ReplenishmentSkuListPanel: FC<Props> = ({
   const isLoadWhData = rplWhViewState.isLoadWhData;
 
   useEffect(() => {
-    if (isLoadWhData && rplSkuData === null && selectedGroupKey) {
-      dispatch(getReplenishmentWHSkuDataRequest({}));
+    if (isLoadWhData) {
+      if (rplSkuData === null && selectedGroupKey) {
+        dispatch(getReplenishmentWHSkuDataRequest({}));
+      } else {
+        dispatch(resetViewWhRplPlanRightPanel());
+        dispatch(getReplenishmentWHSkuDataRequest({}));
+      }
     }
-  }, [selectedGroupKey]);
+  }, [selectedGroupKey, filterAppliedIndicator, isLoadWhData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -143,13 +149,6 @@ const ReplenishmentSkuListPanel: FC<Props> = ({
     }
   }, [rplWhViewState.rplWhSelectedSkuList.length]);
 
-  useEffect(() => {
-    if (isLoadWhData) {
-      dispatch(resetViewWhRplPlanRightPanel());
-      dispatch(getReplenishmentWHSkuDataRequest({ }));
-    }
-  }, [filterAppliedIndicator, isLoadWhData]);
-
   return (
     <Skeleton
       w="full"
@@ -172,22 +171,28 @@ const ReplenishmentSkuListPanel: FC<Props> = ({
             height="36px"
             onKeyDown={handleSearchFieldPress}
           />
-          <HStack spacing="0px">
-            <AppIconButton
-              aria-label="filter"
-              icon={<AppIcon transition="transform 0.25s ease" name="filter" fill={blue_500} />}
-              variant="secondary"
-              size="iconMedium"
-              onClick={() => onFilterClick()}
-              bg={ocean_blue_600}
-            />
-          </HStack>
+          <AppTooltip label="Filter" placement="bottom-start">
+            <HStack spacing="0px">
+              <AppIconButton
+                aria-label="filter"
+                icon={<AppIcon transition="transform 0.25s ease" name="filter" fill={blue_500} />}
+                variant="secondary"
+                size="iconMedium"
+                onClick={() => onFilterClick()}
+                bg={ocean_blue_600}
+              />
+            </HStack>
+          </AppTooltip>
         </HStack>
         <Box w="full" h={'calc(100vh - 235px)'}>
           {renderSimpleGrid()}
         </Box>
         <Box w="full" h="18px">
-          <SkuSelectionFooter totalItems={totalRplSkuCount!} currentPage={1} />
+          <SkuSelectionFooter
+            totalItems={totalRplSkuCount!}
+            currentPage={1}
+            footerLabel="SKU-locations"
+          />
         </Box>
       </VStack>
     </Skeleton>

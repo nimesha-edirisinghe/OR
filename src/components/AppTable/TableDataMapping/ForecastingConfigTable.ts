@@ -86,71 +86,73 @@ export const tableHeaders = [
   'Forecasted from'
 ];
 
-// TODO: implement type support for tableRowDataMapping
-export const forecastConfigTableRowDataMapping = [
-  {
-    cellType: 'groupNameCell',
-    w: '27%'
-  },
-  {
-    cellType: 'gc',
-    mainLabel: 'trainingConfiguration',
-    subLabel: null,
-    actions: [
-      {
-        iconName: 'wrench',
-        onClick: onIconClick,
-        action: 'openTrainingConfigDrawer'
-      }
-    ],
-    w: '17%'
-  },
-  {
-    cellType: 'gc',
-    mainLabel: 'influencingFactor',
-    subLabel: null,
-    actions: [
-      {
-        iconName: 'plus',
-        onClick: onIconClick,
-        action: 'openInfluencingFactorDrawer'
-      }
-    ],
-    w: '17%'
-  },
-  {
-    cellType: 'gc',
-    mainLabel: 'scheduled',
-    subLabel: null,
-    actions: [
-      {
-        iconName: 'play',
-        onClick: onIconClick,
-        action: 'openRunNowDrawer'
-      },
-      {
-        iconName: 'calender',
-        onClick: onIconClick,
-        action: 'openJobScheduleDrawer'
-      }
-    ],
-    w: '17%',
-    formatTo: 'schedule'
-  },
-  {
-    cellType: 'gc',
-    mainLabel: 'trainedUpto',
-    subLabel: null,
-    actions: [],
-    w: '11%',
-    formatTo: 'date'
-  },
-  {
-    cellType: 'gc',
-    mainLabel: 'forecastedFrom',
-    subLabel: null,
-    actions: [],
-    w: '11%',
-    formatTo: 'date'
-  }
-];
+export const getForecastConfigTableRowDataMapping = (accessibilityCheck: boolean = false) => {
+  return [
+    {
+      cellType: 'groupNameCell',
+      w: '27%'
+    },
+    {
+      cellType: 'gc',
+      mainLabel: 'trainingConfiguration',
+      subLabel: null,
+      actions: [
+        {
+          iconName: 'wrench',
+          onClick: onIconClick,
+          action: 'openTrainingConfigDrawer'
+        }
+      ],
+      w: '17%'
+    },
+    {
+      cellType: 'gc',
+      mainLabel: 'influencingFactor',
+      subLabel: null,
+      actions: [
+        {
+          iconName: 'plus',
+          onClick: onIconClick,
+          action: 'openInfluencingFactorDrawer'
+        }
+      ],
+      w: '17%'
+    },
+    {
+      cellType: 'gc',
+      mainLabel: 'scheduled',
+      subLabel: null,
+      actions: [
+        {
+          iconName: 'play',
+          onClick: onIconClick,
+          action: 'openRunNowDrawer',
+          isDisabled: accessibilityCheck
+        },
+        {
+          iconName: 'calender',
+          onClick: onIconClick,
+          action: 'openJobScheduleDrawer'
+        }
+      ],
+      w: '17%',
+      formatTo: 'schedule'
+    },
+    {
+      cellType: 'gc',
+      mainLabel: 'trainedUpto',
+      subLabel: null,
+      actions: [],
+      w: '11%',
+      formatTo: 'date'
+    },
+    {
+      cellType: 'gc',
+      mainLabel: 'forecastedFrom',
+      subLabel: null,
+      actions: [],
+      w: '11%',
+      formatTo: 'date'
+    }
+  ];
+};

@@ -29,6 +29,10 @@ const WHGridViewPanel: FC<WHGridViewPanelProps> = () => {
   const selectedSkuCount = selectedSkuList.length;
   const dataLoading = dfViewState.loading.skuDataLoading;
   const searchKey = dfViewState.dfViewLocalScope.skuSearchKey;
+  const isSelectAll = dfViewState.dfViewLocalScope.globalSkuSelected;
+  const totalSkuCount = dfViewState.gridSkuListData?.totalCount;
+  const selectedLabelText = selectedSkuCount > 1 ? 'Forecasts Selected' : 'Forecast Selected';
+  const selectedLabelCount = isSelectAll ? totalSkuCount : selectedSkuCount;
 
   let rowData: { id?: any; isSelected?: boolean; row: any[] }[] = [];
   const freezeCols = [0, 1];
@@ -79,7 +83,7 @@ const WHGridViewPanel: FC<WHGridViewPanelProps> = () => {
               bg={ocean_blue_600}
             />
             <AppText size="h3Semibold" color={neutral_100}>
-              {selectedSkuCount} Forecasts Selected
+              {selectedLabelCount} {selectedLabelText}
             </AppText>
           </HStack>
           <HStack>
@@ -108,7 +112,7 @@ const WHGridViewPanel: FC<WHGridViewPanelProps> = () => {
               <AppText
                 size="body3"
                 color={'rgba(62, 99, 123, 1)'}
-              >{`Showing ${selectedSkuCount} out of ${selectedSkuCount} Forecasts`}</AppText>
+              >{`Showing ${selectedSkuCount} out of ${totalSkuCount} Forecasts`}</AppText>
             </HStack>
           </Box>
         </Skeleton>

@@ -24,6 +24,7 @@ interface Props {
     index: number
   ) => void;
   onPercentageConfigValueChange?: (value: number, index: number) => void;
+  isDisabled?: boolean;
 }
 
 const ConfigTypeSelectionDropdown: FC<Props> = ({
@@ -32,7 +33,8 @@ const ConfigTypeSelectionDropdown: FC<Props> = ({
   configValue,
   onPercentageConfigValueChange,
   onConfigTypeChange,
-  dropdownType
+  dropdownType,
+  isDisabled = false
 }) => {
   const [selectedConfigType, setSelectedConfigType] = useState<
     InfluencingFactorConfigType | SKUPredictorConfigType
@@ -70,6 +72,7 @@ const ConfigTypeSelectionDropdown: FC<Props> = ({
           height="36px"
           handleItemClick={(config: any) => onItemSelect(config, uniqueKey)}
           selectedItem={selectedConfigType}
+          isDisabled={isDisabled}
         />
       )}
       {dropdownType === 'sku' && (
@@ -79,6 +82,7 @@ const ConfigTypeSelectionDropdown: FC<Props> = ({
           height="36px"
           handleItemClick={(config: any) => onItemSelect(config, uniqueKey)}
           selectedItem={selectedConfigType}
+          isDisabled={isDisabled}
         />
       )}
 

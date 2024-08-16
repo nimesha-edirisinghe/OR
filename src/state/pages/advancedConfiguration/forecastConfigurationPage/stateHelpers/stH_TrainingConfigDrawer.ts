@@ -66,6 +66,8 @@ export const _resetTrainingConfigurations = (state: IPage) => {
   state.trainingConfigData.algorithmSettings.penalized_error.weight_matrix = [
     { lower_limit: '-inf', upper_limit: 'inf', penalty: '' }
   ];
+  state.trainingConfigData.algorithmSettings.algorithm_selection.default = true;
+  state.trainingConfigLocalScope.checkAllPredictionsCheckBoxChecked = true;
 
   const advancedConfig = state.trainingConfigData.algorithmSettings.advanced_configurations;
   advancedConfig.model_selection_criteria = 'RMSE';

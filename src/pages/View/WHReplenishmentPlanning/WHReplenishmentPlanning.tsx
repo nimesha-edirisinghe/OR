@@ -78,6 +78,7 @@ const WHReplenishmentPlanning: FC<Props> = () => {
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenFilterDrawer}
         filterHierarchy={viewReplenishmentFilterHierarchy}
         whFlag={1}
+        showWarning
       />
       <FilterItemsSelectionDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenItemSelectionDrawer}

@@ -22,7 +22,7 @@ const AnalyzingDataPanel: FC<Props> = ({ percentage, cancelHandler }) => {
             {`${Math.floor(percentage)}%`}
           </AppText>
         </HStack>
-        <AppText size="h3Regular">Analyzing your data</AppText>
+        <AppText size="h3Regular">Analysing your data</AppText>
       </VStack>
       <AppButton onClick={cancelHandler} variant="secondary" size="medium" px="25px">
         Cancel

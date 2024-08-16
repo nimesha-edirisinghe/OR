@@ -5,9 +5,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { IUser, userSliceSelector } from 'state/user/userState';
 import MainContainer from './MainSection/MainSection';
 import {
-  IGroupConfigurationSlice,
   getGroupListRequest,
-  groupConfigurationSliceSelector
+  resetGroupFilter,
+  resetStoreGroup
 } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
 import { GroupTypesEnum } from 'utils/enum';
 
@@ -16,15 +16,14 @@ interface Props {}
 const GroupConfiguration: FC<Props> = () => {
   const userState: IUser = useSelector(userSliceSelector);
   const selectedOrgKey = userState.selectedOrg && userState.selectedOrg.orgKey;
-  const groupConfigurationSlice: IGroupConfigurationSlice = useSelector(
-    groupConfigurationSliceSelector
-  );
   const dispatch = useDispatch();
 
   useEffect(() => {
     try {
       const abortController = new AbortController();
       if (selectedOrgKey) {
+        dispatch(resetStoreGroup());
+        dispatch(resetGroupFilter());
         dispatch(getGroupListRequest({ groupType: GroupTypesEnum.WAREHOUSE }));
         dispatch(getGroupListRequest({ groupType: GroupTypesEnum.STORE }));
       }
@@ -38,7 +37,7 @@ const GroupConfiguration: FC<Props> = () => {
 
   const groupConfigPageContent = useCallback(() => {
     return (
-      <Box w="full" px="24px" pt="10px">
+      <Box w="full" h="full" px="24px" pt="10px">
         <HStack>
           <MainContainer />
         </HStack>

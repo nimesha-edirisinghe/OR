@@ -21,6 +21,7 @@ import {
   groupConfigurationSliceSelector,
   IGroupConfigurationSlice,
   resetGroupFilter,
+  setRightPanelRetainPreviousDataList,
   toggleDrawerFilter,
   toggleFilterAppliedIndicatorIndicator,
   updateFilterApply,
@@ -36,6 +37,22 @@ import {
 import { showErrorToast } from 'state/toast/toastState';
 import { GroupLabelI } from 'types/groupConfig';
 import { numberWithCommaSeparator } from 'utils/utility';
+import {
+  updateShouldReloadData as dfViewUpdateShouldReloadData,
+  skuSearchAction as dfViewSkuSearchAction
+} from 'state/pages/view/demandForecastView/dfViewPageState';
+import {
+  skuSearchAction as whViewSkuSearchAction,
+  updateShouldReloadData as whViewUpdateShouldReloadData
+} from 'state/pages/view/whDemandForecastView/whDfViewPageState';
+import {
+  rplSkuSearchAction,
+  setIsLoadData
+} from 'state/pages/view/replenishmentView/rplViewPageState';
+import {
+  setIsLoadWhData,
+  whRplSkuSearchAction
+} from 'state/pages/view/whReplenishmentView/whRplViewState';
 
 interface Props {
   isOpen: boolean;
@@ -43,14 +60,16 @@ interface Props {
   isGroupDisabled?: boolean;
   showWarning?: boolean;
   whFlag?: 0 | 1 | 2;
+  isOnAlertPage?: boolean;
 }
 
 const FilterDrawer: FC<Props> = ({
   isOpen,
   filterHierarchy,
   isGroupDisabled = false,
-  showWarning = true,
-  whFlag = 0
+  showWarning = false,
+  whFlag = 0,
+  isOnAlertPage = false
 }) => {
   const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
   const groupFilter = groupConfigState.groupFilter;
@@ -76,7 +95,24 @@ const FilterDrawer: FC<Props> = ({
     dispatch(toggleDrawerFilter({ isOpen: false }));
   };
 
+  const refreshSkuListPanel = () => {
+    dispatch(dfViewUpdateShouldReloadData(true));
+    dispatch(whViewUpdateShouldReloadData(true));
+    dispatch(setIsLoadData(true));
+    dispatch(setIsLoadWhData(true));
+  };
+
+  const resetFilter = () => {
+    dispatch(dfViewSkuSearchAction(''));
+    dispatch(whViewSkuSearchAction(''));
+    dispatch(rplSkuSearchAction(''));
+    dispatch(whRplSkuSearchAction(''));
+  };
+
   const onSaveHandler = () => {
+    resetFilter();
+    refreshSkuListPanel();
+
     if (!sharedGroupState.selectedGroupKey && !isGroupDisabled) {
       showErrorToast('Please select a Group first');
       return;
@@ -84,13 +120,14 @@ const FilterDrawer: FC<Props> = ({
     if (isGroupDisabled) {
       dispatch(updateFilterApply());
     }
+    dispatch(setRightPanelRetainPreviousDataList());
     dispatch(toggleFilterAppliedIndicatorIndicator());
     dispatch(toggleDrawerFilter({ isOpen: false }));
   };
 
   const onCancelHandler = () => {
-    onDrawerClose();
     onCloseCancelPrompt();
+    onDrawerClose();
   };
 
   const onResetFilter = () => {
@@ -113,7 +150,7 @@ const FilterDrawer: FC<Props> = ({
         onClose={onCloseCancelPrompt}
         leftBtnName="YES"
         rightBtnName="NO"
-        infoMessage="The changes you have made in filters will be discarded.Are you sure you want to continue?"
+        infoMessage="The changes you have made in filters will be discarded. Are you sure you want to continue?"
         onConfirmHandler={onCancelHandler}
         onCloseHandler={onCloseCancelPrompt}
         icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
@@ -159,13 +196,16 @@ const FilterDrawer: FC<Props> = ({
                 />
               </HStack>
               <FilterTypeItemList
-                maxH={skuLocationCount > 100 ? 'calc(100vh - 232px)' : 'calc(100vh - 180px)'}
+                maxH={
+                  showWarning && skuLocationCount ? 'calc(100vh - 232px)' : 'calc(100vh - 180px)'
+                }
                 loadTo="drawer"
                 filterHierarchy={filterHierarchy}
                 isGroupDisabled={isGroupDisabled}
-                showWarning = {showWarning}
+                showWarning={showWarning}
                 whFlag={whFlag}
-              />  
+                isOnAlertPage={isOnAlertPage}
+              />
             </VStack>
           </DrawerBody>
           <DrawerFooter flexDirection="column" p="20px 0 0 0">

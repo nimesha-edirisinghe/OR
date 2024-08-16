@@ -29,7 +29,6 @@ import {
   setDateRange,
   setIsLoadData
 } from 'state/pages/view/replenishmentView/rplViewPageState';
-import { showErrorToast } from 'state/toast/toastState';
 import MoreOptionContent from './MoreOptionContent';
 import AppPopover from 'components/AppPopover/AppPopover';
 import AppRadio from 'components/newTheme/AppRadio/AppRadio';
@@ -37,6 +36,11 @@ import AppDateRangeCalendar from 'components/AppDateCalendar/Calender/AppDateRan
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { storeReplBulkMoreOptionItemList } from 'utils/constants';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
+import useTooltip from 'hooks/useTooltip';
 
 export type orderFrequencyT = 'default' | 'custom';
 interface ReplenishmentHeaderProps {}
@@ -60,8 +64,15 @@ const ReplenishmentHeader: FC<ReplenishmentHeaderProps> = ({}) => {
   const endDate = rplViewState.rplViewLocalScope.endDate;
   const searchKey = rplViewState.rplViewLocalScope.rplSkuSearchKey;
   const [dateError, setDateError] = useState<string>('');
+  const [fileError, setFileError] = useState<string>('');
+
   const selectedSKUCount = rplViewState.rplSelectedSkuList.length;
   const isSelectAll = rplViewState.rplViewLocalScope.globalRplSkuSelected;
+  const selectedSkuCount = isSelectAll ? totalSkuCount : selectedSKUCount;
+
+  const accessType = useAccessType(MenuItems.STORE_REPLENISHMENT_AND_DSD);
+  const isDisabled = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
+  const [isResolveTooltipOpen, handleResolveMouseEnter, handleResolveMouseLeave] = useTooltip();
 
   const moreOptionPopoverStyles: CSSProperties = {
     maxWidth: '277px',
@@ -86,6 +97,9 @@ const ReplenishmentHeader: FC<ReplenishmentHeaderProps> = ({}) => {
 
     const orderFrequencyHandler = (value: string) => {
       setOrderFrequency(value as orderFrequencyT);
+      dispatch(setDateRange({ startDate: null, endDate: null }));
+      setDateError('');
+      setFileError('');
     };
 
     const onRangeSelectHandler = (startDate: Date, endDate: Date) => {
@@ -93,7 +107,6 @@ const ReplenishmentHeader: FC<ReplenishmentHeaderProps> = ({}) => {
       const strEndDate = format(endDate, 'yyyy-MM-dd').toString();
 
       dispatch(setDateRange({ startDate: strStartDate, endDate: strEndDate }));
-      setDateError('');
     };
     return (
       <VStack align="start">
@@ -125,9 +138,11 @@ const ReplenishmentHeader: FC<ReplenishmentHeaderProps> = ({}) => {
           {orderFrequency === 'custom' && (
             <VStack>
               <AppDateRangeCalendar onRangeSelect={onRangeSelectHandler} selectedDateRange={null} />
-              <AppText fontSize="15px" color={red_500} alignSelf="self-start">
-                {dateError}
-              </AppText>
+              {(startDate === null || endDate === null) && (
+                <AppText fontSize="15px" color={red_500} alignSelf="self-start">
+                  {dateError}
+                </AppText>
+              )}
             </VStack>
           )}
         </VStack>
@@ -141,11 +156,15 @@ const ReplenishmentHeader: FC<ReplenishmentHeaderProps> = ({}) => {
             size="small"
             fontSize="14px"
             placeholder="Enter file name"
+            isRequired={true}
           />
+          <AppText fontSize="15px" color={red_500} alignSelf="self-start">
+            {fileError}
+          </AppText>
         </Box>
       </VStack>
     );
-  }, [fileName, orderFrequency, dateError]);
+  }, [fileName, orderFrequency, dateError, fileError]);
 
   const downloadConfirmationPrompt = useCallback(() => {
     const onDownloadHandler = () => {
@@ -154,8 +173,8 @@ const ReplenishmentHeader: FC<ReplenishmentHeaderProps> = ({}) => {
         return;
       }
 
-      if (fileName === '') {
-        showErrorToast('File name required');
+      if (fileName.length === 0) {
+        setFileError('This field is mandatory');
         return;
       }
       dispatch(
@@ -172,17 +191,19 @@ const ReplenishmentHeader: FC<ReplenishmentHeaderProps> = ({}) => {
         onClose={onClose}
         leftBtnName="Cancel"
         rightBtnName="Download"
-        title={`Download ${totalSkuCount} Replenishment Plans`}
+        title={`Download ${selectedSkuCount} Replenishment Plans`}
         onConfirmHandler={onDownloadHandler}
         onCloseHandler={onClose}
         children={renderBody()}
         minWidth="546px"
       />
     );
-  }, [isOpen, fileName, orderFrequency, dateError]);
+  }, [isOpen, fileName, orderFrequency, dateError, fileError, startDate, endDate]);
 
   const onClickDownload = () => {
     setDateError('');
+    setFileError('');
+    setOrderFrequency('default');
     dispatch(setDateRange({ startDate: null, endDate: null }));
     onToggle();
   };
@@ -208,73 +229,95 @@ const ReplenishmentHeader: FC<ReplenishmentHeaderProps> = ({}) => {
           )}
         </HStack>
         <HStack>
-          <AppIconButton
-            aria-label="download"
-            icon={
-              <AppIcon
-                transition="transform 0.25s ease"
-                name="download"
-                width="11.67px"
-                height="14.17px"
-                fill={blue_500}
+          <AppTooltip label="Download" placement="bottom-start">
+            <Box>
+              <AppIconButton
+                aria-label="download"
+                icon={
+                  <AppIcon
+                    transition="transform 0.25s ease"
+                    name="download"
+                    width="11.67px"
+                    height="14.17px"
+                    fill={blue_500}
+                  />
+                }
+                variant="secondary"
+                size="iconMedium"
+                onClick={onClickDownload}
+                bg={ocean_blue_600}
+                isLoading={isDownloading}
+                isDisabled={!isSelectAll && selectedSKUCount == 0}
               />
-            }
-            variant="secondary"
-            size="iconMedium"
-            onClick={onClickDownload}
-            bg={ocean_blue_600}
-            isLoading={isDownloading}
-            isDisabled={!isSelectAll && selectedSKUCount == 0}
-          />
-          <AppIconButton
-            aria-label="gridView"
-            icon={<AppIcon transition="transform 0.25s ease" name="gridView" fill={blue_500} />}
-            variant="secondary"
-            size="iconMedium"
-            onClick={onClickGridView}
-            bg={ocean_blue_600}
-            isLoading={isSkuListLoading}
-            isDisabled={!isSelectAll && selectedSKUCount == 0}
-          />
-          <AppIconButton
-            aria-label="refresh"
-            icon={
-              <AppIcon
-                transition="transform 0.25s ease"
-                name="refresh"
-                width="14px"
-                height="14px"
-                fill={blue_500}
+            </Box>
+          </AppTooltip>
+          <AppTooltip label="Grid View" placement="bottom-start">
+            <Box>
+              <AppIconButton
+                aria-label="gridView"
+                icon={<AppIcon transition="transform 0.25s ease" name="gridView" fill={blue_500} />}
+                variant="secondary"
+                size="iconMedium"
+                onClick={onClickGridView}
+                bg={ocean_blue_600}
+                isDisabled={!isSelectAll && selectedSKUCount == 0}
               />
-            }
-            variant="secondary"
-            size="iconMedium"
-            onClick={onRefreshHandler}
-            bg={ocean_blue_600}
-          />
-
-          <Box>
-            <AppPopover
-              isOpen={isOpenMoreOption}
-              onClose={onCloseMoreOption}
-              contentStyles={moreOptionPopoverStyles}
-              trigger="click"
-              children={
-                <AppIconButton
-                  aria-label="moreOption"
-                  icon={
-                    <AppIcon transition="transform 0.25s ease" name="moreOption" fill={blue_500} />
-                  }
-                  variant="secondary"
-                  size="iconMedium"
-                  onClick={onToggleMoreOption}
-                  bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
-                  isDisabled={!isSelectAll && selectedSKUCount == 0}
-                />
-              }
-              content={<MoreOptionContent options={storeReplBulkMoreOptionItemList}/>}
-            />
-          </Box>
+            </Box>
+          </AppTooltip>
+          <AppTooltip label="Refresh" placement="bottom-start">
+            <Box>
+              <AppIconButton
+                aria-label="refresh"
+                icon={
+                  <AppIcon
+                    transition="transform 0.25s ease"
+                    name="refresh"
+                    width="14px"
+                    height="14px"
+                    fill={blue_500}
+                  />
+                }
+                variant="secondary"
+                size="iconMedium"
+                onClick={onRefreshHandler}
+                bg={ocean_blue_600}
+              />
+            </Box>
+          </AppTooltip>
+          <AppTooltip
+            label="More Option"
+            placement="bottom-start"
+            isOpen={isResolveTooltipOpen}
+            onClose={handleResolveMouseLeave}
+            display={isOpenMoreOption ? 'none' : 'block'}
+          >
+            <Box onMouseEnter={handleResolveMouseEnter} onMouseLeave={handleResolveMouseLeave}>
+              <AppPopover
+                isOpen={isOpenMoreOption}
+                onClose={onCloseMoreOption}
+                contentStyles={moreOptionPopoverStyles}
+                trigger="click"
+                children={
+                  <AppIconButton
+                    aria-label="moreOption"
+                    icon={
+                      <AppIcon
+                        transition="transform 0.25s ease"
+                        name="moreOption"
+                        fill={blue_500}
+                      />
+                    }
+                    variant="secondary"
+                    size="iconMedium"
+                    onClick={onToggleMoreOption}
+                    bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
+                    isDisabled={(!isSelectAll && selectedSKUCount == 0) || isDisabled}
+                  />
+                }
+                content={<MoreOptionContent options={storeReplBulkMoreOptionItemList} />}
+              />
+            </Box>
+          </AppTooltip>
         </HStack>
       </HStack>
     </>

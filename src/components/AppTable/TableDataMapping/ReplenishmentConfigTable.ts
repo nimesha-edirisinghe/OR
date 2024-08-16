@@ -47,52 +47,54 @@ export const onTableSearch = (searchKey: string) => {
 
 export const rplTableHeaders = ['Group name', 'Planning Configuration', 'Schedule', 'Planned On'];
 
-// TODO: implement type support for tableRowDataMapping
-export const replenishmentConfigTableRowDataMapping = [
-  {
-    cellType: 'rplGroupNameCell',
-    mainLabel: 'groupName',
-    subLabel: null,
-    w: '32%'
-  },
-  {
-    cellType: 'gc',
-    mainLabel: 'config',
-    subLabel: null,
-    actions: [
-      {
-        iconName: 'wrench',
-        onClick: onIconClick,
-        action: 'openPlanningConfigDrawer'
-      }
-    ],
-    w: '17%'
-  },
-  {
-    cellType: 'gc',
-    mainLabel: 'scheduled',
-    subLabel: null,
-    actions: [
-      {
-        iconName: 'play',
-        onClick: onIconClick,
-        action: 'openRplRunNowDrawer'
-      },
-      {
-        iconName: 'calender',
-        onClick: onIconClick,
-        action: 'openRplJobScheduleDrawer'
-      }
-    ],
-    w: '17%',
-    formatTo: 'schedule'
-  },
-  {
-    cellType: 'gc',
-    mainLabel: 'date',
-    subLabel: null,
-    actions: [],
-    w: '11%',
-    formatTo: 'date'
-  }
-];
+export const getReplenishmentConfigTableRowDataMapping = (accessibilityCheck: boolean = false) => {
+  return [
+    {
+      cellType: 'rplGroupNameCell',
+      mainLabel: 'groupName',
+      subLabel: null,
+      w: '32%'
+    },
+    {
+      cellType: 'gc',
+      mainLabel: 'config',
+      subLabel: null,
+      actions: [
+        {
+          iconName: 'wrench',
+          onClick: onIconClick,
+          action: 'openPlanningConfigDrawer'
+        }
+      ],
+      w: '17%'
+    },
+    {
+      cellType: 'gc',
+      mainLabel: 'scheduled',
+      subLabel: null,
+      actions: [
+        {
+          iconName: 'play',
+          onClick: onIconClick,
+          action: 'openRplRunNowDrawer',
+          isDisabled: accessibilityCheck
+        },
+        {
+          iconName: 'calender',
+          onClick: onIconClick,
+          action: 'openRplJobScheduleDrawer'
+        }
+      ],
+      w: '17%',
+      formatTo: 'schedule'
+    },
+    {
+      cellType: 'gc',
+      mainLabel: 'date',
+      subLabel: null,
+      actions: [],
+      w: '11%',
+      formatTo: 'date'
+    }
+  ];
+};

@@ -3,7 +3,7 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 import AppTable from './AppTable';
 import {
   tableHeaders,
-  forecastConfigTableRowDataMapping
+  getForecastConfigTableRowDataMapping
 } from './TableDataMapping/ForecastingConfigTable';
 
 export default {
@@ -17,7 +17,7 @@ const Template: ComponentStory<typeof AppTable> = (args) => (
 export const Default = Template.bind({});
 Default.args = {
   tableHeaders: tableHeaders,
-  tableRowDataMapping: forecastConfigTableRowDataMapping,
+  tableRowDataMapping: getForecastConfigTableRowDataMapping(),
   tableRowsDataSet: [
     {
       groupDetails: {

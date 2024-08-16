@@ -19,7 +19,6 @@ import AppInput from 'components/newTheme/AppInput/AppInput';
 import { showErrorToast } from 'state/toast/toastState';
 import AppTooltip from 'components/AppTooltip/AppTooltip';
 import { useNavigate } from 'react-router-dom';
-import { removeAllSelectedItems } from 'pages/MonitoringResolution/PredictiveAlerts/CreateAlerts/AlertCreationSteps/AnchorLocationFilter/FilterItemsSelectionDrawer/Helpers/addOrRemoveItemHelper';
 import {
   IGroupConfigurationSlice,
   groupConfigurationSliceSelector
@@ -54,7 +53,6 @@ const ForecastingHeader: FC<ForecastingHeaderProps> = ({ maximizedHandler, skuMa
     } else {
       dispatch(skuSearchAction(''));
       dispatch(resetViewForecastRightPanel());
-      removeAllSelectedItems(1, 'sku', groupFilter, dispatch);
       dispatch(getDemandForecastSkuListRequest({}));
     }
   };
@@ -192,15 +190,21 @@ const ForecastingHeader: FC<ForecastingHeaderProps> = ({ maximizedHandler, skuMa
                 />
               </Box>
             </AppTooltip>
-            <AppIconButton
-              aria-label="moreOption"
-              icon={<AppIcon transition="transform 0.25s ease" name="moreOption" fill={blue_500} />}
-              variant="secondary"
-              size="iconMedium"
-              onClick={() => {}}
-              bg={ocean_blue_600}
-              isDisabled={selectedSkuListLen === 0}
-            />
+            <AppTooltip label="More Option" placement="bottom-start">
+              <Box>
+                <AppIconButton
+                  aria-label="moreOption"
+                  icon={
+                    <AppIcon transition="transform 0.25s ease" name="moreOption" fill={blue_500} />
+                  }
+                  variant="secondary"
+                  size="iconMedium"
+                  onClick={() => {}}
+                  bg={ocean_blue_600}
+                  isDisabled={selectedSkuListLen === 0}
+                />
+              </Box>
+            </AppTooltip>
           </HStack>
         </HStack>
       </HStack>

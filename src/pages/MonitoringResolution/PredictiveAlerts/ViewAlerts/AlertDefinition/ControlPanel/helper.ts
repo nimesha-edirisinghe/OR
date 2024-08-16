@@ -17,7 +17,7 @@ export const historyOptions: Option[] = [
   },
   {
     label: '3',
-    value: '2 Year Back'
+    value: '2 Years Back'
   }
 ];
 

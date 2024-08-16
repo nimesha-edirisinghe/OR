@@ -8,6 +8,9 @@ import {
 } from 'state/pages/advancedConfiguration/forecastConfigurationPage/pageState';
 import ConfigTypeSelectionDropdown from './ConfigTypeSelectionDropdown';
 import { neutral_400 } from 'theme/colors';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface Props {}
 
@@ -15,6 +18,8 @@ const SkuTab: FC<Props> = () => {
   const dispatch = useDispatch();
   const skuPredictors =
     useSelector(fcConfigPageSliceSelector).influencingFactorsConfig.sKUPredictorsConfig;
+  const accessType = useAccessType(MenuItems.FORECASTING_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const onPercentageConfigValueChange = (value: number, index: number) => {
     dispatch(updateSKUPredictorsConfig({ field: 'predictorValue', index, value }));
@@ -39,6 +44,7 @@ const SkuTab: FC<Props> = () => {
               configType={predictor.configType ? predictor.configType : 'From database'}
               onConfigTypeChange={onConfigTypeChange}
               onPercentageConfigValueChange={onPercentageConfigValueChange}
+              isDisabled={accessNotAllowed}
             />
           </Box>
         ))}

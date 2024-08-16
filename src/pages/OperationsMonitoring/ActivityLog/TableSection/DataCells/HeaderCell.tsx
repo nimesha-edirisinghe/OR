@@ -3,7 +3,7 @@ import AppText from 'components/AppText/AppText';
 import { FC, ReactNode } from 'react';
 import { TableMapDataI } from '../TableDataMapping';
 import { AppIconChakra } from 'assets/svg/chakraIcons';
-import { ocean_blue_500 } from 'theme/colors';
+import { neutral_200, ocean_blue_500 } from 'theme/colors';
 
 interface HeaderCellProps {
   children: ReactNode;
@@ -19,7 +19,7 @@ const HeaderCell: FC<HeaderCellProps> = ({ children, tableMap }) => {
       minW={tableMap.styles?.width}
       justifyContent="space-between"
     >
-      <AppText fontSize="13px" fontWeight={500} noOfLines={1}>
+      <AppText fontSize="13px" fontWeight={600} color={neutral_200} noOfLines={1}>
         {children}
       </AppText>
       {tableMap.header.action && tableMap.header.action.iconName && (

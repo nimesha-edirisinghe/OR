@@ -14,11 +14,13 @@ import { AlertReplenishmentI, CreateAlertPayloadI } from 'types/requests/alertCo
 import {
   AlertDetailsI,
   AlertListI,
+  AlertListSelectedOptionT,
+  AlertedGroupDetailsResponseI,
   GetAlertList,
   GetAlertSummaryI,
   GetAlertsData
 } from 'types/responses/alertConfigResponse';
-import { defaultAlertTypeList } from './stateHelpers/stH_alert';
+import { defaultAlertTypeList, validateReplenishmentEditData } from './stateHelpers/stH_alert';
 import { TrainingSummaryDataResponseI } from 'types/responses/trainingSummaryResponse';
 import { InfluencingFactorTypes } from 'types/groupConfig';
 import { getSelectedChartName } from 'state/pages/view/demandForecastView/stateHelpers/stH_DfView';
@@ -43,6 +45,10 @@ export interface IAlert {
     skuSearchKey: string;
     pageNumber: number;
     globalSkuSelected: boolean;
+    shouldReloadAlertData: boolean;
+    uploadHistoryPageNumber: number;
+    selectedOption: AlertListSelectedOptionT;
+    selectedAlertTypeName: AlertTypesT;
   };
   selectedSkuList: GetAlertList[] | [];
   selectedSku: GetAlertList | null;
@@ -71,10 +77,17 @@ export interface IAlert {
   isReplenishmentEditable: boolean;
   isReplenishmentValidated: boolean;
   editReplenishmentPayload: AlertReplenishmentI | null;
+  alertedGroupDetails: AlertedGroupDetailsResponseI | null;
+  isSuccessfullyEdited: boolean;
 }
 
-interface UpdateCellDataI {
+export interface UpdateCellDataI {
   id: number | string;
+  index: number;
+  value: string | number;
+}
+
+interface ForecastDataI {
   index: number;
   value: string | number;
 }
@@ -111,7 +124,11 @@ export const AlertSlice = createSlice({
       isInitialAlertSummaryRequest: false,
       skuSearchKey: '',
       pageNumber: 1,
-      globalSkuSelected: false
+      globalSkuSelected: false,
+      shouldReloadAlertData: false,
+      uploadHistoryPageNumber: 1,
+      selectedOption: 'individual',
+      selectedAlertTypeName: 'outofstock'
     },
     selectedSkuList: [],
     selectedSku: null,
@@ -143,7 +160,9 @@ export const AlertSlice = createSlice({
     },
     isReplenishmentEditable: false,
     isReplenishmentValidated: false,
-    editReplenishmentPayload: null
+    editReplenishmentPayload: null,
+    alertedGroupDetails: null,
+    isSuccessfullyEdited: false
   } as IAlert,
   reducers: {
     setAlertDefinitionSearchKey: (state, action: PayloadAction<string>) => {
@@ -193,12 +212,25 @@ export const AlertSlice = createSlice({
     getAlertsSuccess: (state, action: PayloadAction<GetAlertsData>) => {
       state.loading.data = false;
       const isGlobalSkuSelected = state.alertLocalScope.globalSkuSelected;
+      const selectedSkuList =
+        state.selectedSkuList
+          ?.filter((item) => item.anchorProdKey)
+          ?.map((item) => item.anchorProdKey) || [];
+
+      const alertProdModelKeys = action.payload.list
+        ?.filter((item) => item.anchorProdKey)
+        ?.map((item) => item.anchorProdKey);
+      const allKeysMatch = selectedSkuList?.every((key) => alertProdModelKeys?.includes(key)) || [];
+
+      if (!allKeysMatch) {
+        state.selectedSkuList = [];
+      }
       state.alertDataList = {
         ...action.payload,
         list:
           action.payload.list?.map((item) => ({
             ...item,
-            isSelected: isGlobalSkuSelected || false
+            isSelected: isGlobalSkuSelected || selectedSkuList?.includes(item.anchorProdKey)
           })) || []
       };
       if (isGlobalSkuSelected) {
@@ -349,15 +381,15 @@ export const AlertSlice = createSlice({
       state.isTrainingModalOpen = !state.isTrainingModalOpen;
     },
     setSelectedSkuAction: (state, action: PayloadAction<number>) => {
-      const currentIndex = action.payload;
+      const anchorProdModelKey = action.payload;
       state.selectedSku = state.alertDataList.list
-        ? state.alertDataList.list.find((item) => item.anchorProdKey === currentIndex)!
+        ? state.alertDataList.list.find((item) => item.anchorProdModelKey === anchorProdModelKey)!
         : null;
     },
     setReplenishmentEditable: (state, action: PayloadAction<boolean>) => {
       state.isReplenishmentEditable = action.payload;
     },
-    AlertForecastChartRequest: (
+    alertForecastChartRequest: (
       state,
       action: PayloadAction<{ chartType: alertForecastChartType }>
     ) => {
@@ -397,8 +429,10 @@ export const AlertSlice = createSlice({
 
         if (existingIndex !== -1) {
           state.selectedSkuList?.splice(existingIndex!, 1);
+          state.selectedSku = null;
         } else {
           state.selectedSkuList = [...state.selectedSkuList, { ...data, isSelected: true }];
+          state.selectedSku = state.selectedSkuList[0];
         }
         state.alertLocalScope.globalSkuSelected =
           state.selectedSkuList?.length === state.alertDataList.totalCount || false;
@@ -406,8 +440,10 @@ export const AlertSlice = createSlice({
         if (state.alertLocalScope.globalSkuSelected) {
           const listData = state.alertDataList?.list;
           state.selectedSkuList = listData!;
+          state.selectedSku = listData![0];
         } else {
           state.selectedSkuList = [];
+          state.selectedSku = null;
         }
       }
     },
@@ -457,7 +493,7 @@ export const AlertSlice = createSlice({
 
       let dfTable: AlertForecastChartTable = {
         headers: [{ displayValue: '', key: 'Label', w: 150 }],
-        skuForecast: ['SKU Forecast'],
+        skuForecast: ['Sales'],
         compareForecast: [_selectedCName]
       };
       action.payload.forEach((graphData) => {
@@ -477,7 +513,7 @@ export const AlertSlice = createSlice({
       state.loading.graphDataLoading = true;
     },
     resetViewForecast: (state) => {
-      state.selectedSku = null;
+      // state.selectedSku = null;
       state.graphData = [];
       state.graphDateRange = null;
       state.aggregateOption = {
@@ -507,10 +543,15 @@ export const AlertSlice = createSlice({
     addNewCellData: (state) => {
       if (state?.rplPlanDetails?.orderQtyDetails?.list) {
         const rowLists = state.rplPlanDetails.orderQtyDetails.list;
-        const lastRow = rowLists[rowLists.length - 1];
+        let id: number = 0;
+        if (rowLists.length > 0) {
+          const lastRow = rowLists[rowLists.length - 1];
+          id = lastRow.id + 1;
+        }
+
         state.rplPlanDetails.orderQtyDetails.list.push({
-          id: lastRow.id + 1,
-          row: ['', 0, 0, ''],
+          id,
+          row: ['', 0, '', 0, ''],
           isSelected: false,
           fresh: true,
           action: AlertReplenishmentActionTypeEnum.CREATE
@@ -529,6 +570,7 @@ export const AlertSlice = createSlice({
             return row;
           }
         );
+        state.isReplenishmentValidated = validateReplenishmentEditData(state);
       }
     },
     updateCellData: (state, action: PayloadAction<UpdateCellDataI>) => {
@@ -537,26 +579,22 @@ export const AlertSlice = createSlice({
       if (rowList?.length) {
         const selectedRow = rowList[+id].row;
         let calculatedValue = value;
+        const supplyPackSize = state.rplPlanDetails?.orderPlan.unitOrderQty;
         if (index === 1) {
           calculatedValue = +value;
-          selectedRow[index + 1] =
+          selectedRow[index + 2] =
             calculatedValue * (state.rplPlanDetails?.orderPlan.unitPrice || 0);
+          selectedRow[index + 1] =
+            supplyPackSize !== undefined && value !== ''
+              ? Math.round(calculatedValue / supplyPackSize)
+              : '';
         }
         selectedRow[index] = calculatedValue;
         if (!rowList[+id].fresh) rowList[+id].action = AlertReplenishmentActionTypeEnum.EDIT;
+        state.isReplenishmentValidated = validateReplenishmentEditData(state);
       }
-
-      let validationFlag: boolean = true;
-
-      for (const element of rowList as any) {
-        if (!validationFlag) break;
-        const row = element.row;
-        const firstDate: number = new Date(row[0]).getTime();
-        const secondDate: number = new Date(row[3]).getTime();
-        validationFlag = secondDate > firstDate && row[1] > 0;
-      }
-      state.isReplenishmentValidated = validationFlag;
     },
+
     alertReplenishmentRequest: (state, action: PayloadAction<AlertReplenishmentI>) => {
       state.loading.data = true;
       state.editReplenishmentPayload = action.payload;
@@ -566,6 +604,77 @@ export const AlertSlice = createSlice({
     },
     alertReplenishmentFailure: (state) => {
       state.loading.data = false;
+    },
+    updateForecastTableData: (state, action: PayloadAction<ForecastDataI>) => {
+      const { index, value } = action.payload;
+      if (state.dfTable && state.dfTable.skuForecast) {
+        state.dfTable.skuForecast[index] = value;
+      }
+    },
+
+    getAlertedGroupDetailsRequest: (
+      state,
+      action: PayloadAction<{
+        alertOnly: number;
+      }>
+    ) => {},
+    getAlertedGroupDetailsRequestSuccess: (
+      state,
+      action: PayloadAction<AlertedGroupDetailsResponseI>
+    ) => {
+      state.alertedGroupDetails = action.payload;
+    },
+    getAlertedGroupDetailsRequestFailure: (state) => {},
+    updateAlertShouldReloadData: (state, action: PayloadAction<boolean>) => {
+      state.alertLocalScope.shouldReloadAlertData = action.payload;
+    },
+    setUploadHistoryPageNo: (state, action: PayloadAction<number>) => {
+      state.alertLocalScope.uploadHistoryPageNumber = action.payload;
+    },
+    setAlertSelectionOption: (state, action: PayloadAction<AlertListSelectedOptionT>) => {
+      state.alertLocalScope.selectedOption = action.payload;
+    },
+    setSelectedSkuByIndexAction: (state, action: PayloadAction<number>) => {
+      const currentIndex = action.payload;
+      state.selectedSku = state.selectedSkuList ? state.selectedSkuList[currentIndex] : null;
+    },
+    updateSuccessStatus: (state, action: PayloadAction<boolean>) => {
+      state.isSuccessfullyEdited = action.payload;
+    },
+    setSelectedAlertTypeName: (state, action: PayloadAction<AlertTypesT>) => {
+      state.alertLocalScope.selectedAlertTypeName = action.payload;
+    },
+    alertDownloadBulkEditForecastRequest: (
+      state,
+      action: PayloadAction<{
+        fileName: string;
+        groupKey: string;
+        searchKey?: string;
+      }>
+    ) => {
+      state.loading.download = true;
+    },
+    alertDownloadBulkEditForecastRequestSuccess: (state) => {
+      state.loading.download = false;
+    },
+    alertDownloadBulkEditForecastRequestFailure: (state) => {
+      state.loading.download = false;
+    },
+    alertRplDownloadBulkEditForecastRequest: (
+      state,
+      action: PayloadAction<{
+        fileName: string;
+        groupKey: string;
+        searchKey?: string;
+      }>
+    ) => {
+      state.loading.download = true;
+    },
+    alertRplDownloadBulkEditForecastRequestSuccess: (state) => {
+      state.loading.download = false;
+    },
+    alertRplDownloadBulkEditForecastRequestFailure: (state) => {
+      state.loading.download = false;
     }
   }
 });
@@ -606,7 +715,7 @@ export const {
   clearAlertName,
   alertFormValidator,
   setSelectedSkuAction,
-  AlertForecastChartRequest,
+  alertForecastChartRequest,
   updateSkuListSelectedStatus,
   addOrRemoveFromSelectedSkuList,
   getPredictorsRequest,
@@ -640,7 +749,23 @@ export const {
   deleteCellData,
   alertReplenishmentRequest,
   alertReplenishmentSuccess,
-  alertReplenishmentFailure
+  alertReplenishmentFailure,
+  updateForecastTableData,
+  getAlertedGroupDetailsRequest,
+  getAlertedGroupDetailsRequestSuccess,
+  getAlertedGroupDetailsRequestFailure,
+  updateAlertShouldReloadData,
+  setUploadHistoryPageNo,
+  setAlertSelectionOption,
+  setSelectedSkuByIndexAction,
+  updateSuccessStatus,
+  setSelectedAlertTypeName,
+  alertDownloadBulkEditForecastRequest,
+  alertDownloadBulkEditForecastRequestFailure,
+  alertDownloadBulkEditForecastRequestSuccess,
+  alertRplDownloadBulkEditForecastRequest,
+  alertRplDownloadBulkEditForecastRequestFailure,
+  alertRplDownloadBulkEditForecastRequestSuccess
 } = AlertSlice.actions;
 
 export default AlertSlice.reducer;

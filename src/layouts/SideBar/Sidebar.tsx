@@ -17,14 +17,19 @@ import { scrollbarYStyles } from 'theme/styles';
 import DataScienceWorkbench from './DataScienceWorkbench';
 import { useEffect, useRef, useState } from 'react';
 import { Direction } from 'utils/enum';
+import { Menu, getActiveMenu } from 'utils/navBar';
 
 const Sidebar = () => {
-  const leftMenu = useSelector(layoutSliceSelector).leftMenu;
-  const leftMenuOpen = useSelector(layoutSliceSelector).leftMenuOpen;
+  const sidebar = useSelector(layoutSliceSelector);
+  const leftMenu = sidebar.leftMenu;
+  const leftMenuOpen = sidebar.leftMenuOpen;
+  const activeSubMenuItem = sidebar.activeSubMenuItem;
+  const activeMenuItem = sidebar.activeMenuItem;
   const [isReachedBottom, setIsReachedBottom] = useState<boolean>(false);
   const [isReachedTop, setIsReachedTop] = useState<boolean>(true);
   const [scrollTop, setScrollTop] = useState<number>(0);
   const [clientHeight, setClientHeight] = useState<number>(0);
+  const navItemCount = leftMenu ? Object.keys(leftMenu).length : 0;
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,10 +38,15 @@ const Sidebar = () => {
 
   useEffect(() => {
     if (ref && ref.current) {
-      if (ref.current.scrollHeight > 600) setIsReachedBottom(true);
+      const NAV_ITEM_HEIGHT = 60;
+      const requiredNavHeight = navItemCount * NAV_ITEM_HEIGHT;
+
+      if (ref.current.clientHeight > requiredNavHeight) setIsReachedBottom(true);
+      else setIsReachedBottom(false);
+
       setClientHeight(ref.current.clientHeight);
     }
-  }, []);
+  }, [navItemCount]);
 
   const navigateToWorkbench = () => {
     dispatch(setActiveMenuItem({ menuItem: null }));
@@ -76,6 +86,13 @@ const Sidebar = () => {
     }
   };
 
+  const onNavBarFocusOut = () => {
+    if (leftMenuOpen && activeMenuItem) {
+      const subMenuDetail: Menu = getActiveMenu(activeSubMenuItem!, leftMenu);
+      dispatch(setActiveMenuItem({ menuItem: subMenuDetail.parentMenuName }));
+    }
+  };
+
   return (
     <Box
       minW={leftMenuOpen ? '280px' : '56px'}
@@ -105,6 +122,7 @@ const Sidebar = () => {
         transition=".2s ease-in"
         overflowX="hidden"
         spacing={0}
+        onMouseLeave={onNavBarFocusOut}
       >
         <VStack align="start">
           <HStack py="20px" w="full" pl="16px" gap="14px" minW="280px" spacing="4px">

@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { HStack } from '@chakra-ui/react';
+import { Box, HStack } from '@chakra-ui/react';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import {
@@ -22,6 +22,7 @@ import {
   setAlertDefinitionSearchKey
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import { timeStampToDateString } from 'utils/utility';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 
 interface Props {}
 
@@ -31,12 +32,14 @@ const ViewAllHeader: FC<Props> = () => {
 
   const alertState: IAlert = useSelector(alertSliceSelector);
   const selectedViewAlertObj = alertState.alertLocalScope?.selectedViewAlertObj;
+  const selectedAlertTypeName = alertState.alertLocalScope?.selectedAlertTypeName;
   const refreshHandler = () => {
     dispatch(setAlertDefinitionSearchKey(''));
     dispatch(setAlertDefinitionPaginationPageNo(1));
     dispatch(
       getAlertsRequest({
-        alertOnly: 0
+        alertOnly: 0,
+        selectedAlertType: selectedAlertTypeName
       })
     );
   };
@@ -80,7 +83,7 @@ const ViewAllHeader: FC<Props> = () => {
           </AppText>
           <HStack spacing="4px">
             <AppText size="body3" color={ocean_blue_100} lineHeight="18px">
-              Forecast Last Update:
+              Last Update:
             </AppText>
             <AppText size="body3" color={ocean_blue_100} lineHeight="18px">
               {selectedViewAlertObj?.lastUpdatedOn &&
@@ -90,22 +93,26 @@ const ViewAllHeader: FC<Props> = () => {
         </HStack>
       </HStack>
       <HStack spacing="12px">
-        <AppIconButton
-          aria-label="next"
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name="refresh"
-              width="14px"
-              height="14px"
-              fill={blue_500}
+        <AppTooltip label="Refresh" placement="bottom-start">
+          <Box>
+            <AppIconButton
+              aria-label="next"
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name="refresh"
+                  width="14px"
+                  height="14px"
+                  fill={blue_500}
+                />
+              }
+              variant="secondary"
+              size="iconMedium"
+              onClick={refreshHandler}
+              bg={ocean_blue_600}
             />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={refreshHandler}
-          bg={ocean_blue_600}
-        />
+          </Box>
+        </AppTooltip>
         <AppButton
           variant="secondary"
           size="medium"

@@ -17,10 +17,10 @@ export const getSelectedChartName = (
       _selectedCName = 'Aggregated';
       break;
     case 'anchor':
-      _selectedCName = 'Anchor Forecast';
+      _selectedCName = 'Anchor';
       break;
     case 'history':
-      _selectedCName = aggregateOption.compareSelection == '2' ? '1 Year back' : '2 Years back';
+      _selectedCName = aggregateOption.compareSelection == '2' ? '1 Year Back' : '2 Years Back';
       break;
     case 'influencingFactor':
       _selectedCName =

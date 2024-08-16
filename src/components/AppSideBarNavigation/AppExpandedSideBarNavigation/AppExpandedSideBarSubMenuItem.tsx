@@ -32,12 +32,20 @@ const AppExpandedSideBarSubMenuItem: FC<Props> = ({
               cursor="pointer"
               onClick={backToMainMenu}
             />
-            <AppText size="body2" color={neutral_100} p={0} noOfLines={1} style={{ wordBreak: 'break-all' }}>
-            {subMenuName?.length>20? 
-             <AppTooltip label={subMenuName} placement="bottom-end" zIndex={1}>
-                {subMenuName?.substring(0,20)+"..."}
-              </AppTooltip> 
-               :subMenuName}
+            <AppText
+              size="body2"
+              color={neutral_100}
+              p={0}
+              noOfLines={1}
+              style={{ wordBreak: 'break-all' }}
+            >
+              {subMenuName?.length > 20 ? (
+                <AppTooltip label={subMenuName} placement="bottom-end" zIndex={1}>
+                  {subMenuName?.substring(0, 20) + '...'}
+                </AppTooltip>
+              ) : (
+                subMenuName
+              )}
             </AppText>
           </HStack>
         );
@@ -54,11 +62,13 @@ const AppExpandedSideBarSubMenuItem: FC<Props> = ({
             {...rest}
           >
             <AppText size="body2" color="#0AA5FF" noOfLines={1}>
-              {subMenuName?.length>23? 
-             <AppTooltip label={subMenuName} noOfLines={1} placement="bottom-end" zIndex={1}>
-                {subMenuName?.substring(0,23)+"..."}
-              </AppTooltip> 
-               :subMenuName}
+              {subMenuName?.length > 23 ? (
+                <AppTooltip label={subMenuName} noOfLines={1} placement="bottom-end" zIndex={1}>
+                  {subMenuName?.substring(0, 23) + '...'}
+                </AppTooltip>
+              ) : (
+                subMenuName
+              )}
             </AppText>
           </HStack>
         );
@@ -74,12 +84,14 @@ const AppExpandedSideBarSubMenuItem: FC<Props> = ({
             pl="36px"
             {...rest}
           >
-            <AppText size="body2" color={neutral_400} noOfLines={1}>
-            {subMenuName?.length>23? 
-             <AppTooltip label={subMenuName} noOfLines={1} placement="bottom-end" zIndex={1}>
-                {subMenuName?.substring(0,23)+"..."}
-              </AppTooltip> 
-               :subMenuName}
+            <AppText size="body2" color={ocean_blue_100} noOfLines={1}>
+              {subMenuName?.length > 23 ? (
+                <AppTooltip label={subMenuName} noOfLines={1} placement="bottom-end" zIndex={1}>
+                  {subMenuName?.substring(0, 23) + '...'}
+                </AppTooltip>
+              ) : (
+                subMenuName
+              )}
             </AppText>
           </HStack>
         );

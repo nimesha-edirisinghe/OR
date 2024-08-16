@@ -6,6 +6,10 @@ import AppText from 'components/newTheme/AppText/AppText';
 import { ChangeEvent, FC, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
+  IGroupConfig,
+  groupConfigSliceSelector
+} from 'state/pages/shared/groupConfig/groupConfigState';
+import {
   IRPLView,
   rplDownloadBulkEditForecastRequest,
   rplViewSliceSelector
@@ -18,15 +22,17 @@ interface Props {
   filterLabelTypes?: GroupLabelTypes;
 }
 
-const DownloadTab: FC<Props> = ({ filterLabelTypes }) => {
+const DownloadTab: FC<Props> = () => {
   const dispatch = useDispatch();
   const { isOpen, onToggle, onClose } = useDisclosure();
   const [fileName, setFileName] = useState<string>('');
   const rplViewState: IRPLView = useSelector(rplViewSliceSelector);
+  const sharedGroupState: IGroupConfig = useSelector(groupConfigSliceSelector);
   const bulkEditDownloading = rplViewState.loading.rplBulkEditDownload;
   const totalSkuCount = rplViewState.rplSkuDataList?.totalCount || 0;
   const selectedSKUCount = rplViewState.rplSelectedSkuList.length || 0;
   const isSelectAll = rplViewState.rplViewLocalScope.globalRplSkuSelected;
+  const groupKey = sharedGroupState.selectedGroupKey!;
 
   const renderBody = useCallback(() => {
     const onChangeFileName = (value: string) => {
@@ -54,7 +60,8 @@ const DownloadTab: FC<Props> = ({ filterLabelTypes }) => {
       if (fileName) {
         dispatch(
           rplDownloadBulkEditForecastRequest({
-            fileName: fileName
+            fileName: fileName,
+            groupKey
           })
         );
         onClose();

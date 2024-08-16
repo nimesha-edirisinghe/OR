@@ -76,12 +76,14 @@ const AppSkipper: FC<Props> = ({
           border="none"
           _focus={{ border: 'none', outline: 'none' }}
           onChange={(e) => onInputChange(e.target.value)}
+          max={maxNumber}
+          min={minNumber}
           value={inputValue}
           fontSize="13px"
           fontWeight={400}
           isDisabled={isDisabled}
           _disabled={{ backgroundColor: ocean_blue_600, color: black_800 }}
-          placeholder="Enter value 1-100"
+          placeholder="Enter value"
         />
         <VStack hidden={!isUpDownIconVisible}>
           <AppIconChakra

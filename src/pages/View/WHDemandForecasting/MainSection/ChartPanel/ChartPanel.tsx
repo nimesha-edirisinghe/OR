@@ -12,7 +12,7 @@ interface Props {
 
 const ChartPanel: FC<Props> = ({ chartHeight }) => {
   const dfWhViewState: IWhDFView = useSelector(whDfViewSliceSelector);
-  const selectedChartType = dfWhViewState.selectedChartType;
+  const selectedChartType = dfWhViewState.aggregateOption.selectedAggregateOption;
   const graphData = dfWhViewState.graphData;
   return (
     <DemandForecastChart

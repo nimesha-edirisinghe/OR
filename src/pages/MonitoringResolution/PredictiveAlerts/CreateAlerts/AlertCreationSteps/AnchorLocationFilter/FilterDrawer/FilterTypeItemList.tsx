@@ -31,6 +31,7 @@ import {
 import { filterHierarchyGenerator } from 'state/layout/stateHelpers/stH_Layout';
 import { HStack } from '@chakra-ui/react';
 import { AppIcon } from 'components/AppIcon/AppIcon';
+import { useLocation } from 'react-router-dom';
 
 interface Props {
   loadTo: FilterLoadType;
@@ -43,6 +44,7 @@ interface Props {
   isGroupDisabled?: boolean;
   showWarning?: boolean;
   whFlag?: 0 | 1 | 2;
+  isOnAlertPage?: boolean;
 }
 
 const defaultFilterHierarchy = filterHierarchyGenerator('default');
@@ -52,9 +54,11 @@ const FilterTypeItemList: FC<Props> = ({
   loadTo,
   filterHierarchy = defaultFilterHierarchy,
   isGroupDisabled = false,
-  showWarning = true,
-  whFlag = 0
+  showWarning = false,
+  whFlag = 0,
+  isOnAlertPage = false
 }) => {
+  const dispatch = useDispatch();
   const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
   const groupFilter = groupConfigState.groupFilter;
   const filterTotalItemsCount = groupConfigState.groupFilter?.filterTotalItemsCount;
@@ -62,10 +66,9 @@ const FilterTypeItemList: FC<Props> = ({
     groupConfigState.groupFilter?.filterLocalScope.rightPanelRetainDataList;
   const filterLabels = groupConfigState.groupLabels;
   const [isHover, setIsHover] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState(false);
   const sharedGroupState: IGroupConfig = useSelector(groupConfigSliceSelector);
   const [skuLocationCount, setSkuLocationCount] = useState(0);
-
-  const dispatch = useDispatch();
 
   useEffect(() => {
     const skuLocationCount = getFilterItemCount(groupFilter, 1, 'sku');
@@ -95,7 +98,8 @@ const FilterTypeItemList: FC<Props> = ({
         pageNumber: 1,
         viewFilter: false,
         whFlag,
-        initialRequest: true
+        initialRequest: true,
+        isAlertPage: isOnAlertPage
       })
     );
     dispatch(closeGroupConfigDrawer());
@@ -137,6 +141,14 @@ const FilterTypeItemList: FC<Props> = ({
     dispatch(getFilterCountRequest({ whFlag }));
   };
 
+  const handleToggle = (open: boolean) => {
+    setIsOpen(open);
+  };
+
+  useEffect(() => {
+    setIsHover(!isOpen);
+  }, [isOpen]);
+
   return (
     <>
       <Box
@@ -145,8 +157,6 @@ const FilterTypeItemList: FC<Props> = ({
         overflowY={isHover ? 'scroll' : 'hidden'}
         __css={scrollbarYStyles}
         w="full"
-        onMouseEnter={() => setIsHover(true)}
-        onMouseLeave={() => setIsHover(false)}
       >
         <VStack as={motion.div} align="start" w="full" h="full">
           {!isGroupDisabled && (
@@ -160,7 +170,13 @@ const FilterTypeItemList: FC<Props> = ({
                 </AppText>
               </HStack>
               <VStack spacing="4px" w="full" pt="8px" pb="20px">
-                <AppGroupSelectDropDown onGroupSelect={onGroupSelect} w="full" height="44px" />
+                <AppGroupSelectDropDown
+                  onGroupSelect={onGroupSelect}
+                  w="full"
+                  height="44px"
+                  lineMaxLength={80}
+                  handleToggle={handleToggle}
+                />
               </VStack>
             </>
           )}

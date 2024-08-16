@@ -9,7 +9,7 @@ interface Props {
 
 const ChartPanel: FC<Props> = ({ chartHeight }) => {
   const dfViewState: IDFView = useSelector(dfViewSliceSelector);
-  const selectedChartType = dfViewState.selectedChartType;
+  const selectedChartType = dfViewState.aggregateOption.selectedAggregateOption;
   const graphData = dfViewState.graphData;
   return (
     <DemandForecastChart

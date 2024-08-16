@@ -9,7 +9,9 @@ import {
   getAlertsRequest,
   editAlertDataRequest,
   toggleGraphPanel,
-  updateGraphPayloadData
+  updateGraphPayloadData,
+  updateForecastTableData,
+  updateSuccessStatus
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import { AlertForecastChartTable, AlertGraphForecastDataI } from 'types/alertConfig';
 import AppButton from 'components/newTheme/AppButton/AppButton';
@@ -19,7 +21,6 @@ import AppText from 'components/AppText/AppText';
 import { neutral_100, yellow_500 } from 'theme/colors';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppPopup from 'components/newTheme/AppPopup/AppPopup';
-import { isNumber } from 'lodash';
 
 interface Props extends BoxProps {}
 
@@ -34,6 +35,7 @@ const GridPanel: FC<Props> = ({ ...rest }) => {
     onToggle: onToggleCancelPrompt,
     onClose: onCloseCancelPrompt
   } = useDisclosure();
+  const dispatch = useDispatch();
   const alertState: IAlert = useSelector(alertSliceSelector);
   const isAnchorSelected = alertState.selectedChartType !== 'sku';
   const headers = alertState.dfTable?.headers || [];
@@ -41,8 +43,8 @@ const GridPanel: FC<Props> = ({ ...rest }) => {
     (AlertForecastChartTable['skuForecast'] | AlertForecastChartTable['compareForecast'])[]
   >([]);
   const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(true);
-  const tempSKURow: any[] = [];
-  const dispatch = useDispatch();
+  const editedForecastData: number[] = [];
+  const isSuccessfullyEdited = alertState.isSuccessfullyEdited;
 
   const closeGraphPanel = () => {
     dispatch(toggleGraphPanel());
@@ -50,17 +52,17 @@ const GridPanel: FC<Props> = ({ ...rest }) => {
 
   const formattedDataRow = rows
     .filter((arr) => arr.every((value) => value !== null))
-    .map((row, idx) => {
+    .map((row, index) => {
       let editableFlags: boolean[] = [];
-      if (row[0] === 'SKU Forecast') {
-        tempSKURow.push(...row);
+      if (index === 0) {
+        editedForecastData.push(...(row as number[]));
         editableFlags = [
           false,
           ...row.map((_val, indx) => alertState.graphData[indx]?.skuActual === null)
         ];
       }
       return {
-        id: idx,
+        id: index,
         row: row,
         editableFlags
       };
@@ -77,27 +79,43 @@ const GridPanel: FC<Props> = ({ ...rest }) => {
     setRows(_rows);
   }, [alertState.dfTable?.skuForecast, alertState.dfTable?.compareForecast]);
 
-  const updateSkuValue = (id: number|string, index: number, value: string | number) => {
-    tempSKURow[index] = value;
-    let flag: boolean = false;
-    flag = !tempSKURow.slice(1, tempSKURow.length).some((value) => value.length);
-    setIsButtonDisabled(flag);
+  const validateCell = (): boolean => {
+    let skuActualCellNumber: number = 1;
+    const isAnyForecastEdited = alertState.graphData.some((item, index) => {
+      if (item.skuActual === null && skuActualCellNumber === 1) {
+        skuActualCellNumber = index + 1;
+      }
+      return item.skuActual === null && item.skuProjected != editedForecastData[index + 1];
+    });
+    const isAnyValueInValid = editedForecastData
+      .slice(skuActualCellNumber)
+      .some((item) => item <= 0);
+    return isAnyForecastEdited && !isAnyValueInValid;
   };
 
-  const compareAndReturnUniqueArrayOfObject = () => {
-    const collectUniqChangeData: AlertGraphForecastDataI[] = [];
+  const onUpdateTableCell = (id: number | string, index: number, value: string | number) => {
+    const isValidNumber = /^\d*\.?\d*$/.test(value.toString());
+    if (isValidNumber) {
+      editedForecastData[index] = value as number;
+      dispatch(updateForecastTableData({ index, value: value as number }));
+      const isAllCellValid = validateCell();
+      setIsButtonDisabled(!isAllCellValid);
+    }
+  };
 
-    alertState.graphData.forEach((obj, index) => {
-      const edited = +tempSKURow[index + 1];
-      if (obj.skuProjected !== edited && obj.skuActual === null) {
-        collectUniqChangeData.push({
-          actual: obj.skuProjected,
-          date: obj.date,
-          edited
+  const getEditedForecastData = () => {
+    const forecastData: AlertGraphForecastDataI[] = [];
+    alertState.graphData.forEach((forecast, index) => {
+      const editedValue = editedForecastData[index + 1];
+      if (forecast.skuActual === null && forecast.skuProjected !== editedValue) {
+        forecastData.push({
+          actual: forecast.skuProjected,
+          date: forecast.date,
+          edited: parseFloat(editedValue.toString())
         });
       }
     });
-    return collectUniqChangeData;
+    return forecastData;
   };
 
   const updateTableData = () => {
@@ -108,7 +126,7 @@ const GridPanel: FC<Props> = ({ ...rest }) => {
       anchorKey: selectedSku?.anchorKey,
       anchorProdKey: selectedSku?.anchorProdKey,
       anchorProdModelKey: selectedSku?.anchorProdModelKey,
-      forecastData: compareAndReturnUniqueArrayOfObject(),
+      forecastData: getEditedForecastData(),
       forecastKey: selectedSku?.forecastKey,
       groupKey: selectedSku?.groupCode
     };
@@ -122,10 +140,18 @@ const GridPanel: FC<Props> = ({ ...rest }) => {
 
   const updateGraphData = () => {
     dispatch(editAlertDataRequest(alertState.graphPayloadData));
-    dispatch(getAlertConfigsRequest({ initRequest: true }));
-    dispatch(getAlertsRequest({ alertOnly: 1 }));
-    closeGraphPanel();
   };
+
+  useEffect(() => {
+    if (isSuccessfullyEdited) {
+      setTimeout(() => {
+        closeGraphPanel();
+        dispatch(getAlertConfigsRequest({}));
+        dispatch(getAlertsRequest({ alertOnly: 1 }));
+      }, 1);
+    }
+    dispatch(updateSuccessStatus(false));
+  }, [isSuccessfullyEdited]);
 
   const saveConfirmationPrompt = useCallback(() => {
     return (
@@ -178,7 +204,8 @@ const GridPanel: FC<Props> = ({ ...rest }) => {
           maxH={'120px'}
           isEditable={alertState.isGraphModalEditable}
           freezedColumns={[0]}
-          cellCallback={updateSkuValue}
+          textAlign="end"
+          cellCallback={onUpdateTableCell}
         />
       </Box>
       {alertState.isGraphModalEditable && (

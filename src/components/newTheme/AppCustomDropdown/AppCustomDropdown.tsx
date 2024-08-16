@@ -57,13 +57,18 @@ const AppCustomDropdown: React.FC<Props> = ({
 
   const renderRadio = (value: string, isChecked: boolean, colorScheme: string) =>
     isEnableAction && (
-      <AppRadio
-        value={value}
-        isChecked={isChecked}
-        onChange={() => {}}
-        colorScheme={colorScheme}
-        size="sm"
-      />
+      <HStack
+        width={'12px'}
+        height={'12px'}
+        border={`2.5px solid ${isChecked ? colorScheme : '#ffffff29'}`}
+        borderRadius={'10px'}
+        justify={'center'}
+        align={'center'}
+      >
+        {isChecked && (
+          <HStack width={'3px'} height={'3px'} bg={colorScheme} borderRadius={'10px'}></HStack>
+        )}
+      </HStack>
     );
 
   const renderMenuItem = (option: Option | GroupedOption, index: number) => (
@@ -87,7 +92,7 @@ const AppCustomDropdown: React.FC<Props> = ({
             w="full"
             onClick={() => handleItemClick((option as Option).label)}
           >
-            <Box pt="12px">
+            <Box pt="12px" w={'20px'}>
               {renderRadio(
                 (option as Option).value,
                 (option as Option).value === selectedItem,
@@ -111,7 +116,7 @@ const AppCustomDropdown: React.FC<Props> = ({
               px="16px"
             >
               <HStack align="start" spacing="4px">
-                <Box pt="12px">
+                <Box pt="12px" w={'20px'}>
                   {renderRadio(
                     opt.value,
                     opt.value === selectedItem && selectedGroupIndex === index,

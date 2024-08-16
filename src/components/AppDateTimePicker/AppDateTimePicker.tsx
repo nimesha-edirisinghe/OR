@@ -94,12 +94,7 @@ const AppDateTimePicker: FC<Props> = ({
   };
 
   return (
-    <Box
-      as={motion.div}
-      initial={{ opacity: 0, scale: 0.5, x: -100 }}
-      animate={{ opacity: 1, scale: 1, x: 0 }}
-      transition=".1s"
-    >
+    <Box>
       <Box
         onClick={(e) => !isDisabled && onCalenderIconClick(e)}
         cursor={isDisabled ? 'not-allowed' : 'pointer'}
@@ -116,10 +111,6 @@ const AppDateTimePicker: FC<Props> = ({
           padding="10px 10px "
           boxShadow="0px 0px 5px rgba(0, 0, 0, 0.3)"
           borderRadius="6px"
-          as={motion.div}
-          initial={{ opacity: 0, scale: 0, y: '-300px' }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition=".2s"
           zIndex={1}
         >
           <HStack bg={ocean_blue_500} pr="10px" align="start" justify="space-between">

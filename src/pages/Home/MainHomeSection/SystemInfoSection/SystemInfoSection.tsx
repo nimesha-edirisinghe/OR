@@ -2,18 +2,34 @@ import { HStack, VStack } from '@chakra-ui/react';
 import AppButton from 'components/newTheme/AppButton/AppButton';
 import AppText from 'components/newTheme/AppText/AppText';
 import { FC } from 'react';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { setActiveSubMenuItem } from 'state/layout/layoutState';
 import { neutral_200, ocean_blue_600 } from 'theme/colors';
 
-interface Props {}
+interface Props {
+  isDisabledDataIngestion?: boolean;
+  isDisabledOpTracker?: boolean;
+}
 
-const SystemInfoSection: FC<Props> = () => {
+const SystemInfoSection: FC<Props> = ({
+  isDisabledDataIngestion = false,
+  isDisabledOpTracker = false
+}) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const dataIngestionHandler = () => {
-    navigate('/app/data-ingestion-summary');
+    if (!isDisabledDataIngestion) {
+      dispatch(setActiveSubMenuItem({ subMenuItem: '/app/data-ingestion-summary' }));
+      navigate('/app/data-ingestion-summary');
+    }
   };
   const algoExecutionHandler = () => {
-    navigate('/app/operations-tracker');
+    if (!isDisabledOpTracker) {
+      dispatch(setActiveSubMenuItem({ subMenuItem: '/app/operations-tracker' }));
+      navigate('/app/operations-tracker');
+    }
   };
   return (
     <VStack
@@ -21,10 +37,10 @@ const SystemInfoSection: FC<Props> = () => {
       w="full"
       bg={ocean_blue_600}
       borderRadius="8px"
-      py="20px"
       px="6px"
       spacing="8px"
       align="start"
+      justify="center"
     >
       <VStack px="14px" align="start">
         <AppText size="h3Semibold" color={neutral_200}>
@@ -35,10 +51,20 @@ const SystemInfoSection: FC<Props> = () => {
         </AppText>
       </VStack>
       <HStack spacing="8px">
-        <AppButton variant="secondary" size="medium" onClick={dataIngestionHandler}>
+        <AppButton
+          variant="secondary"
+          size="medium"
+          onClick={dataIngestionHandler}
+          isDisabled={isDisabledDataIngestion}
+        >
           Data Ingestion Preview
         </AppButton>
-        <AppButton variant="secondary" size="medium" onClick={algoExecutionHandler}>
+        <AppButton
+          variant="secondary"
+          size="medium"
+          onClick={algoExecutionHandler}
+          isDisabled={isDisabledOpTracker}
+        >
           Algorithm Execution Preview
         </AppButton>
       </HStack>

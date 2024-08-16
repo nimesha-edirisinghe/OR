@@ -10,10 +10,11 @@ import { repeatDurationOptions } from 'utils/utility';
 
 interface RepeatEveryProps {
   frequency: number | null;
-  scheduleType: ScheduleType;
+  scheduleType: string;
   onChangeOption: (selectedOption: { key: string; value: string }) => void;
   onChangeFrequency: (value: number) => void;
   status: boolean;
+  isDisabled?: boolean;
 }
 
 const RepeatEvery: FC<RepeatEveryProps> = ({
@@ -21,41 +22,47 @@ const RepeatEvery: FC<RepeatEveryProps> = ({
   scheduleType,
   onChangeOption,
   onChangeFrequency,
-  status = false
+  status = false,
+  isDisabled = false
 }) => {
-  const options: string[] = repeatDurationOptions.map((obj:{ key: string; value: string })=>obj.key);
+  const disabled = !status || isDisabled;
+  const options: string[] = repeatDurationOptions.map(
+    (obj: { key: string; value: string }) => obj.value
+  );
   return (
     <HStack h="40px" w="full">
-      <Flex direction="column"  gap="4px"> 
-      <Box w="100px">
-        <AppText fontSize="12px" fontWeight={200} color={neutral_400}>
-          Repeat every
-        </AppText>
-      </Box>
-      <HStack spacing="16px">
-         <AppInput
-              value={frequency ?? 0}
-              onChange={(e) => onChangeFrequency(Number(e.target.value)||0)}
-              border="none"
-              borderRadius="8px"
-              w="165px"
-              h="36px"
-              bg={ocean_blue_500}
-              isDisabled={!status}
-              fontSize="13px"
-              fontWeight="400"
-              color={neutral_100}
-            />
+      <Flex direction="column" gap="4px">
+        <Box w="100px">
+          <AppText fontSize="12px" fontWeight={200} color={neutral_400}>
+            Repeat every
+          </AppText>
+        </Box>
+        <HStack spacing="16px">
+          <AppInput
+            value={frequency ?? 0}
+            onChange={(e) => onChangeFrequency(Number(e.target.value) || 0)}
+            border="none"
+            borderRadius="8px"
+            w="165px"
+            h="36px"
+            bg={ocean_blue_500}
+            isDisabled={disabled}
+            fontSize="13px"
+            fontWeight="400"
+            color={neutral_100}
+            cursor={disabled ? 'not-allowed' : 'default'}
+            opacity={disabled ? 0.6 : 1}
+          />
 
           <AppDropdown
             options={options}
-            buttonWidth='379px'
-            height='36px'
-            handleItemClick={(value)=>onChangeOption({key:value,value})}
-            selectedItem={scheduleType||''}
-            isDisabled={!status}
+            buttonWidth="379px"
+            height="36px"
+            handleItemClick={(value) => onChangeOption({ key: value, value })}
+            selectedItem={scheduleType || ''}
+            isDisabled={disabled}
           />
-      </HStack>
+        </HStack>
       </Flex>
     </HStack>
   );

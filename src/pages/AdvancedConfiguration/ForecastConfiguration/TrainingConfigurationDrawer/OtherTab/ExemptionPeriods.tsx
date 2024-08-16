@@ -23,20 +23,27 @@ import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppDateRangePicker from 'components/AppDateCalendar/Pickers/AppDateRangePicker';
 import { AppIconChakra } from 'assets/svg/chakraIcons';
 
-const ExemptionPeriods: FC = () => {
+interface Props {
+  isDisabled?: boolean;
+}
+
+const ExemptionPeriods: FC<Props> = ({ isDisabled = false }) => {
   const dispatch = useDispatch();
   const exemptionPeriods =
     useSelector(fcConfigPageSliceSelector).trainingConfigData.algorithmSettings
       .advanced_configurations.exemption_periods;
   const exemptionPeriodsCheckboxChecked =
     useSelector(fcConfigPageSliceSelector).trainingConfigLocalScope.exemptionPeriodsCheckboxChecked;
-
   const onAddExemptionPeriod = () => {
-    dispatch(addNewExemptionPeriod());
+    if (!isDisabled) {
+      dispatch(addNewExemptionPeriod());
+    }
   };
 
   const onRemoveExemptionPeriod = (index: number) => {
-    dispatch(removeExemptionPeriod(index));
+    if (!isDisabled) {
+      dispatch(removeExemptionPeriod(index));
+    }
   };
 
   const onUpdateExemptionPeriod = (
@@ -44,7 +51,9 @@ const ExemptionPeriods: FC = () => {
     index: number,
     value: string
   ) => {
-    dispatch(updateExemptionPeriod({ field, index, value }));
+    if (!isDisabled) {
+      dispatch(updateExemptionPeriod({ field, index, value }));
+    }
   };
 
   const onRangeSelect = (startDate: Date, endDate: Date, key: number) => {
@@ -58,6 +67,7 @@ const ExemptionPeriods: FC = () => {
     onUpdateExemptionPeriod('start_date', key, strStartDate);
     onUpdateExemptionPeriod('end_date', key, strEndDate);
   };
+
   return (
     <VStack
       w="full"
@@ -82,9 +92,10 @@ const ExemptionPeriods: FC = () => {
           <HStack key={key}>
             <HStack position="relative">
               <AppInput
+                backgroundColor="blue"
                 w="490px"
                 h="36px"
-                isDisabled={!exemptionPeriodsCheckboxChecked}
+                isDisabled={isDisabled || !exemptionPeriodsCheckboxChecked}
                 type="text"
                 fontSize="14px"
                 fontWeight={400}
@@ -97,12 +108,13 @@ const ExemptionPeriods: FC = () => {
                 p="10px 8px 10px 12px"
                 onChange={(e) => onUpdateExemptionPeriod('start_date', key, e.target.value)}
               />
-              <Box position="absolute" right={2}>
+              <Box position="absolute" w="475px" textAlign={'end'}>
                 <AppDateRangePicker
                   id={key}
                   children={<AppIconChakra name="calender" fill={blue_500} />}
                   onRangeSelect={onRangeSelect}
-                  prePos={{ x: -473, y: 8 }}
+                  prePos={{ x: -1, y: 7 }}
+                  isDisabled={isDisabled}
                 />
               </Box>
             </HStack>
@@ -110,13 +122,14 @@ const ExemptionPeriods: FC = () => {
             {exemptionPeriods.length > 1 && (
               <Box
                 transition=".1s"
-                cursor="pointer"
+                cursor={isDisabled ? 'not-allowed' : 'pointer'}
                 w="36px"
                 h="36px"
                 borderRadius="8px"
                 p="8px"
                 bg={ocean_blue_600}
                 onClick={() => onRemoveExemptionPeriod(key)}
+                opacity={isDisabled ? 0.6 : 1}
               >
                 <AppIcon name="minus" fill={blue_500} w="full" h="1.67px" />
               </Box>
@@ -125,7 +138,7 @@ const ExemptionPeriods: FC = () => {
         ))}
         {exemptionPeriods.length - 1 < 3 && (
           <HStack
-            cursor="pointer"
+            cursor={isDisabled ? 'not-allowed' : 'pointer'}
             w="534px"
             h="36px"
             borderRadius="8px"
@@ -135,6 +148,7 @@ const ExemptionPeriods: FC = () => {
             gap="8px"
             justifyContent="center"
             alignContent="center"
+            opacity={isDisabled ? 0.6 : 1}
           >
             <AppIcon name="plus" fill={blue_500} w="9.33px" h="9.33px" />
             <AppText color={blue_500} fontSize="13px" fontWeight={400}>

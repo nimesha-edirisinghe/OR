@@ -1,1 +1,1 @@
-export type FCAnalyzerType = 'individual' | 'aggregated';
+export type FCAnalyzerType = 'single' | 'aggregate';

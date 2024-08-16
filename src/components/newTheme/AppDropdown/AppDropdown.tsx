@@ -22,6 +22,8 @@ interface Props {
   isEnableSearch?: boolean;
   height?: string;
   isDisabled?: boolean;
+  lineMaxLength?: number;
+  onToggle?: (isOpen: boolean) => void;
 }
 
 const AppDropdown: React.FC<Props> = ({
@@ -32,7 +34,9 @@ const AppDropdown: React.FC<Props> = ({
   buttonWidth,
   isEnableSearch = false,
   height = '36px',
-  isDisabled = false
+  isDisabled = false,
+  lineMaxLength = 18,
+  onToggle
 }: Props) => {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -44,8 +48,13 @@ const AppDropdown: React.FC<Props> = ({
   const filteredOptions = options?.filter((option) =>
     option.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
   return (
-    <Menu variant={variant}>
+    <Menu
+      variant={variant}
+      onOpen={() => !isDisabled && onToggle?.(true)}
+      onClose={() => !isDisabled && onToggle?.(false)}
+    >
       {({ isOpen }) => (
         <>
           <MenuButton
@@ -67,23 +76,24 @@ const AppDropdown: React.FC<Props> = ({
                 fill={ocean_blue_300}
                 stroke={ocean_blue_300}
                 transform={isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}
+                mr="-10px"
               />
             }
             _expanded={{ border: '1px solid', borderColor: blue_500, bg: { ocean_blue_500 } }}
-            _hover={{ bg: '' }}
+            _hover={{ bg: ocean_blue_500 }}
             _focus={{ color: neutral_100 }}
             borderRadius="8px"
             transition="all 0.25s ease-in"
             w={buttonWidth}
             cursor={isDisabled ? 'not-allowed' : ''}
           >
-            {selectedItem?.length > 18 ? (
+            {selectedItem?.length > lineMaxLength ? (
               <AppTooltip label={selectedItem} placement="auto-start">
                 <AppText noOfLines={1}>{selectedItem}</AppText>
               </AppTooltip>
             ) : (
               <HStack spacing="4px" mr="4px" w="auto">
-                <span> {selectedItem || 'Select an option'}</span>
+                <AppText size="body3"> {selectedItem || 'Select an option'}</AppText>
               </HStack>
             )}
           </MenuButton>
@@ -98,6 +108,7 @@ const AppDropdown: React.FC<Props> = ({
             __css={scrollbarYStyles}
             zIndex={100}
             bg={ocean_blue_500}
+            boxShadow="0px 12px 20px 0px #001019"
           >
             {isEnableSearch && (
               <AppInputGroup
@@ -108,16 +119,17 @@ const AppDropdown: React.FC<Props> = ({
                 variant="primary"
                 inputSize="large"
                 width="full"
+                isDisabled={isDisabled}
               />
             )}
             {filteredOptions?.map((option, index) => (
               <MenuItem
                 key={index}
-                onClick={() => handleItemClick(option)}
+                onClick={() => !isDisabled && handleItemClick(option)}
                 transition="all 0.25s ease-in"
               >
                 <AppText size="body3" noOfLines={1} align="start" py="7.5px" color={ocean_blue_200}>
-                  {option?.length > 18 ? (
+                  {option?.length > lineMaxLength ? (
                     <AppTooltip label={option} placement="auto-start">
                       <span>{option}</span>
                     </AppTooltip>

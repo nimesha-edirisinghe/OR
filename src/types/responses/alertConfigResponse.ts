@@ -48,7 +48,7 @@ export interface GetAlertList {
   storeNameCode: string;
   threshold: string;
   isSelected: boolean;
-  invPlanKey:number
+  invPlanKey: number;
 }
 
 export interface GetAlertsData {
@@ -56,3 +56,10 @@ export interface GetAlertsData {
   list: GetAlertList[] | null;
   totalCount: number;
 }
+
+export interface AlertedGroupDetailsResponseI {
+  totalCount: number;
+  groupCode: number[];
+}
+
+export type AlertListSelectedOptionT = 'multiple' | 'individual';

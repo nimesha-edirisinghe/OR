@@ -60,7 +60,7 @@ const AppCalenderDate: FC<Props> = ({
   return (
     <Box
       key={`as-${day}`}
-      cursor={isDisabled ? 'not-allowed' : isValidDateRange(date) ? 'pointer' : 'default'}
+      cursor={isDisabled ? 'default' : isValidDateRange(date) ? 'pointer' : 'default'}
       onClick={() => {
         isValidDateRange(date) && onDateClickHandler();
       }}

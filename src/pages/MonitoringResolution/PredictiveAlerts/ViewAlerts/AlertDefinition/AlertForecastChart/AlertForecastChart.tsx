@@ -70,7 +70,7 @@ const AlertForecastChart: FC<AlertForecastChartProps> = ({
       actualKey: 'skuActual',
       projectedKey: 'skuProjected',
       mergePoint: 'isSKUMergePoint',
-      displayName: 'SKU Forecast'
+      displayName: 'Sales'
     },
     {
       actualKey: 'compareActual',
@@ -141,7 +141,7 @@ const AlertForecastChart: FC<AlertForecastChartProps> = ({
               bg="linear-gradient(180deg, #F8705E 0%, #FFA914 100%)"
             ></Box>
             <AppText color={yellow_400} size="body2">
-              SKU Forecast
+              Sales
             </AppText>
           </>
         </HStack>

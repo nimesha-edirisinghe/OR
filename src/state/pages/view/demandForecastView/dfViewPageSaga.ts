@@ -8,12 +8,18 @@ import {
   dfViewSliceSelector,
   downloadBulkEditForecastFailure,
   downloadBulkEditForecastSuccess,
+  downloadBulkEditForecastZipFileRequestFailure,
+  downloadBulkEditForecastZipFileRequestSuccess,
   downloadBulkForecastEditResultFailure,
   downloadBulkForecastEditResultSuccess,
   downloadDemandForecastReportFailure,
   downloadDemandForecastReportSuccess,
   downloadForecastReportFailure,
   downloadForecastReportSuccess,
+  editForecastDataRequestFailure,
+  editForecastDataRequestSuccess,
+  getAlertTypeFailure,
+  getAlertTypeSuccess,
   getDemandForecastDataFailure,
   getDemandForecastDataSuccess,
   getDemandForecastSkuListFailure,
@@ -35,12 +41,14 @@ import { IUser, userSliceSelector } from 'state/user/userState';
 import { v4 as uuidv4 } from 'uuid';
 import { downloadFile } from 'utils/fileDownloadUtils';
 import {
+  AlertGraphRequestBodyI,
   BulkEditFileUploadBodyI,
   DFPredictorsQueryParamI,
   DemandForecastChartRequestParamI,
   DemandForecastDataRequestQueryI,
   DemandForecastDownloadRequestQueryI,
   DownloadBulkEditQueryParamI,
+  DownloadBulkEditZipFileBodyI,
   DownloadEditResultRequestBodyI,
   GetUploadHistoryReqBodyI
 } from 'types/requests/viewRequests';
@@ -74,6 +82,15 @@ import { format } from 'date-fns';
 import { AxiosProgressEvent } from 'axios';
 import { TrainingSummaryDataResponseI } from 'types/responses/trainingSummaryResponse';
 import { GetTrainingSummaryDataReqBodyI } from 'types/requests/trainingSummaryRequests';
+import { IAlert, alertSliceSelector } from 'state/pages/monitoringAndResolution/Alert/alertState';
+import { generateGroupFilters } from './sagaHelpers/sgH_DfView';
+import { getUniqueGroupCodes } from 'pages/MonitoringResolution/PredictiveAlerts/BulkEditAlertsPage/Tabs/DownloadTab/Forecast/helper';
+import {
+  AlertForecastChartResponseDataI,
+  AlertTypeI,
+  AlertTypePayloadI,
+  ForecastAlertType
+} from 'types/alertConfig';
 
 function* downloadForecastReportRequest() {
   try {
@@ -221,6 +238,7 @@ function* getDemandForecastDataRequestSaga(action: PayloadAction<{ searchKey: st
   try {
     const { searchKey } = action.payload;
     const userState: IUser = yield select(userSliceSelector);
+    const dfViewState: IDFView = yield select(dfViewSliceSelector);
     const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
     const orgKey = userState.selectedOrg.orgKey;
     const selectedGroupKey = sharedGroupState.selectedGroupKey!;
@@ -228,10 +246,12 @@ function* getDemandForecastDataRequestSaga(action: PayloadAction<{ searchKey: st
       groupConfigurationSliceSelector
     );
     const groupFilter = groupConfigurationState.groupFilter;
+    const selectedSkuList = dfViewState.selectedSkuList;
     const filters = rightSidePanelFormatForRequest(
       groupFilter.filterLocalScope.rightPanelRetainDataList
     );
 
+    const globalSkuSelected = dfViewState.dfViewLocalScope.globalSkuSelected;
     const queryParams: DemandForecastDataRequestQueryI = {
       groupKey: selectedGroupKey!,
       limit: Number(REACT_APP_VIEW_FORECAST_SKU_PAGE_SIZE),
@@ -241,10 +261,31 @@ function* getDemandForecastDataRequestSaga(action: PayloadAction<{ searchKey: st
       whFlag: 0
     };
 
+    let additionalFilter: GroupFilterI = {
+      code: 1,
+      isSelectAll: false,
+      search: '',
+      selectedItems: [],
+      type: 'sku'
+    };
+
     if (selectedGroupKey) {
-      const requestBody: GroupFilterI[] = filters.filter(
+      if (globalSkuSelected) {
+        additionalFilter = { ...additionalFilter, isSelectAll: true };
+      } else {
+        additionalFilter = {
+          ...additionalFilter,
+          selectedItems: selectedSkuList.map((sku) => {
+            return sku.anchorProdKey.toString();
+          })
+        };
+      }
+
+      let requestBody: GroupFilterI[] = filters.filter(
         (filter) => !(filter.code === 1 && filter.type === 'group')
       );
+
+      requestBody = [...requestBody, additionalFilter];
 
       const response: ApiResponse<DemandForecastSkuResponseDataI> = yield call(() =>
         demandForecastApi.getDemandForecastDataRequest(requestBody, queryParams)
@@ -283,6 +324,7 @@ function* downloadDemandForecastReportRequestSaga(
       groupConfigurationSliceSelector
     );
     const groupFilter = groupConfigurationState.groupFilter;
+    const selectedSkuList = dfViewState.selectedSkuList;
     const filters = rightSidePanelFormatForRequest(
       groupFilter.filterLocalScope.rightPanelRetainDataList
     );
@@ -295,17 +337,30 @@ function* downloadDemandForecastReportRequestSaga(
       search: searchKey
     };
 
-    const requestBody: GroupFilterI[]  = filters
-      .filter((filter) => !(filter.code === 1 && filter.type === 'group'))
-      .map((filter) => {
-        if (filter.code === 1) {
-          return {
-            ...filter,
-            selectedItems: globalSkuSelected ? [] : filter.selectedItems
-          };
-        }
-        return filter;
-      });
+    let additionalFilter: GroupFilterI = {
+      code: 1,
+      isSelectAll: false,
+      search: '',
+      selectedItems: [],
+      type: 'sku'
+    };
+
+    if (globalSkuSelected) {
+      additionalFilter = { ...additionalFilter, isSelectAll: true };
+    } else {
+      additionalFilter = {
+        ...additionalFilter,
+        selectedItems: selectedSkuList.map((sku) => {
+          return sku.anchorProdKey.toString();
+        })
+      };
+    }
+
+    let requestBody: GroupFilterI[] = filters.filter(
+      (filter) => !(filter.code === 1 && filter.type === 'group')
+    );
+
+    requestBody = [...requestBody, additionalFilter];
 
     const response: GeneralResponse = yield call(() =>
       demandForecastApi.downloadDemandForecastReportRequest(requestBody, queryParams)
@@ -420,11 +475,6 @@ function* bulkEditFileUploadRequestSaga(
 ) {
   try {
     const { file, uploadPercentageCallback } = action.payload;
-    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
-    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
-    const selectedGroupName = sharedGroupState?.groupList?.list?.find(
-      (item) => item.key === selectedGroupKey
-    )?.value;
 
     let previousUploadProgressHandler: ((progressEvent: AxiosProgressEvent) => void) | null = null;
     const uploadProgressHandler = async (progressEvent: AxiosProgressEvent) => {
@@ -433,13 +483,8 @@ function* bulkEditFileUploadRequestSaga(
     };
     previousUploadProgressHandler = uploadProgressHandler;
 
-    const reqBody: BulkEditFileUploadBodyI = {
-      groupKey: selectedGroupKey!,
-      groupDesc: selectedGroupName!
-    };
-
     const response: ApiResponse<any> = yield call(() =>
-      demandForecastApi.bulkEditFileUploadRequest(reqBody, file, uploadProgressHandler)
+      demandForecastApi.bulkEditFileUploadRequest(file, uploadProgressHandler)
     );
 
     if (response) {
@@ -456,53 +501,72 @@ function* bulkEditFileUploadRequestSaga(
 }
 
 function* downloadBulkEditForecastRequestSaga(
-  action: PayloadAction<{ fileName: string; searchKey?: string }>
+  action: PayloadAction<{ fileName: string; groupKey: string }>
 ) {
   try {
-    const { fileName, searchKey } = action.payload;
+    const { fileName, groupKey } = action.payload;
     const userState: IUser = yield select(userSliceSelector);
-    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
+    const dfViewState: IDFView = yield select(dfViewSliceSelector);
     const orgKey = userState.selectedOrg.orgKey;
-    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
     const groupConfigurationState: IGroupConfigurationSlice = yield select(
       groupConfigurationSliceSelector
     );
     const groupFilter = groupConfigurationState.groupFilter;
+    const selectedSkuList = dfViewState.selectedSkuList;
+    const searchKey = dfViewState.dfViewLocalScope.skuSearchKey;
+    const isSearchEmpty = searchKey.length === 0;
     const filters = rightSidePanelFormatForRequest(
       groupFilter.filterLocalScope.rightPanelRetainDataList
     );
-
+    const globalSkuSelected = dfViewState.dfViewLocalScope.globalSkuSelected;
     const queryParams: DownloadBulkEditQueryParamI = {
       fileName,
-      groupKey: Number(selectedGroupKey!),
+      groupKey: Number(groupKey),
       orgKey,
-      search: searchKey
+      search: searchKey || ''
     };
 
-    if (selectedGroupKey) {
-      const requestBody: GroupFilterI[] = filters.filter(
-        (filter) => !(filter.code === 1 && filter.type === 'group')
-      );
+    let additionalFilter: GroupFilterI = {
+      code: 1,
+      isSelectAll: false,
+      search: searchKey || '',
+      selectedItems: [],
+      type: 'sku'
+    };
 
-      const response: GeneralResponse = yield call(() =>
-        demandForecastApi.downloadBulkEditForecastRequest(requestBody, queryParams)
-      );
+    if (globalSkuSelected) {
+      additionalFilter = { ...additionalFilter, isSelectAll: true };
+    } else {
+      additionalFilter = {
+        ...additionalFilter,
+        selectedItems: selectedSkuList.map((sku) => {
+          return sku.anchorProdKey.toString();
+        })
+      };
+    }
 
-      if (response) {
-        const downloadFileName = `${fileName}.csv`;
-        const success: boolean = yield call(downloadFile, response, downloadFileName);
+    let requestBody: GroupFilterI[] = filters.filter(
+      (filter) => !(filter.code === 1 && filter.type === 'group')
+    );
 
-        if (success) {
-          yield put(downloadBulkEditForecastSuccess());
-          yield call(showSuccessToast, DOWNLOAD_SUCCESS_MESSAGE);
-        } else {
-          yield put(downloadForecastReportFailure());
-        }
+    requestBody = [...requestBody, additionalFilter];
+
+    const response: GeneralResponse = yield call(() =>
+      demandForecastApi.downloadBulkEditForecastRequest(requestBody, queryParams)
+    );
+
+    if (response) {
+      const downloadFileName = `${groupKey}_${fileName}.csv`;
+      const success: boolean = yield call(downloadFile, response, downloadFileName);
+
+      if (success) {
+        yield put(downloadBulkEditForecastSuccess());
+        yield call(showSuccessToast, DOWNLOAD_SUCCESS_MESSAGE);
       } else {
-        yield put(downloadBulkEditForecastFailure());
+        yield put(downloadForecastReportFailure());
       }
     } else {
-      yield call(showErrorToast, 'Please select a Group');
+      yield put(downloadBulkEditForecastFailure());
     }
   } catch (error) {
     console.error('error in request ', error);
@@ -514,8 +578,6 @@ function* getUploadHistoryDataRequestSaga(
 ) {
   try {
     const { searchKey, pageNumber } = action.payload;
-    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
-    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
     const groupConfigurationState: IGroupConfigurationSlice = yield select(
       groupConfigurationSliceSelector
     );
@@ -524,33 +586,28 @@ function* getUploadHistoryDataRequestSaga(
       groupFilter.filterLocalScope.rightPanelRetainDataList
     );
 
-    if (selectedGroupKey) {
-      const appliedFilters = filters.filter(
-        (filter) => !(filter.code === 1 && filter.type === 'group')
-      );
-      const requestBody: GetUploadHistoryReqBodyI = {
-        filters: appliedFilters,
-        groupKey: Number(selectedGroupKey),
-        limit: BULK_EDIT_HISTORY_TABLE_PAGE_SIZE,
-        page: pageNumber || 1,
-        search: searchKey || ''
-      };
+    const appliedFilters = filters.filter(
+      (filter) => !(filter.code === 1 && filter.type === 'group')
+    );
+    const requestBody: GetUploadHistoryReqBodyI = {
+      filters: appliedFilters,
+      limit: BULK_EDIT_HISTORY_TABLE_PAGE_SIZE,
+      page: pageNumber || 1,
+      search: searchKey || ''
+    };
 
-      const response: ApiResponse<GetUploadHistoryResponseI> = yield call(() =>
-        demandForecastApi.getUploadHistoryDataRequest(requestBody)
-      );
+    const response: ApiResponse<GetUploadHistoryResponseI> = yield call(() =>
+      demandForecastApi.getUploadHistoryDataRequest(requestBody)
+    );
 
-      if (!responseValidator(response, true)) {
-        return;
-      }
+    if (!responseValidator(response, true)) {
+      return;
+    }
 
-      if (response) {
-        yield put(getUploadHistoryDataSuccess(response.data));
-      } else {
-        yield put(getUploadHistoryDataFailure());
-      }
+    if (response) {
+      yield put(getUploadHistoryDataSuccess(response.data));
     } else {
-      yield call(showErrorToast, 'Please select a Group');
+      yield put(getUploadHistoryDataFailure());
     }
   } catch (error) {
     console.error('error in request ', error);
@@ -562,33 +619,26 @@ function* downloadBulkForecastEditResultRequestSaga(
 ) {
   try {
     const { fileName, uploadId } = action.payload;
-    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
-    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
+    const requestBody: DownloadEditResultRequestBodyI = {
+      fileName: fileName,
+      uploadId: uploadId
+    };
 
-    if (selectedGroupKey) {
-      const requestBody: DownloadEditResultRequestBodyI = {
-        fileName: fileName,
-        uploadId: uploadId
-      };
+    const response: GeneralResponse = yield call(() =>
+      demandForecastApi.downloadBulkForecastEditResultRequest(requestBody)
+    );
 
-      const response: GeneralResponse = yield call(() =>
-        demandForecastApi.downloadBulkForecastEditResultRequest(requestBody)
-      );
+    if (response) {
+      const success: boolean = yield call(downloadFile, response, fileName);
 
-      if (response) {
-        const success: boolean = yield call(downloadFile, response, fileName);
-
-        if (success) {
-          yield put(downloadBulkForecastEditResultSuccess());
-          yield call(showSuccessToast, DOWNLOAD_SUCCESS_MESSAGE);
-        } else {
-          yield put(downloadBulkForecastEditResultFailure());
-        }
+      if (success) {
+        yield put(downloadBulkForecastEditResultSuccess());
+        yield call(showSuccessToast, DOWNLOAD_SUCCESS_MESSAGE);
       } else {
         yield put(downloadBulkForecastEditResultFailure());
       }
     } else {
-      yield call(showErrorToast, 'Please select a Group');
+      yield put(downloadBulkForecastEditResultFailure());
     }
   } catch (error) {
     console.error('error in request ', error);
@@ -631,6 +681,124 @@ function* getTrainingSummaryDataRequestSaga() {
   }
 }
 
+function* downloadBulkEditForecastZipFileRequestSaga(action: PayloadAction<{ fileName: string }>) {
+  try {
+    const { fileName } = action.payload;
+    const userState: IUser = yield select(userSliceSelector);
+    const alertState: IAlert = yield select(alertSliceSelector);
+    const orgKey = userState.selectedOrg.orgKey;
+    const groupConfigurationState: IGroupConfigurationSlice = yield select(
+      groupConfigurationSliceSelector
+    );
+    const groupFilter = groupConfigurationState.groupFilter;
+    const filters = rightSidePanelFormatForRequest(
+      groupFilter.filterLocalScope.rightPanelRetainDataList
+    );
+    const isSelectedAll = alertState.alertLocalScope.globalSkuSelected;
+    const selectedSKUList = alertState.selectedSkuList;
+    const selectedAlertTypeObj = alertState.alertLocalScope.selectedAlertTypeObj;
+    const uniqueGroupCodes = getUniqueGroupCodes(selectedSKUList);
+    const groupCodes = isSelectedAll ? alertState.alertedGroupDetails?.groupCode : uniqueGroupCodes;
+    const skuSearchKey = alertState.alertLocalScope.skuSearchKey;
+
+    const groupFilters = generateGroupFilters(
+      filters,
+      isSelectedAll,
+      selectedSKUList,
+      skuSearchKey
+    );
+
+    const requestBody: DownloadBulkEditZipFileBodyI = {
+      fileName: fileName,
+      filters: groupFilters,
+      types: [selectedAlertTypeObj.alertType],
+      groupKeys: groupCodes!,
+      orgKey,
+      search: skuSearchKey,
+      whFlag: 0
+    };
+
+    const response: GeneralResponse = yield call(() =>
+      demandForecastApi.downloadBulkEditForecastZipFileRequest(requestBody)
+    );
+
+    if (response) {
+      const downloadFileName = `${fileName}.zip`;
+      const success: boolean = yield call(downloadFile, response, downloadFileName);
+
+      if (success) {
+        yield put(downloadBulkEditForecastZipFileRequestSuccess());
+        yield call(showSuccessToast, DOWNLOAD_SUCCESS_MESSAGE);
+      } else {
+        yield put(downloadBulkEditForecastZipFileRequestFailure());
+      }
+    } else {
+      yield put(downloadBulkEditForecastZipFileRequestFailure());
+    }
+  } catch (error) {
+    console.error('error in request ', error);
+  }
+}
+
+function* getAlertTypesRequestSaga() {
+  try {
+    const dfState: IDFView = yield select(dfViewSliceSelector);
+    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
+    const selectedSkuObj = dfState.selectedSku;
+
+    const anchorProdKey = dfState.selectedSku?.anchorProdKey!;
+    const anchorProdModelKey = dfState.selectedSku?.anchorProdModelKey!;
+    const groupKey = parseInt(sharedGroupState.selectedGroupKey!);
+    const forecastKey = selectedSkuObj?.forecastKey!;
+
+    const requestBody: ForecastAlertType = {
+      anchorProdKey,
+      anchorProdModelKey,
+      groupKey,
+      forecastKey,
+      alertType:'growth'
+    };
+
+    const response: ApiResponse<AlertTypeI> = yield call(() =>
+      demandForecastApi.getAlertTypeRequest(requestBody)
+    );
+
+    if (!responseValidator(response, true)) {
+      return;
+    }
+
+    if (response) {
+      yield put(getAlertTypeSuccess(response.data));
+    } else {
+      yield put(getAlertTypeFailure());
+    }
+  } catch (error) {
+    console.error('error in request ', error);
+  }
+}
+
+function* editForecastDataRequestSaga(action: PayloadAction<AlertGraphRequestBodyI>) {
+  try {
+    const dfState: IDFView = yield select(dfViewSliceSelector);
+    const response: ApiResponse<AlertForecastChartResponseDataI> = yield call(() =>
+      demandForecastApi.alertGraphRequest(action.payload)
+    );
+
+    if (!responseValidator(response, true)) {
+      return;
+    }
+
+    if (response) {
+      yield put(editForecastDataRequestSuccess());
+      yield call(showSuccessToast, response.message);
+    } else {
+      yield put(editForecastDataRequestFailure());
+    }
+  } catch (error) {
+    console.error('error in request ', error);
+  }
+}
+
 function* userSaga() {
   yield takeLatest('dfView/demandForecastChartRequest', demandForecastChartRequestSaga);
   yield takeLatest('dfView/downloadForecastReportRequest', downloadForecastReportRequest);
@@ -649,6 +817,12 @@ function* userSaga() {
     downloadBulkForecastEditResultRequestSaga
   );
   yield takeLatest('dfView/getTrainingSummaryDataRequest', getTrainingSummaryDataRequestSaga);
+  yield takeLatest(
+    'dfView/downloadBulkEditForecastZipFileRequest',
+    downloadBulkEditForecastZipFileRequestSaga
+  );
+  yield takeLatest('dfView/getAlertTypeRequest', getAlertTypesRequestSaga);
+  yield takeLatest('dfView/editForecastDataRequest', editForecastDataRequestSaga);
 }
 
 export default userSaga;

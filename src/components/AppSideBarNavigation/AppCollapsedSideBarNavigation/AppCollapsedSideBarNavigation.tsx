@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import ChatWithMaya from 'layouts/SideBar/ChatWithMaya';
 import { ocean_blue_50, ocean_blue_500_t95, ocean_blue_500_t97 } from 'theme/colors';
 import { Direction } from 'utils/enum';
+import { storeInLocal } from 'utils/localStorage';
 
 interface Props {
   leftMenu: LeftMenu;
@@ -38,6 +39,7 @@ const AppCollapsedSideBarNavigation: FC<Props> = ({
   const navigateToMaya = () => {
     dispatch(setActiveMenuItem({ menuItem: null }));
     dispatch(setActiveSubMenuItem({ subMenuItem: null }));
+    storeInLocal('activeSubMenuItem', '/app/maya');
     navigate('/app/maya');
   };
 

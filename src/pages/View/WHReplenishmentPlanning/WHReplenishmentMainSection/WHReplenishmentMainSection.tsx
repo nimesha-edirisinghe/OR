@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { Box, Center, HStack, Skeleton, VStack, usePrevious } from '@chakra-ui/react';
 import { useDispatch, useSelector } from 'react-redux';
-import { neutral_500, ocean_blue_500, ocean_blue_600 } from 'theme/colors';
+import { neutral_500, ocean_blue_500, ocean_blue_600, red_500 } from 'theme/colors';
 import { layoutSliceSelector } from 'state/layout/layoutState';
 import { GroupLabelTypes } from 'types/requests/groupConfigRequests';
 import ActionBar from './ActionBar/ActionBar';
@@ -15,7 +15,9 @@ import {
   IRPLWhView,
   addOrRemoveFromSelectedRplWHSkuList,
   getRplWHPlanDetailsRequest,
+  rplWHAlertTypeRequest,
   rplWHViewSliceSelector,
+  setReplEditable,
   setSelectedRplWHSkuAction,
   updateRplWHSkuListSelectedStatus
 } from 'state/pages/view/whReplenishmentView/whRplViewState';
@@ -25,6 +27,7 @@ import { resetViewRplPlanRightPanel } from 'state/pages/view/replenishmentView/r
 import WHReplenishmentHeader from '../WHReplenishmentHeader/WHReplenishmentHeader';
 import { IUser, userSliceSelector } from 'state/user/userState';
 import { useNavigate } from 'react-router-dom';
+import { scrollbarYStyles } from 'theme/styles';
 
 interface Props {
   filterLabelTypes?: GroupLabelTypes;
@@ -46,6 +49,7 @@ const WHReplenishmentMainSection: FC<Props> = ({ filterLabelTypes }) => {
   const planNavigator = useNavigator(rplSelectedSkuList);
   const userState: IUser = useSelector(userSliceSelector);
   const selectedOrgKey = userState.selectedOrg && userState.selectedOrg.orgKey;
+  const alertType = rplWhViewState.AlertType;
   const [initialOrgKey, setInitialOrgKey] = useState<number>(selectedOrgKey);
   const [newOrgKey, setNewOrgKey] = useState<number>();
 
@@ -55,6 +59,7 @@ const WHReplenishmentMainSection: FC<Props> = ({ filterLabelTypes }) => {
     }
     dispatch(setSelectedRplWHSkuAction(selectedSku));
     dispatch(getRplWHPlanDetailsRequest());
+    dispatch(rplWHAlertTypeRequest());
   };
 
   useEffect(() => {
@@ -74,12 +79,19 @@ const WHReplenishmentMainSection: FC<Props> = ({ filterLabelTypes }) => {
       previousSelectedRplSkuList.length &&
       rplSelectedSkuList.length === previousSelectedRplSkuList.length
     ) {
-      requestReplenishmentPlan(rplSelectedSkuList[planNavigator.currentStepIndex]);
+      const time = rplWhViewState.loading.editDetail ? 1000 : 5;
+      const timeOut = setTimeout(() => {
+        requestReplenishmentPlan(rplSelectedSkuList[planNavigator.currentStepIndex]);
+      }, time);
+      return () => clearTimeout(timeOut);
     }
-  }, [planNavigator.currentStepIndex]);
+  }, [planNavigator.currentStepIndex, maximizedInfo]);
 
   const onMaxMinHandler = () => {
-    setMaximizedInfo((prev) => !prev);
+    setMaximizedInfo((prev) => {
+      if (prev) dispatch(setReplEditable(false));
+      return !prev;
+    });
   };
 
   const onChangeAllHandler = (isSelected: boolean, id: number) => {
@@ -170,33 +182,60 @@ const WHReplenishmentMainSection: FC<Props> = ({ filterLabelTypes }) => {
             >
               <VStack w="full" h="full" spacing={0}>
                 <Box bg={ocean_blue_500} h="52px" w="full" borderTopRadius="8px">
-                  <ActionBar onMaxMinHandler={onMaxMinHandler} navigator={planNavigator} />
+                  <ActionBar
+                    onMaxMinHandler={onMaxMinHandler}
+                    isOpenPanel={maximizedInfo}
+                    navigator={planNavigator}
+                  />
                 </Box>
                 <VStack
                   w="full"
                   h="full"
                   bg={ocean_blue_600}
                   p="12px"
-                  spacing="12px"
-                  borderBottom="8px"
+                  pr="8px"
+                  gap="12px"
+                  overflowY="scroll"
+                  __css={scrollbarYStyles}
                 >
+                  <HStack w="full" spacing="8px">
+                    {alertType.alertTypeDisplayName?.map((item) => (
+                      <HStack
+                        bg="#F4312A1A"
+                        border="0px 0px 0px 1px"
+                        borderRadius="23px"
+                        h="26px"
+                        padding="4px 12px 4px 12px"
+                      >
+                        <AppText
+                          fontSize="12px"
+                          fontWeight={400}
+                          color={red_500}
+                          textAlign={'center'}
+                          textTransform={'capitalize'}
+                        >
+                          {item} Alert
+                        </AppText>
+                      </HStack>
+                    ))}
+                  </HStack>
                   <Box h="45px" w="full" minH="45px">
                     <ParameterPanel />
                   </Box>
                   <Box h="151px" w="full" borderRadius="8px">
                     {orderQtyDetailsList?.length > 0 ? (
-                      <PlanTablePanel tableHeight="151px" />
+                      <PlanTablePanel tableHeight="151px" maximized={false} />
                     ) : (
-                      <Center h="full" w="full" bg={ocean_blue_500} borderRadius="8px">
+                      <Center h="151px" w="full" bg={ocean_blue_500} borderRadius="8px">
                         <AppText size="body2" color={neutral_500} fontStyle="italic">
                           No proposed orders for the current planning period.
                         </AppText>
                       </Center>
                     )}
                   </Box>
-                  <Box h="calc(100vh - 460px)" w="full" borderRadius="8px">
+                  <Box h="full" w="full" borderRadius="8px" pb="50px">
                     {stockMovementList?.length > 0 ? (
-                      <ReplenishmentInfoTable tableHeight="calc(100vh - 460px)" />
+                      <ReplenishmentInfoTable tableHeight="100%" maximized={false} />
                     ) : (
                       <Center h="full" bg={ocean_blue_500} borderRadius="8px">
                         <AppText size="body2" color={neutral_500} fontStyle="italic">

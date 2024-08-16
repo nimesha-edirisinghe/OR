@@ -163,10 +163,9 @@ const pathTitleMap: { [key: string]: string } = {
   '/app/predictive-alerts/definition': 'Predictive alerts > View Alerts',
   '/app/predictive-alerts/view-all': 'Predictive alerts > View Alerts > All SKU Locations',
   '/app/predictive-alerts/edit': 'Predictive alerts > Edit Alerts',
-  '/app/demand-forecast/individual-forecast-analyzer':
-    'Product-Store Forecasting > Forecast Analyzer',
-  '/app/demand-forecast/aggregated-forecast-analyzer':
-    'Product-Store Forecasting > Forecast Analyzer'
+  '/app/demand-forecast/individual-forecast-analyser': 'Store Forecasts > Validate',
+  '/app/demand-forecast/aggregated-forecast-analyser': 'Store Forecasts > Forecast Analyser',
+  '/app/predictive-alerts/bulk-edit': 'Predictive alerts > Bulk Edit Alerts'
 };
 
 export const getPageTitle = (leftMenu: LeftMenu, pathName: string): string => {

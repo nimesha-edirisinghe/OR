@@ -10,6 +10,9 @@ import {
   updateJobScheduleState
 } from 'state/pages/shared/jobScheduling/jobSchedulingState';
 import { closeDrawer } from 'state/pages/advancedConfiguration/forecastConfigurationPage/pageState';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface TrainingTabProps {}
 
@@ -57,6 +60,9 @@ const TrainingTab: FC<TrainingTabProps> = () => {
     dispatch(removeScheduleJobRequest());
   };
 
+  const accessType = useAccessType(MenuItems.FORECASTING_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.SCHEDULE]);
+
   return (
     <VStack pt="8px" spacing="20px" align="start">
       <AppScheduling
@@ -65,6 +71,7 @@ const TrainingTab: FC<TrainingTabProps> = () => {
         onChangeDay={onChangeTrainingDay}
         onDeleteHandler={onRemoveSchedule}
         setEsEnabledHandler={setEsEnabledHandler}
+        isDisabled={accessNotAllowed}
       />
     </VStack>
   );

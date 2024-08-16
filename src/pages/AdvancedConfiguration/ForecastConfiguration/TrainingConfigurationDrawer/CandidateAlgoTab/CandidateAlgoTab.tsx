@@ -10,6 +10,9 @@ import { ConfigurationI } from 'types/forecastConfig';
 import { initCandidateAlgoState } from 'utils/utility';
 import { scrollbarYStyles } from 'theme/styles';
 import useScrollState from 'hooks/useScrollState';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface CandidateAlgoTabProps {}
 
@@ -23,6 +26,9 @@ const CandidateAlgoTab: React.FC<CandidateAlgoTabProps> = () => {
 
   const initState = initCandidateAlgoState(algoSelection, isUnivariate);
   const dispatch = useDispatch();
+
+  const accessType = useAccessType(MenuItems.FORECASTING_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   // Function definition for handle node select
   const handleNodeSelect = (nodeId: string, isSelected: boolean, selectedKey: ConfigurationI) => {
@@ -51,7 +57,7 @@ const CandidateAlgoTab: React.FC<CandidateAlgoTabProps> = () => {
           <CandidateAlgoList
             node={initState[index]}
             onNodeSelect={handleNodeSelect}
-            disabled={data.isDisabled}
+            disabled={data.isDisabled || accessNotAllowed}
           />
         </VStack>
       ))}

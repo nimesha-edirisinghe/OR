@@ -1,5 +1,6 @@
 import { PlanTableHeader } from 'state/pages/view/demandForecastView/sagaHelpers/sgH_DfView';
 import { TableHeader } from './viewResponses';
+import { AlertReplenishmentActionTypeEnum } from 'utils/enum';
 
 export interface RplWHOrderPlanI {
   plannedOn: string;
@@ -10,6 +11,8 @@ export interface RplWHOrderPlanI {
   moq: number;
   unitOrderQty: number;
   wayOfSupply: string;
+  riskValue:number;
+  shelfLife:number;
 }
 
 export interface RplWHStockMovementI {
@@ -35,7 +38,8 @@ export interface RplWHOrderQtyDetailsI {
 
 export interface WHOrderQtyDetailsStateI {
   headers: PlanTableHeader[];
-  list: { id?: any; isSelected?: boolean; row: any[] }[] | null;
+  list: { id?: any; isSelected?: boolean; row: any[], action: AlertReplenishmentActionTypeEnum,fresh:boolean }[] | null;
+  defaultList: { id?: any; isSelected?: boolean; row: any[], action: AlertReplenishmentActionTypeEnum,fresh:boolean }[] | null;
 }
 export interface WHStockMovementsI {
   headers: TableHeader[];

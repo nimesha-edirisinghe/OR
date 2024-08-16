@@ -3,12 +3,17 @@ import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import AppInputGroup from 'components/newTheme/AppInputGroup/AppInputGroup';
 import { useDispatch, useSelector } from 'react-redux';
-import { layoutSliceSelector, leftMenuToggler } from 'state/layout/layoutState';
+import { layoutSliceSelector, leftMenuToggler, setActiveMenuItem } from 'state/layout/layoutState';
 import { yellow_500 } from 'theme/colors';
 
 export default function LeftMenuToggler() {
   const leftMenuOpen = useSelector(layoutSliceSelector).leftMenuOpen;
   const dispatch = useDispatch();
+
+  const onClickExpand = () => {
+    dispatch(leftMenuToggler());
+    dispatch(setActiveMenuItem({ menuItem: null }));
+  };
 
   return (
     <HStack
@@ -37,7 +42,7 @@ export default function LeftMenuToggler() {
             fill={yellow_500}
           />
         }
-        onClick={() => dispatch(leftMenuToggler())}
+        onClick={onClickExpand}
       />
       {leftMenuOpen && (
         <AppInputGroup

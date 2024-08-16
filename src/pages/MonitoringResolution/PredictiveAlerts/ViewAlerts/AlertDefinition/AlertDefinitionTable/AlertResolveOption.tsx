@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   IAlert,
   alertSliceSelector,
-  AlertForecastChartRequest,
+  alertForecastChartRequest,
   getPredictorsRequest,
   setGraphPanelEditable,
   setSelectedSkuAction,
@@ -15,16 +15,19 @@ import {
   toggleReplenishmentPanel,
   getRplPlanDetailsRequest,
   getAlertTypeRequest,
-  setReplenishmentEditable
+  setReplenishmentEditable,
+  setAlertSelectionOption
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import { selectGroupKey } from 'state/pages/shared/groupConfig/groupConfigState';
 import { neutral_200, ocean_blue_200, ocean_blue_400, ocean_blue_600, white } from 'theme/colors';
+import { AlertSelectionEnum } from 'utils/enum';
 
 interface AlertResolveOptionProps {
-  id: number;
+  anchorProdModelKey: number;
   groupKey: string;
   onMouseLeave: () => void;
   onResolvePopUp: (flag: boolean) => void;
+  isDisabled?: boolean;
 }
 
 interface optionI {
@@ -83,10 +86,11 @@ const replenishmentOptions: optionI[] = [
 ];
 
 const AlertResolveOption: FC<AlertResolveOptionProps> = ({
-  id,
+  anchorProdModelKey,
   groupKey,
   onMouseLeave,
-  onResolvePopUp
+  onResolvePopUp,
+  isDisabled = false
 }) => {
   const alertState: IAlert = useSelector(alertSliceSelector);
   const selectedAlertTypeObj = alertState.alertLocalScope.selectedAlertTypeObj;
@@ -97,9 +101,14 @@ const AlertResolveOption: FC<AlertResolveOptionProps> = ({
     onClose();
   };
 
-  const requestViewForecastChart = (id: number, index: number, groupKey: string) => {
-    dispatch(setSelectedSkuAction(id));
-    dispatch(AlertForecastChartRequest({ chartType: alertState.selectedChartType }));
+  const requestViewForecastChart = (
+    anchorProdModelKey: number,
+    index: number,
+    groupKey: string
+  ) => {
+    dispatch(setAlertSelectionOption(AlertSelectionEnum.INDIVIDUAL));
+    dispatch(setSelectedSkuAction(anchorProdModelKey));
+    dispatch(alertForecastChartRequest({ chartType: alertState.selectedChartType }));
     dispatch(getPredictorsRequest());
     dispatch(getAlertTypeRequest());
     dispatch(toggleGraphPanel());
@@ -107,12 +116,12 @@ const AlertResolveOption: FC<AlertResolveOptionProps> = ({
     dispatch(selectGroupKey(groupKey.toString()));
   };
 
-  const requestViewReplenishment = (option: optionI, anchorProdKey: number) => {
+  const requestViewReplenishment = (option: optionI, anchorProdModelKey: number) => {
     const editableFlag: boolean =
       option.isEnabled && option.title === replenishmentOptions[1].title;
+    dispatch(setAlertSelectionOption(AlertSelectionEnum.INDIVIDUAL));
     dispatch(setReplenishmentEditable(editableFlag));
-
-    dispatch(setSelectedSkuAction(anchorProdKey));
+    dispatch(setSelectedSkuAction(anchorProdModelKey));
     dispatch(getAlertTypeRequest());
     dispatch(getRplPlanDetailsRequest());
     dispatch(toggleReplenishmentPanel());
@@ -138,9 +147,13 @@ const AlertResolveOption: FC<AlertResolveOptionProps> = ({
               width="14px"
               height="14px"
               fill={neutral_200}
+              cursor={isDisabled ? 'not-allowed' : 'pointer'}
+              opacity={isDisabled ? 0.3 : 1}
               onClick={() => {
-                onOpen();
-                onResolvePopUp(true);
+                if (!isDisabled) {
+                  onOpen();
+                  onResolvePopUp(true);
+                }
               }}
             />
           }
@@ -165,7 +178,8 @@ const AlertResolveOption: FC<AlertResolveOptionProps> = ({
                   }}
                   px="12px"
                   onClick={() => {
-                    if (option.isEnabled) requestViewForecastChart(id, idx, groupKey);
+                    if (option.isEnabled)
+                      requestViewForecastChart(anchorProdModelKey, idx, groupKey);
                   }}
                 >
                   <AppText
@@ -229,7 +243,7 @@ const AlertResolveOption: FC<AlertResolveOptionProps> = ({
                   }}
                   px="12px"
                   onClick={() => {
-                    if (option.isEnabled) requestViewReplenishment(option, id);
+                    if (option.isEnabled) requestViewReplenishment(option, anchorProdModelKey);
                   }}
                 >
                   <AppText

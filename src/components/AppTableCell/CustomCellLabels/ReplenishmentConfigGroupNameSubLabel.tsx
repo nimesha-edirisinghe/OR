@@ -10,8 +10,14 @@ interface Props {
 const ReplenishmentConfigGroupNameSubLabel: FC<Props> = ({ skuCount }) => {
   return (
     <HStack>
-      <AppText fontSize="10px" fontWeight={400} color={ocean_blue_100}>
-        <span style={{ color: ocean_blue_100 }}>{skuCount.toLocaleString('en-US')}</span> SKU-locations
+      <AppText
+        fontSize="10px"
+        fontWeight={400}
+        color={ocean_blue_100}
+        style={{ userSelect: 'text' }}
+      >
+        <span style={{ color: ocean_blue_100 }}>{skuCount.toLocaleString('en-US')}</span>{' '}
+        SKU-locations
       </AppText>
     </HStack>
   );

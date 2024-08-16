@@ -10,7 +10,7 @@ interface Props {
 const ForecastConfigGroupNameSubLabel: FC<Props> = ({ anchorCount, skuCount }) => {
   return (
     <HStack>
-      <AppText fontSize="12px" color="#B3B3B3">
+      <AppText fontSize="12px" color="#B3B3B3" style={{ userSelect: 'text' }}>
         {anchorCount.toLocaleString('en-US')} Anchors-locations,{' '}
         <span style={{ color: '#fff' }}>{skuCount.toLocaleString('en-US')}</span> SKU-locations
       </AppText>

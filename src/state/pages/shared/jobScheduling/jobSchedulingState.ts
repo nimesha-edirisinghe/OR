@@ -7,8 +7,7 @@ import {
 } from 'types/jobSchedule';
 import { JobScheduleTypes } from 'types/requests/jobScheduleRequest';
 import { JobScheduleConfigurationI } from 'types/responses/jobScheduleResponses';
-import { END_OF_DAY_TIMESTAMP_SECONDS } from 'utils/constants';
-import { addSecondsToTimestamp, defaultSchedulingData } from 'utils/utility';
+import { defaultSchedulingData, getEndOfDayTimestamp } from 'utils/utility';
 
 export interface IJobSchedule {
   isLoading: boolean;
@@ -23,6 +22,7 @@ export const JobScheduleSlice = createSlice({
     jobSchedulingData: defaultSchedulingData,
     jobScheduleLocalScope: {
       selectedJobScheduleType: 'training',
+      selectedJobSchedulingData: defaultSchedulingData,
       currentEnableStatus: 1
     }
   } as IJobSchedule,
@@ -53,9 +53,8 @@ export const JobScheduleSlice = createSlice({
             state.jobSchedulingData.scheduleConfiguration.days = [action.payload.value as number];
             break;
           case 'endDate':
-            state.jobSchedulingData.endDate = addSecondsToTimestamp(
-              action.payload.value as JobScheduleConfigurationI['endDate'],
-              END_OF_DAY_TIMESTAMP_SECONDS
+            state.jobSchedulingData.endDate = getEndOfDayTimestamp(
+              action.payload.value as JobScheduleConfigurationI['endDate']
             );
 
             break;
@@ -98,14 +97,25 @@ export const JobScheduleSlice = createSlice({
       }>
     ) => {
       const { data } = action.payload;
+      const scheduleTypeMapping: any = {
+        MONTHLY: 'Months',
+        WEEKLY: 'Weeks',
+        DAILY: 'Days'
+      };
+
+      if (data) {
+        data.scheduleType = scheduleTypeMapping[data.scheduleType!];
+      }
 
       state.isLoading = false;
       state.jobSchedulingData = data ?? defaultSchedulingData;
       state.jobScheduleLocalScope.currentEnableStatus = data?.previousEnableStatus ?? 1;
+      state.jobScheduleLocalScope.selectedJobSchedulingData = data ?? defaultSchedulingData;
     },
     getJobSchedulesFailure: (state) => {
       state.isLoading = false;
       state.jobSchedulingData = defaultSchedulingData;
+      state.jobScheduleLocalScope.selectedJobSchedulingData = defaultSchedulingData;
     },
 
     createScheduleRequest: (state, action: PayloadAction<'fc' | 'repl'>) => {

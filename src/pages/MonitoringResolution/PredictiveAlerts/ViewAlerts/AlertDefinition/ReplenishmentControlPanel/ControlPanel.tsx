@@ -1,5 +1,5 @@
 import { Box, HStack, VStack, useDisclosure } from '@chakra-ui/react';
-import { CSSProperties, FC } from 'react';
+import { CSSProperties, FC, useEffect } from 'react';
 import ForecastChartNavigator from '../AlertForecastChart/ForecastChartNavigator';
 import AppText from 'components/AppText/AppText';
 import AppPopover from 'components/AppPopover/AppPopover';
@@ -11,16 +11,23 @@ import {
   ocean_blue_200,
   ocean_blue_400,
   ocean_blue_500,
-  ocean_blue_600
+  ocean_blue_600,
+  yellow_500
 } from 'theme/colors';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   alertSliceSelector,
+  getRplPlanDetailsRequest,
   setReplenishmentEditable,
+  setSelectedSkuByIndexAction,
   toggleReplenishmentPanel
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import useTooltip from 'hooks/useTooltip';
 import useNavigator from 'hooks/useNavigator';
+import usePrevious from 'hooks/usePrevious';
+import ReplEditedPopoverContent, {
+  editedReplPopoverStyles
+} from 'pages/View/ReplenishmentPlanning/ReplenishmentMainSection/ActionBar/ReplEditedPopoverContent';
 
 interface ControlPanelProps {}
 
@@ -51,14 +58,40 @@ const ControlPanel: FC<ControlPanelProps> = () => {
   const alertState = useSelector(alertSliceSelector);
   const dispatch = useDispatch();
   const [isExpandTooltipOpen, handleExpandMouseEnter, handleExpandMouseLeave] = useTooltip();
+  const [isTooltipOpen, handleMouseEnter, handleMouseLeave] = useTooltip();
   const { isOpen: isOpen, onToggle: onOpen, onClose: onClose } = useDisclosure();
   const [isResolveOpen, handleResolveExpandMouseEnter, handleResolveExpandMouseLeave] =
     useTooltip();
+  const alertSelectionOption = alertState.alertLocalScope.selectedOption!;
   const onClickMinimizeHandler = () => {
     dispatch(toggleReplenishmentPanel());
   };
-  const selectedSku = alertState.selectedSku ? [alertState.selectedSku] : [];
-  const graphNavigator = useNavigator(selectedSku);
+  const selectedSku = alertState?.selectedSku!;
+  const selectedSkuList =
+    alertSelectionOption === 'multiple' ? alertState?.selectedSkuList! : [selectedSku];
+  const previousSelectedSkuList = usePrevious(selectedSkuList);
+  const graphNavigator = useNavigator(selectedSkuList);
+  const isEdited = !!alertState.rplPlanDetails?.isEdited;
+
+  const requestViewReplData = (currentStepIndex?: number) => {
+    dispatch(
+      setSelectedSkuByIndexAction(
+        currentStepIndex !== undefined ? currentStepIndex : graphNavigator.currentStepIndex
+      )
+    );
+    dispatch(getRplPlanDetailsRequest());
+  };
+
+  useEffect(() => {
+    if (
+      selectedSkuList &&
+      previousSelectedSkuList &&
+      previousSelectedSkuList.length &&
+      selectedSkuList.length === previousSelectedSkuList.length
+    ) {
+      requestViewReplData();
+    }
+  }, [graphNavigator.currentStepIndex]);
 
   const optionHandler = (option: any) => {
     if (options.length)
@@ -75,6 +108,20 @@ const ControlPanel: FC<ControlPanelProps> = () => {
             {`${alertState.selectedSku?.skuNameCode} | ${alertState.selectedSku?.store}`}
           </AppText>
         </HStack>
+        {isEdited && (
+          <AppPopover
+            isOpen={isTooltipOpen}
+            onClose={handleMouseLeave}
+            contentStyles={editedReplPopoverStyles}
+            trigger="hover"
+            children={
+              <Box onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                <AppIcon fill={yellow_500} name="infoCircle" w="20px" h="20px" />
+              </Box>
+            }
+            content={<ReplEditedPopoverContent />}
+          />
+        )}
       </HStack>
       <HStack>
         <AppTooltip
@@ -102,14 +149,13 @@ const ControlPanel: FC<ControlPanelProps> = () => {
                       width="14px"
                       height="14px"
                       fill={blue_500}
-                      onClick={() => {
-                        onOpen();
-                      }}
                     />
                   }
                   variant="secondary"
                   size="iconMedium"
-                  onClick={() => {}}
+                  onClick={() => {
+                    onOpen();
+                  }}
                   bg={ocean_blue_600}
                 />
               }
@@ -122,31 +168,38 @@ const ControlPanel: FC<ControlPanelProps> = () => {
                   boxShadow="0px 12px 20px 0px #001019"
                   overflow={'hidden'}
                 >
-                  {options.map((option, index) => (
-                    <HStack
-                      key={index}
-                      h="36px"
-                      w="full"
-                      spacing="4px"
-                      cursor="pointer"
-                      _hover={{
-                        bg: ocean_blue_400
-                      }}
-                      px="12px"
-                      onClick={() => optionHandler(option)}
-                    >
-                      <AppText
-                        fontSize="12px"
-                        size={'body3'}
-                        fontWeight={400}
-                        lineHeight="18px"
-                        color={ocean_blue_200}
-                        width={'100%'}
+                  {options.map((option, index) => {
+                    if (
+                      !!!alertState.AlertType.alertTypeDisplayName?.length &&
+                      option.title === 'Ignore alert'
+                    )
+                      return null;
+                    return (
+                      <HStack
+                        key={index}
+                        h="36px"
+                        w="full"
+                        spacing="4px"
+                        cursor="pointer"
+                        _hover={{
+                          bg: ocean_blue_400
+                        }}
+                        px="12px"
+                        onClick={() => optionHandler(option)}
                       >
-                        {option.title}
-                      </AppText>
-                    </HStack>
-                  ))}
+                        <AppText
+                          fontSize="12px"
+                          size={'body3'}
+                          fontWeight={400}
+                          lineHeight="18px"
+                          color={ocean_blue_200}
+                          width={'100%'}
+                        >
+                          {option.title}
+                        </AppText>
+                      </HStack>
+                    );
+                  })}
                 </VStack>
               }
               contentStyles={optionPopoverStyles}

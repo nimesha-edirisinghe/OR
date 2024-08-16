@@ -27,7 +27,7 @@ export default function AppMenuPanel({ isOpen, onClose, children, menuItems }: P
   const navigate = useNavigate();
 
   const getPopOverMenuKeys = (obj: any) => {
-    if (obj.hasOwnProperty('isOpen')) {
+    if (Object.prototype.hasOwnProperty.call(obj, 'isOpen')) {
       const { isOpen, ...newObj } = obj;
       return Object.keys(newObj);
     }
@@ -79,7 +79,7 @@ export default function AppMenuPanel({ isOpen, onClose, children, menuItems }: P
                             as="span"
                             flex="1"
                             textAlign="left"
-                            onClick={() => navigate(menuItems.subMenu[firstLevel].path)}
+                            onClick={() => navigate(menuItems?.subMenu[firstLevel].path)}
                           >
                             <AppText
                               fontSize="14px"
@@ -93,12 +93,12 @@ export default function AppMenuPanel({ isOpen, onClose, children, menuItems }: P
                               {menuItems.subMenu[firstLevel].displayName}
                             </AppText>
                           </Box>
-                          {menuItems.subMenu[firstLevel].subMenu && <AccordionIcon />}
+                          {menuItems?.subMenu[firstLevel].subMenu && <AccordionIcon />}
                         </AccordionButton>
                       </h2>
-                      {menuItems.subMenu[firstLevel].subMenu && (
+                      {menuItems?.subMenu[firstLevel].subMenu && (
                         <AccordionPanel pb={0} pl={0} pr={0}>
-                          {getPopOverMenuKeys(menuItems.subMenu[firstLevel].subMenu).map(
+                          {getPopOverMenuKeys(menuItems?.subMenu[firstLevel]?.subMenu).map(
                             (secondLevel, index2) => (
                               <AccordionItem
                                 borderColor="transparent"
@@ -125,7 +125,7 @@ export default function AppMenuPanel({ isOpen, onClose, children, menuItems }: P
                                         color="left-menu-item-font-color"
                                       >
                                         {
-                                          menuItems.subMenu[firstLevel].subMenu[secondLevel]
+                                          menuItems?.subMenu[firstLevel]?.subMenu[secondLevel]
                                             .displayName
                                         }
                                       </AppText>

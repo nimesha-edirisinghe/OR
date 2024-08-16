@@ -1,6 +1,5 @@
 import { FC, useEffect, useState } from 'react';
-import { Box, Flex, HStack, Center } from '@chakra-ui/layout';
-import AppText from 'components/AppText/AppText';
+import { Box, Flex, HStack } from '@chakra-ui/layout';
 import { AnimatePresence, motion } from 'framer-motion';
 import { blue_500, neutral_600, ocean_blue_400, ocean_blue_600, white } from 'theme/colors';
 import { AppIcon } from 'components/AppIcon/AppIcon';
@@ -8,11 +7,12 @@ import { AppIcon } from 'components/AppIcon/AppIcon';
 interface Props {
   count: number;
   onChange: (state: number) => void;
+  isDisabled?: boolean;
 }
 
 type ButtonJustifyType = 'center' | 'right' | 'left';
 
-const AppThreeStateSwitch: FC<Props> = ({ onChange, count }) => {
+const AppThreeStateSwitch: FC<Props> = ({ onChange, count, isDisabled = false }) => {
   const [justifyState, setJustifyState] = useState<ButtonJustifyType>('center');
 
   useEffect(() => {
@@ -22,12 +22,15 @@ const AppThreeStateSwitch: FC<Props> = ({ onChange, count }) => {
     setJustifyState(btnState);
   }, [count]);
 
+  const handleClick = (state: number) => {
+    if (!isDisabled) {
+      onChange(state);
+    }
+  };
+
   return (
     <AnimatePresence>
-      <HStack cursor="pointer">
-        {/* <AppText color={blue_500} onClick={() => onChange(count > -1 ? count - 1 : -1)}>
-          -
-        </AppText> */}
+      <HStack cursor={isDisabled ? 'not-allowed' : 'pointer'}>
         <Flex
           bg={ocean_blue_600}
           justify={justifyState}
@@ -39,13 +42,14 @@ const AppThreeStateSwitch: FC<Props> = ({ onChange, count }) => {
           h="28px"
           border="1px"
           borderColor={ocean_blue_400}
+          opacity={isDisabled ? 0.6 : 1}
         >
           <Box
             className="controller"
             bg={justifyState === 'left' ? blue_500 : 'transparent'}
             w="24px"
             h="24px"
-            onClick={() => onChange(-1)}
+            onClick={() => handleClick(-1)}
             as={motion.div}
             initial={{ x: 20 }}
             animate={{ x: 0 }}
@@ -63,7 +67,7 @@ const AppThreeStateSwitch: FC<Props> = ({ onChange, count }) => {
             bg={justifyState === 'center' ? blue_500 : 'transparent'}
             w="24px"
             h="24px"
-            onClick={() => onChange(0)}
+            onClick={() => handleClick(0)}
             as={motion.div}
             transition=".3s"
             borderRadius="4px"
@@ -78,7 +82,7 @@ const AppThreeStateSwitch: FC<Props> = ({ onChange, count }) => {
             bg={justifyState === 'right' ? blue_500 : 'transparent'}
             w="24px"
             h="24px"
-            onClick={() => onChange(1)}
+            onClick={() => handleClick(1)}
             as={motion.div}
             initial={{ x: -20 }}
             animate={{ x: 0 }}
@@ -92,9 +96,6 @@ const AppThreeStateSwitch: FC<Props> = ({ onChange, count }) => {
             <AppIcon name="plus" fill={white} w="9.33px" h="9.33px" />
           </Box>
         </Flex>
-        {/* <AppText color={blue_500} onClick={() => onChange(count < 1 ? count + 1 : 1)}>
-          +
-        </AppText> */}
       </HStack>
     </AnimatePresence>
   );

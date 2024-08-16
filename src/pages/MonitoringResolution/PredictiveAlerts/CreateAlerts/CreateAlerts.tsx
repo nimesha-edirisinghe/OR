@@ -1,7 +1,7 @@
 import { Box, HStack, VStack } from '@chakra-ui/react';
 import { FC, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { IUser, setUserSelectedOrg, userSliceSelector } from 'state/user/userState';
+import { IUser, userSliceSelector } from 'state/user/userState';
 import { AlertCreationStepsEnum } from 'utils/enum';
 import FilterSkuLocations from './AlertCreationSteps/FilterSkuLocations/FilterSkuLocations';
 import SelectSkuLocations from './AlertCreationSteps/SelectSkuLocations/SelectSkuLocations';
@@ -23,7 +23,8 @@ import {
   alertSliceSelector,
   createAlertRequest,
   alertFormValidator,
-  clearAlertErrorsMessages
+  clearAlertErrorsMessages,
+  createAlertSuccess
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import { isValidAlertConfigs } from './AlertCreationSteps/AlertConfiguration/Helpers/AlertConfigurationValidator';
 import { showErrorToast } from 'state/toast/toastState';
@@ -36,15 +37,15 @@ import { storeInLocal } from 'utils/localStorage';
 interface Props {}
 
 const CreateAlerts: FC<Props> = () => {
-  const [activeStep, setActiveStep] = useState<number>(0);
-  const userState: IUser = useSelector(userSliceSelector);
-  const alertState: IAlert = useSelector(alertSliceSelector);
-  const selectedOrgKey = userState.selectedOrg && userState.selectedOrg.orgKey;
-  const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
-  const defaultAlertTypes = alertState.defaultAlertTypes;
-  const groupFilter = groupConfigState.groupFilter;
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const userState: IUser = useSelector(userSliceSelector);
+  const alertState: IAlert = useSelector(alertSliceSelector);
+  const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
+  const [activeStep, setActiveStep] = useState<number>(0);
+  const selectedOrgKey = userState.selectedOrg && userState.selectedOrg.orgKey;
+  const defaultAlertTypes = alertState.defaultAlertTypes;
+  const groupFilter = groupConfigState.groupFilter;
 
   const steps: StepItem[] = [
     {
@@ -62,6 +63,7 @@ const CreateAlerts: FC<Props> = () => {
     try {
       const abortController = new AbortController();
       if (selectedOrgKey) {
+        dispatch(createAlertSuccess());
         dispatch(resetGroupFilter());
         dispatch(getLabelsRequest({ labelTypes: ['location', 'product', 'anchor', 'store'] }));
         dispatch(getFilterCountRequest({ whFlag: 0 }));
@@ -73,20 +75,19 @@ const CreateAlerts: FC<Props> = () => {
     } catch (error) {
       console.error('', error);
     }
-    
   }, [selectedOrgKey]);
-  
-  useEffect(()=>{
+
+  useEffect(() => {
     try {
-        setActiveStep(0);
-        dispatch(resetGroupFilter());
-        dispatch(getLabelsRequest({ labelTypes: ['location', 'product', 'anchor', 'store'] }));
-        dispatch(getFilterCountRequest({ whFlag: 0 }));
-        dispatch(clearAlertErrorsMessages(null));
+      setActiveStep(0);
+      dispatch(resetGroupFilter());
+      dispatch(getLabelsRequest({ labelTypes: ['location', 'product', 'anchor', 'store'] }));
+      dispatch(getFilterCountRequest({ whFlag: 0 }));
+      dispatch(clearAlertErrorsMessages(null));
     } catch (error) {
       console.error('', error);
     }
-  },[userState.selectedOrg])
+  }, [userState.selectedOrg]);
 
   const onStepChangeHandler = (step: number) => {
     if (activeStep === 0) {
@@ -165,8 +166,6 @@ const CreateAlerts: FC<Props> = () => {
     }
   };
 
-  
-
   const onPreviousHandler = () => {
     if (activeStep !== 0) {
       setActiveStep((prevStep) => {
@@ -220,7 +219,7 @@ const CreateAlerts: FC<Props> = () => {
         w="full"
         spacing="20px"
       >
-        <Box w="500px" py="20px">
+        <Box w="256px" py="20px">
           <AppStepper steps={steps} activeStep={activeStep} onStepChange={onStepChangeHandler} />
         </Box>
         <Box h="auto" minH="calc(100vh - 285px)">

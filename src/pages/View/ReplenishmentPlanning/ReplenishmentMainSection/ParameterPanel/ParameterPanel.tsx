@@ -15,32 +15,37 @@ const ParameterPanel: FC<ParameterPanelProps> = () => {
   const rplViewState: IRPLView = useSelector(rplViewSliceSelector);
   const [scroll, setScroll] = useState('hidden');
   const orderPlan = rplViewState.rplPlanDetails?.orderPlan;
-  const ubp = orderPlan?.unitPrice ? '' + orderPlan?.unitPrice : '';
+  const ubp = orderPlan?.unitPrice?.toString() || '';
   const parameterItemArr: RplParameterObjI[] = [
     {
       key: 'plannedOn',
       displayName: 'Planned on',
-      value: orderPlan?.plannedOn!
+      value: orderPlan?.plannedOn ?? ''
     },
     {
       key: 'leadTime',
       displayName: 'Lead Time (Days)',
-      value: orderPlan?.leadTime.toString()!
+      value: orderPlan?.leadTime?.toString() ?? ''
     },
     {
       key: 'dayOfCover',
       displayName: 'Days of Cover',
-      value: orderPlan?.daysOfCover.toString()!
+      value: orderPlan?.daysOfCover?.toString() ?? ''
     },
     {
       key: 'moq',
       displayName: 'MOQ',
-      value: orderPlan?.moq.toString()!
+      value: orderPlan?.moq?.toString() ?? ''
     },
     {
       key: 'orderingFrequency',
       displayName: 'Ordering Freq',
-      value: orderPlan?.orderingFrequency.toString()!
+      value: orderPlan?.orderingFrequency?.toString() ?? ''
+    },
+    {
+      key: 'shelfLife',
+      displayName: 'Shelf Life',
+      value: orderPlan?.shelfLife.toString()!
     },
     {
       key: 'unitBuyingPrice',
@@ -50,7 +55,7 @@ const ParameterPanel: FC<ParameterPanelProps> = () => {
     {
       key: 'unitOrderQty',
       displayName: 'Supply pack size (units)',
-      value: orderPlan?.unitOrderQty.toString()!
+      value: orderPlan?.unitOrderQty?.toString() ?? ''
     },
     {
       key: 'wayOfSupply',

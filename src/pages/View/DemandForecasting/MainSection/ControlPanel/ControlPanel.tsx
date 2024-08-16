@@ -4,12 +4,13 @@ import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppCustomDropdown from 'components/newTheme/AppCustomDropdown/AppCustomDropdown';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import { addMonths } from 'date-fns';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   demandForecastChartRequest,
   dfViewSliceSelector,
   setAggregateOption,
+  setTableStatus,
   toggleGraphPanel,
   updateGraphDateRange
 } from 'state/pages/view/demandForecastView/dfViewPageState';
@@ -23,8 +24,14 @@ interface Props {
   onMaxMinHandler: () => void;
 }
 
+interface PositionI {
+  x: number;
+  y: number;
+}
+
 const ControlPanel: FC<Props> = ({ onMaxMinHandler }) => {
   const dispatch = useDispatch();
+  const ref: any = useRef();
   const dfViewState = useSelector(dfViewSliceSelector);
   const aggregateOption = dfViewState.aggregateOption;
   const graphDateRange = dfViewState.graphDateRange;
@@ -32,6 +39,26 @@ const ControlPanel: FC<Props> = ({ onMaxMinHandler }) => {
   const isSelectedSkuListEmpty = dfViewState.selectedSkuList?.length === 0 || false;
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [isExpandTooltipOpen, handleExpandMouseEnter, handleExpandMouseLeave] = useTooltip();
+  const [isCalendarOpen, handleCalendarMouseEnter, handleCalendarMouseLeave] = useTooltip();
+
+  const [position, setPosition] = useState<PositionI>({
+    x: 0,
+    y: 0
+  });
+  const setCoordHandler = () => {
+    const { x, y, width, height } = ref.current.getBoundingClientRect();
+    let calcX = x - width * 12;
+    calcX -= 18;
+    setPosition({
+      x: calcX,
+      y: y + height
+    });
+  };
+  const isNotAggregate = dfViewState.selectedChartType !== 'aggregate';
+
+  useEffect(() => {
+    setCoordHandler();
+  }, []);
 
   const onSelectHandler = (item: string) => {
     dispatch(
@@ -92,9 +119,10 @@ const ControlPanel: FC<Props> = ({ onMaxMinHandler }) => {
   };
 
   const generatedOption = generateOptions(dfViewState?.predictorList?.list!);
-  const selectedHistoryValue = historyOptions?.find(
-    (opt) => opt.label === aggregateOption.compareSelection
-  )?.value;
+  const selectedHistoryValue =
+    aggregateOption.selectedAggregateOption === 'history'
+      ? historyOptions?.find((opt) => opt.label === aggregateOption.compareSelection)?.value
+      : undefined;
 
   const getValueFromLabel = (selectedLabel: string): string | undefined => {
     if (generatedOption) {
@@ -108,7 +136,10 @@ const ControlPanel: FC<Props> = ({ onMaxMinHandler }) => {
     }
   };
 
-  const selectedValue1 = getValueFromLabel(aggregateOption?.compareSelection!);
+  const selectedValue1 =
+    aggregateOption.selectedAggregateOption === 'influencingFactor'
+      ? getValueFromLabel(aggregateOption?.compareSelection!)
+      : undefined;
 
   useEffect(() => {
     if (!isSelectedSkuListEmpty)
@@ -117,77 +148,107 @@ const ControlPanel: FC<Props> = ({ onMaxMinHandler }) => {
 
   const onClickExpandGraphView = () => {
     dispatch(toggleGraphPanel());
+    dispatch(setTableStatus(false));
     onMaxMinHandler();
   };
 
   return (
     <VStack w="full" pb="16px" borderTopRadius="8px">
       <HStack w="full">
-        <HStack w="full" justify="left">
-          <RadioGroup value={aggregateOption.selectedAggregateOption!}>
-            <Stack direction="row">
-              <AppCustomDropdown
-                colorScheme={neutral_200}
-                handleItemClick={onSelectHandler}
-                selectedItem="Anchor Forecast"
-                buttonWidth="auto"
-                isEnableAction
-                radioValue="anchor"
-                isSelected={aggregateOption.selectedAggregateOption === 'anchor'}
-                isDisabled={isSelectedSkuListEmpty}
-              />
-            </Stack>
-          </RadioGroup>
-          <AppCustomDropdown
-            options={historyOptions}
-            colorScheme={neutral_200}
-            handleItemClick={onSelectHistoryHandler}
-            selectedItem={selectedHistoryValue!}
-            buttonWidth="auto"
-            isEnableAction
-            radioValue="history"
-            isSelected={aggregateOption.selectedAggregateOption === 'history'}
-            defaultValue="History"
-            isDisabled={isSelectedSkuListEmpty}
-          />
-          <AppCustomDropdown
-            options={generatedOption}
-            colorScheme={neutral_200}
-            handleItemClick={onSelectPredictorHandler}
-            selectedItem={selectedValue1!}
-            defaultValue="Influencing Factors"
-            buttonWidth="200px"
-            isEnableAction
-            radioValue="predictor"
-            isSelected={aggregateOption.selectedAggregateOption === 'influencingFactor'}
-            isGroup
-            selectedGroupIndex={selectedGroupIndex}
-            isDisabled={isSelectedSkuListEmpty}
-          />
-        </HStack>
-        <HStack>
-          <AppTooltip label="Calendar" placement="bottom-start">
-            <Box>
+        {dfViewState.selectedTabType === 1 ? (
+          <HStack w="full" justify="left">
+            <AppCustomDropdown
+              options={historyOptions}
+              colorScheme={neutral_200}
+              handleItemClick={onSelectHistoryHandler}
+              selectedItem={selectedHistoryValue!}
+              buttonWidth="auto"
+              isEnableAction
+              radioValue="history"
+              isSelected={aggregateOption.selectedAggregateOption === 'history'}
+              defaultValue="History"
+              isDisabled={isSelectedSkuListEmpty}
+            />
+          </HStack>
+        ) : (
+          <HStack w="full" justify="left">
+            <RadioGroup value={aggregateOption.selectedAggregateOption!}>
+              <Stack direction="row">
+                <AppCustomDropdown
+                  colorScheme={neutral_200}
+                  handleItemClick={onSelectHandler}
+                  selectedItem="Anchor Forecast"
+                  buttonWidth="auto"
+                  isEnableAction
+                  radioValue="anchor"
+                  isSelected={aggregateOption.selectedAggregateOption === 'anchor'}
+                  isDisabled={isSelectedSkuListEmpty}
+                />
+              </Stack>
+            </RadioGroup>
+            <AppCustomDropdown
+              options={historyOptions}
+              colorScheme={neutral_200}
+              handleItemClick={onSelectHistoryHandler}
+              selectedItem={selectedHistoryValue!}
+              buttonWidth="auto"
+              isEnableAction
+              radioValue="history"
+              isSelected={aggregateOption.selectedAggregateOption === 'history'}
+              defaultValue="History"
+              isDisabled={isSelectedSkuListEmpty}
+            />
+            <AppCustomDropdown
+              options={generatedOption}
+              colorScheme={neutral_200}
+              handleItemClick={onSelectPredictorHandler}
+              selectedItem={selectedValue1!}
+              defaultValue="Influencing Factors"
+              buttonWidth="200px"
+              isEnableAction
+              radioValue="predictor"
+              isSelected={aggregateOption.selectedAggregateOption === 'influencingFactor'}
+              isGroup
+              selectedGroupIndex={selectedGroupIndex}
+              isDisabled={isSelectedSkuListEmpty}
+            />
+          </HStack>
+        )}
+        <HStack w="full" justify="right">
+          <AppTooltip
+            label="Calendar"
+            placement="bottom-start"
+            position="relative"
+            isOpen={isCalendarOpen}
+            onClose={handleCalendarMouseLeave}
+          >
+            <Box onMouseEnter={handleExpandMouseEnter} onMouseLeave={handleExpandMouseLeave}>
               <AppDateRangePicker
                 id={1}
                 children={
-                  <AppIconButton
-                    aria-label="calender"
-                    icon={
-                      <AppIcon transition="transform 0.25s ease" name="calender" fill={blue_500} />
-                    }
-                    variant="secondary"
-                    size="iconMedium"
-                    onClick={() => {}}
-                    bg={ocean_blue_600}
-                    isDisabled={isSelectedSkuListEmpty}
-                  />
+                  <Box ref={ref}>
+                    <AppIconButton
+                      aria-label="calender"
+                      icon={
+                        <AppIcon
+                          transition="transform 0.25s ease"
+                          name="calender"
+                          fill={blue_500}
+                        />
+                      }
+                      variant="secondary"
+                      size="iconMedium"
+                      onClick={setCoordHandler}
+                      bg={ocean_blue_600}
+                      isDisabled={isSelectedSkuListEmpty}
+                    />
+                  </Box>
                 }
                 onRangeSelect={onRangeSelect}
                 initialDate1={addMonths(new Date(), -1)}
                 initialDate2={new Date()}
                 selectedDateRange={graphDateRange}
-                prePos={{ x: 0, y: 235 }}
+                prePos={{ x: position.x, y: position.y }}
               />
             </Box>
           </AppTooltip>

@@ -49,6 +49,8 @@ const GetGeneralCellDataMap: FC<GeneralCellI> = ({
       } else {
         if (schedule.active) {
           formattedLabel = `Enabled (${schedule.active})`;
+        } else {
+          formattedLabel = '-';
         }
       }
     } catch (e) {
@@ -62,12 +64,23 @@ const GetGeneralCellDataMap: FC<GeneralCellI> = ({
     <GeneralCellLayout
       rowId={rowId}
       mainLabel={
-        <AppText whiteSpace="nowrap" fontSize="12px" color={neutral_200} fontWeight={400}>
+        <AppText
+          whiteSpace="nowrap"
+          fontSize="12px"
+          color={neutral_200}
+          fontWeight={400}
+          style={{ userSelect: 'text' }}
+        >
           {formattedLabel}
         </AppText>
       }
       subLabel={
-        <AppText whiteSpace="nowrap" fontSize="13px" fontWeight={400}>
+        <AppText
+          whiteSpace="nowrap"
+          fontSize="13px"
+          fontWeight={400}
+          style={{ userSelect: 'text' }}
+        >
           {cellDataMapping?.subLabel && valueForKeyPath(cellData, cellDataMapping?.subLabel)}
         </AppText>
       }

@@ -12,7 +12,6 @@ import {
   neutral_100,
   ocean_blue_100,
   ocean_blue_200,
-  ocean_blue_350,
   ocean_blue_400,
   ocean_blue_500
 } from 'theme/colors';
@@ -68,7 +67,8 @@ const LeftPanel: FC<Props> = ({ selectedRightSideItem, addOrRemoveItem, viewFilt
         isLoaded={!groupConfigState.isLoading}
         fadeDuration={1}
         speed={1}
-        maxH={'calc(100vh - 272px)'}
+        maxH={'calc(100vh - 235px)'}
+        pb={'10px'}
       >
         <Box
           paddingBottom={'10px'}

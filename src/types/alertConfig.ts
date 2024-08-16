@@ -10,12 +10,7 @@ export interface AlertLoadingI {
   planDetails: boolean;
 }
 
-export type AlertNamesT =
-  | 'Out of Stock'
-  | 'Excess Stock'
-  | 'Expiration Risk'
-  | 'Growth'
-  | 'Degrowth';
+export type AlertNamesT = 'Out of Stock' | 'Excess Stock' | 'Expiration' | 'Growth' | 'Degrowth';
 
 export type AlertTypesT = 'outofstock' | 'expirationrisk' | 'growth' | 'degrowth' | 'excessstock';
 
@@ -106,7 +101,51 @@ export interface AlertTypeI {
   groupKey: number | null;
 }
 
-export interface MoreOptionI{
-  title:string;
-  isEnabled:boolean
+export interface MoreOptionI {
+  title: string;
+  key: string;
+  isEnabled: boolean;
+  path?: string;
+}
+
+export interface AlertCalendarPrevMonthI {
+  date: Date;
+  day: number;
+  isDisabled: boolean;
+}
+
+export interface AlertCalendarI {
+  id: number;
+  index: number;
+  visibility: boolean;
+  coordinates: {
+    x: number;
+    y: number;
+  };
+  prevMonth: AlertCalendarPrevMonthI;
+}
+
+export interface AlertCalendarPrevMonthI {
+  date: Date;
+  day: number;
+  isDisabled: boolean;
+}
+
+export interface AlertCalendarI {
+  id: number;
+  index: number;
+  visibility: boolean;
+  coordinates: {
+    x: number;
+    y: number;
+  };
+  prevMonth: AlertCalendarPrevMonthI;
+}
+
+export interface ForecastAlertType{
+  alertType:AlertTypesT
+  anchorProdKey: number;
+  anchorProdModelKey: number;
+  groupKey: number;
+  forecastKey: number;
 }

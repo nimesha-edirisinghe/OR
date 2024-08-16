@@ -3,14 +3,14 @@ import AppText from 'components/AppText/AppText';
 import { FC, ReactNode } from 'react';
 import { TableMapDataI } from '../TableDataMapping';
 import { AppIconChakra } from 'assets/svg/chakraIcons';
-import { getStatusColor, findObject, statusTypes } from 'utils/utility';
+import { getStatusColor, findObject, statusTypes, getStatusBackgroundColor } from 'utils/utility';
 import AppPopover from 'components/AppPopover/AppPopover';
 import {
   IActivityLogSlice,
   activityLogSliceSelector
 } from 'state/pages/operationAndMonitoring/activityLog/activityLogState';
 import { useSelector } from 'react-redux';
-import { ocean_blue_400, ocean_blue_500 } from 'theme/colors';
+import { ocean_blue_400, ocean_blue_500, yellow_500 } from 'theme/colors';
 
 interface OperationCellProps {
   children: ReactNode;
@@ -21,6 +21,7 @@ interface OperationCellProps {
 
 const OperationCell: FC<OperationCellProps> = ({ jobGroupId, children, tableMap, status }) => {
   const textColor = getStatusColor(status, tableMap.key);
+  const backgroundColor = getStatusBackgroundColor(status, tableMap.key);
   const statusName = findObject(children as string, statusTypes)?.[1] as string;
   const { isOpen, onClose, onOpen } = useDisclosure();
   const activityLogState: IActivityLogSlice = useSelector(activityLogSliceSelector);
@@ -36,7 +37,15 @@ const OperationCell: FC<OperationCellProps> = ({ jobGroupId, children, tableMap,
       justifyContent="space-between"
       h="35px"
     >
-      <AppText fontSize="13px" fontWeight={500} color={textColor} noOfLines={1}>
+      <AppText
+        fontSize="13px"
+        fontWeight={400}
+        color={textColor}
+        bg={backgroundColor}
+        noOfLines={1}
+        borderRadius="8px"
+        p="2px 8px 2px 8px"
+      >
         {statusName}
       </AppText>
       {tableMap.action &&
@@ -49,7 +58,7 @@ const OperationCell: FC<OperationCellProps> = ({ jobGroupId, children, tableMap,
             children={
               <AppIconChakra
                 name={tableMap.action.iconName}
-                fill="left-menu-icon-color"
+                fill={yellow_500}
                 width="16px"
                 height="16px"
                 transition="fill 0.3s"
@@ -59,7 +68,7 @@ const OperationCell: FC<OperationCellProps> = ({ jobGroupId, children, tableMap,
                   tableMap.action?.onIconClick('summaryPopUp', jobGroupId!);
                 }}
                 _hover={{
-                  fill: 'yellow'
+                  fill: yellow_500
                 }}
               />
             }

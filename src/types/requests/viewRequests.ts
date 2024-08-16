@@ -107,7 +107,6 @@ export interface DownloadBulkEditQueryParamI {
 
 export interface GetUploadHistoryReqBodyI {
   filters: GroupFilterI[];
-  groupKey: number;
   limit: number;
   page: number;
   search: string;
@@ -120,12 +119,22 @@ export interface DownloadEditResultRequestBodyI {
 }
 
 export interface AlertGraphRequestBodyI {
-  alertKey:number|undefined;
-  alertType:string;
-  anchorKey:number|undefined;
-  anchorProdKey:number|undefined;
-  anchorProdModelKey:number|undefined;
+  alertKey?: number | undefined;
+  alertType?: string;
+  anchorKey: number | undefined;
+  anchorProdKey: number | undefined;
+  anchorProdModelKey: number | undefined;
   forecastData: AlertGraphForecastDataI[];
-  forecastKey: number|undefined;
-  groupKey: string|undefined;
+  forecastKey: number | undefined;
+  groupKey: string | undefined;
+}
+
+export interface DownloadBulkEditZipFileBodyI {
+  fileName: string;
+  filters: GroupFilterI[];
+  types: string[];
+  groupKeys: number[];
+  orgKey: number;
+  search?: string;
+  whFlag?: 0 | 1;
 }

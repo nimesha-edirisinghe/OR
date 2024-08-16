@@ -14,6 +14,8 @@ import {
 } from 'types/requests/groupConfigRequests';
 import { produce } from 'immer';
 import { KeyValueI } from 'types/responses/insightResponses';
+import { AlertTypesT } from 'types/alertConfig';
+import { IAlert } from 'state/pages/monitoringAndResolution/Alert/alertState';
 
 const initializeFormattedData = (): FormattedLabelsI => {
   return {
@@ -98,6 +100,24 @@ export const rightSidePanelFormatForRequest = (rightPanelList: RightFilterItemCo
   }) as GroupFilterI[];
 };
 
+export const rightSidePanelFormatWithoutGroupForRequest = (
+  rightPanelList: RightFilterItemContentI[],
+  globalSkuSelected: boolean
+): GroupFilterI[] => {
+  const filteredData = rightPanelList
+    .filter((item) => item.type !== 'group')
+    .map((item) => ({
+      code: item.code || 0,
+      isSelectAll: item.isSelectAll || false,
+      search: item.search || '',
+      selectedItems: globalSkuSelected
+        ? []
+        : ((item.selectedItems as KeyValueI[]).map((i) => i.key) as string[]),
+      type: item.type
+    }));
+  return filteredData;
+};
+
 export const filterRequestFormatterForData = (
   filterType: string,
   filterCode: number,
@@ -164,4 +184,46 @@ export const formatPredictorConfiguration = (data: GroupLabelI[] | []): Predicto
     sku: item.sku,
     anchor: item.anchor
   }));
+};
+
+export const generateAlertFilterObject = (
+  formattedData: any,
+  isGlobalSelected: boolean,
+  alertKey: number,
+  alertType: AlertTypesT
+): any => {
+  const newFilters = [
+    {
+      code: 1,
+      isSelectAll: isGlobalSelected,
+      search: '',
+      selectedItems: [alertKey.toString()],
+      type: 'alert'
+    },
+    {
+      code: 2,
+      isSelectAll: isGlobalSelected,
+      search: '',
+      selectedItems: [alertType],
+      type: 'alert'
+    }
+  ];
+
+  const updatedFilters = formattedData?.filters.concat(newFilters);
+
+  return {
+    ...formattedData,
+    filters: updatedFilters
+  };
+};
+
+export const generateModifyAlertFilterObject = (
+  formattedData: any,
+  alertState:IAlert
+): any => {
+  const filter = alertState.alertDefinition?.filters?.filter((filter=>!(filter.code === 1 && filter.type ==='sku')))  
+  return {
+    ...formattedData,
+    filters: filter
+  };
 };

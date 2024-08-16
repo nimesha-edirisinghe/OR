@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { IRootState } from 'state/rootState';
+import { ModuleKeyI } from 'types/dashboard';
 
 export interface IDashboard {
   loading: {
@@ -19,7 +20,7 @@ export const DashboardSlice = createSlice({
     tableauToken: null
   } as IDashboard,
   reducers: {
-    fetchTableauTokenRequest: (state) => {},
+    fetchTableauTokenRequest: (state, action: PayloadAction<ModuleKeyI>) => {},
     fetchTableauTokenRequestSuccess: (state, action: PayloadAction<string>) => {
       state.tableauToken = action.payload;
     },

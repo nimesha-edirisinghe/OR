@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { Flex, HStack } from '@chakra-ui/react';
 import AppText from 'components/AppText/AppText';
-import { ocean_blue_400, ocean_blue_500 } from 'theme/colors';
+import { ocean_blue_100, ocean_blue_400, ocean_blue_500 } from 'theme/colors';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 
 interface Props {
@@ -20,7 +20,7 @@ const FilterTypeItem: FC<Props> = ({
   isDisabled = false
 }) => {
   const textColor = isDisabled
-    ? ocean_blue_400
+    ? ocean_blue_100
     : isNaN(selectedCount as number)
     ? 'filterMultiSelector.textColor._default'
     : 'filterMultiSelector.textColor._filled';
@@ -32,13 +32,12 @@ const FilterTypeItem: FC<Props> = ({
 
   return (
     <HStack
-      w="full"
+      w="560px"
       h="44px"
-      borderRadius="6px"
+      borderRadius="8px"
       bg={ocean_blue_500}
       justifyContent="space-between"
-      pl="12px"
-      pr="8px"
+      p="10px 8px 10px 12px"
       cursor={isDisabled ? 'not-allowed' : 'pointer'}
       onClick={!isDisabled ? onClickHandler : () => {}}
       role="group"
@@ -51,7 +50,8 @@ const FilterTypeItem: FC<Props> = ({
     >
       <HStack flex={1} key={selectedCount} transition="1s">
         <AppText
-          size="body2"
+          fontSize="13px"
+          fontWeight={400}
           color={textColor}
           _groupHover={{
             color: textHoverColor
@@ -62,27 +62,40 @@ const FilterTypeItem: FC<Props> = ({
         </AppText>
         {totCount && (
           <AppText
-            size="body2"
+            fontSize="13px"
+            fontWeight={600}
             color={textColor}
             _groupHover={{
               color: textHoverColor
             }}
             transition=".6s"
           >
-            ({totCount})
+            : ({totCount})
           </AppText>
         )}
       </HStack>
       <Flex flex={1}>
         <AppText
-          size="body2"
+          fontSize="13px"
+          fontWeight={400}
           color={textColor}
           _groupHover={{
             color: textHoverColor
           }}
           transition=".6s"
         >
-          Selected: {selectedCount}
+          Selected
+        </AppText>
+        <AppText
+          fontSize="13px"
+          fontWeight={600}
+          color={textColor}
+          _groupHover={{
+            color: textHoverColor
+          }}
+          transition=".6s"
+        >
+          : {selectedCount}
         </AppText>
       </Flex>
       <AppIcon

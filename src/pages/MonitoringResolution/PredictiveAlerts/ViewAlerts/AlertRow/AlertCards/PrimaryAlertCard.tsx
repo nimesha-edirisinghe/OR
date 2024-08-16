@@ -47,16 +47,18 @@ const PrimaryAlertCard: FC<PrimaryAlertCardProps> = ({
   const dispatch = useDispatch();
   const alertState: IAlert = useSelector(alertSliceSelector);
   const alertSummaryList = alertState.alertSummaryList;
-  const isEnabled:boolean= (alertDetails as any)?.enable;
+  const isEnabled: boolean = (alertDetails as any)?.enable;
 
   const renderCardContent = useCallback(() => {
-    if (isAvailable&&isEnabled) {
+    if (isAvailable && isEnabled) {
       const alertColor = getAlertColor(alertDetails?.percentageChange!);
+      const growthAndDegrowthSuffix = ['Growth', 'Degrowth'].includes(alertType) ? ' (YoY)' : '';
       return (
         <>
           <HStack justify="space-between" w="full" mb="8px" position="relative">
             <AppText size="body3" color={neutral_100}>
               {alertType}
+              {growthAndDegrowthSuffix}
             </AppText>
             <Box
               bg={alertColor}
@@ -84,7 +86,7 @@ const PrimaryAlertCard: FC<PrimaryAlertCardProps> = ({
       );
     } else {
       return (
-        <VStack>
+        <VStack justify="center" w="full">
           <AppText size="body3" color={neutral_100}>
             {`Add ${alertType} Alert`}
           </AppText>
@@ -151,7 +153,7 @@ const PrimaryAlertCard: FC<PrimaryAlertCardProps> = ({
       onClick={() => cardHandler(alertKey, alertDetails?.alertType)}
       spacing="0px"
       _hover={{
-        bg: isEnabled?ocean_blue_400:''
+        bg: isEnabled ? ocean_blue_400 : ''
       }}
       transition="all 0.25s ease-in"
     >

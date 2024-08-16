@@ -1,5 +1,6 @@
 import { Box, Flex, HStack } from '@chakra-ui/react';
 import { AppIcon } from 'components/AppIcon/AppIcon';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import LastLoginSection from 'pages/AdvancedConfiguration/ForecastConfiguration/LastLoginSection/LastLoginSection';
 import { ReactNode } from 'react';
@@ -36,22 +37,26 @@ export default function MainPageLayout({
           {headerContent}
           <HStack spacing="15px">
             <LastLoginSection />
-            <AppIconButton
-              aria-label="next"
-              icon={
-                <AppIcon
-                  transition="transform 0.25s ease"
-                  name="refresh"
-                  width="14px"
-                  height="14px"
-                  fill={blue_500}
+            <AppTooltip label="Refresh" placement="bottom-start">
+              <Box>
+                <AppIconButton
+                  aria-label="next"
+                  icon={
+                    <AppIcon
+                      transition="transform 0.25s ease"
+                      name="refresh"
+                      width="14px"
+                      height="14px"
+                      fill={blue_500}
+                    />
+                  }
+                  variant="secondary"
+                  size="iconMedium"
+                  onClick={refreshHandler}
+                  bg={ocean_blue_600}
                 />
-              }
-              variant="secondary"
-              size="iconMedium"
-              onClick={refreshHandler}
-              bg={ocean_blue_600}
-            />
+              </Box>
+            </AppTooltip>
           </HStack>
         </HStack>
 

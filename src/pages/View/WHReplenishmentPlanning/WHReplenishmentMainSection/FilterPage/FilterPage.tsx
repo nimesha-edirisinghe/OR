@@ -79,6 +79,7 @@ const FilterPage: FC<Props> = () => {
         loadTo="page"
         filterHierarchy={viewReplenishmentFilterHierarchy}
         whFlag={1}
+        showWarning
       />
       <HStack justify="space-between" w="full">
         <HStack spacing="4px">

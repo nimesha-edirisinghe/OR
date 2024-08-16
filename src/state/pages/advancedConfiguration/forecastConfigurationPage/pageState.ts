@@ -17,6 +17,7 @@ import {
   _updateTreeSelection
 } from './stateHelpers/stH_TrainingConfigDrawer';
 import { IRootState } from 'state/rootState';
+import { CustomConfigT } from 'pages/AdvancedConfiguration/ForecastConfiguration/TrainingConfigurationDrawer/drawerHelpers';
 
 export interface IPage {
   title: string;
@@ -55,7 +56,7 @@ export const PageSlice = createSlice({
       runNowDrawer: false,
       jobScheduleDrawer: false,
       exemptionPeriodsCheckboxChecked: false,
-      checkAllPredictionsCheckBoxChecked: false,
+      checkAllPredictionsCheckBoxChecked: true,
       trainModelFromCheckBoxChecked: false,
       selectedFcConfigObj: {},
       currentPageNo: 1
@@ -225,14 +226,16 @@ export const PageSlice = createSlice({
         state,
         action: PayloadAction<{
           isDefault: boolean;
+          customConfig: CustomConfigT;
         }>
       ) => {
         state.isLoading = true;
       },
-      prepare: (isDefault: boolean) => {
+      prepare: (isDefault: boolean, customConfig: CustomConfigT) => {
         return {
           payload: {
-            isDefault
+            isDefault,
+            customConfig
           }
         };
       }
@@ -277,6 +280,8 @@ export const PageSlice = createSlice({
             state.trainingConfigLocalScope.checkAllPredictionsCheckBoxChecked = false;
           }
           predictor.isActive = !!predictor.isActive ? 0 : 1;
+          state.trainingConfigLocalScope.checkAllPredictionsCheckBoxChecked =
+            state.trainingConfigData.predictors.every((item) => item.isActive);
           break;
         case 'direction':
           predictor.direction = action.payload.data as TrainingConfigPredictorsI['direction'];

@@ -18,17 +18,24 @@ import {
   fcConfigPageSliceSelector,
   closeDrawer,
   resetTrainingConfigurations,
-  getTableDataRequest
+  setFcConfigCurrentPage
 } from 'state/pages/advancedConfiguration/forecastConfigurationPage/pageState';
 import InfluencingFactorTab from './InfluencingFactorTab';
 import OtherTab from './OtherTab/OtherTab';
 import CandidateAlgoTab from './CandidateAlgoTab/CandidateAlgoTab';
 import { saveTrainingConfigSettingsRequest } from 'state/pages/advancedConfiguration/forecastConfigurationPage/pageState';
-import { isUnderDefaultSettings } from './drawerHelpers';
-import { ocean_blue_350, blue_500, neutral_100, ocean_blue_600 } from 'theme/colors';
-import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
+import {
+  CustomConfigT,
+  isUnderCustomConfigSettings,
+  isUnderDefaultSettings
+} from './drawerHelpers';
+import { blue_500, neutral_100, ocean_blue_600, yellow_500 } from 'theme/colors';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppTab from 'components/newTheme/AppTab/AppTab';
+import AppPopup from 'components/newTheme/AppPopup/AppPopup';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface Props {
   isOpen: boolean;
@@ -54,17 +61,25 @@ const TrainingConfigurationDrawer: FC<Props> = ({ isOpen }) => {
   const groupDisplayName =
     fcConfigPage.trainingConfigLocalScope.selectedFcConfigObj?.groupDetails?.groupDisplayName;
   const [activeTab, setActiveTab] = useState<TabType>('influencingFactor');
-  const [isDefault, setIsDefault] = useState<boolean>(false);
+  const [isDefault, setIsDefault] = useState<boolean>(true);
+  const [enableRestBtn, setEnableRestBtn] = useState<boolean>(false);
+  const [customConfig, setCustomConfig] = useState<CustomConfigT>('Default');
   const tabList: TabType[] = ['candidateAlgorithm', 'influencingFactor', 'other'];
   const selectedTabIndex: number = tabList.indexOf(activeTab);
+
+  const accessType = useAccessType(MenuItems.FORECASTING_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const onTabChange = (index: number) => {
     setActiveTab(tabList[index]);
   };
 
   useEffect(() => {
-    const isDefault = isUnderDefaultSettings(trainingConfigData, trainingConfigLocalScope);
+    const isDefault = isUnderDefaultSettings(trainingConfigData);
+    const customConfig = isUnderCustomConfigSettings(trainingConfigData, trainingConfigLocalScope);
     setIsDefault(isDefault);
+    setCustomConfig(customConfig);
+    setEnableRestBtn(customConfig === 'Custom');
   }, [trainingConfigData, trainingConfigLocalScope]);
 
   const onDrawerClose = () => {
@@ -72,8 +87,8 @@ const TrainingConfigurationDrawer: FC<Props> = ({ isOpen }) => {
   };
 
   const onSaveHandler = () => {
-    dispatch(saveTrainingConfigSettingsRequest(isDefault));
-    dispatch(getTableDataRequest({ groupName: '', pageNo: 1 }));
+    dispatch(saveTrainingConfigSettingsRequest(isDefault, customConfig));
+    dispatch(setFcConfigCurrentPage(1));
     onClosePrompt();
     onDrawerClose();
   };
@@ -85,43 +100,35 @@ const TrainingConfigurationDrawer: FC<Props> = ({ isOpen }) => {
 
   const saveConfirmationPrompt = useCallback(() => {
     return (
-      <AppUserInputPrompt
+      <AppPopup
         isOpen={isOpenPrompt}
         onClose={onClosePrompt}
         leftBtnName="NO"
         rightBtnName="YES"
         title="Save Changes"
-        onConfirmHandler={onSaveHandler}
-        onCloseHandler={onClosePrompt}
-      >
-        <AppText fontSize="12px" fontWeight={400} mt={2} width="68%">
-          The changes made in training configuration will be applied to all the Anchors in the group
-        </AppText>
-        <AppText fontSize="12px" fontWeight={400}>
-          Are you sure you want to continue?
-        </AppText>
-      </AppUserInputPrompt>
+        infoMessage={` The changes made in training configuration will be applied to all the Anchors in the group`}
+        onConfirmHandler={onClosePrompt}
+        onCloseHandler={onSaveHandler}
+        confirmationMessage="Are you sure you want to continue?"
+        icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
+      />
     );
   }, [isOpenPrompt]);
 
   const cancelConfirmationPrompt = useCallback(() => {
     return (
-      <AppUserInputPrompt
+      <AppPopup
         isOpen={isOpenCancelPrompt}
         onClose={onCloseCancelPrompt}
         leftBtnName="NO"
         rightBtnName="YES"
         title="Discard Changes"
-        onConfirmHandler={onCancelHandler}
-        onCloseHandler={onCloseCancelPrompt}
-      >
-        <AppText fontSize="12px" fontWeight={400} mt={2} width="68%">
-          The changes you have made in Training Configuration will be discarded.
-        </AppText>
-        <AppText fontSize="12px" fontWeight={400}>
-          Are you sure you want to continue?
-        </AppText>
-      </AppUserInputPrompt>
+        infoMessage={`The changes you have made in Training Configuration will be discarded.`}
+        onConfirmHandler={onCloseCancelPrompt}
+        onCloseHandler={onCancelHandler}
+        confirmationMessage="Are you sure you want to continue?"
+        icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
+      />
     );
   }, [isOpenCancelPrompt]);
 
@@ -196,15 +203,23 @@ const TrainingConfigurationDrawer: FC<Props> = ({ isOpen }) => {
           <DrawerFooter p={0}>
             <Flex direction="column" w="full" pb="15px">
               <HStack w="full" justify="space-between">
-                <AppText
-                  cursor={isDefault ? 'default' : 'pointer'}
+                <AppButton
+                  variant="secondary"
+                  size="medium"
+                  onClick={() => enableRestBtn && dispatch(resetTrainingConfigurations())}
+                  isDisabled={!enableRestBtn || accessNotAllowed}
+                >
+                  Reset to Defaults
+                </AppButton>
+                {/* <AppText
+                  cursor={enableRestBtn ? 'pointer' : 'default'}
                   fontSize="13px"
                   fontWeight={400}
                   color={blue_500}
-                  onClick={() => !isDefault && dispatch(resetTrainingConfigurations())}
+                  onClick={() => enableRestBtn && dispatch(resetTrainingConfigurations())}
                 >
                   Reset to Defaults
-                </AppText>
+                </AppText> */}
                 <HStack gap="8px">
                   <AppButton
                     variant="secondary"
@@ -216,6 +231,7 @@ const TrainingConfigurationDrawer: FC<Props> = ({ isOpen }) => {
                     h="36px"
                     borderRadius="8px"
                     p="10px 14px 10px 14px"
+                    isDisabled={accessNotAllowed}
                   >
                     Cancel
                   </AppButton>
@@ -229,6 +245,7 @@ const TrainingConfigurationDrawer: FC<Props> = ({ isOpen }) => {
                     h="36px"
                     borderRadius="8px"
                     p="10px 14px 10px 14px"
+                    isDisabled={accessNotAllowed}
                   >
                     Save
                   </AppButton>

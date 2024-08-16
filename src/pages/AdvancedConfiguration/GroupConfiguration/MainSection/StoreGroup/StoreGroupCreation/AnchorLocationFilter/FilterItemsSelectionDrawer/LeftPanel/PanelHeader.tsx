@@ -1,7 +1,6 @@
-import { HStack } from '@chakra-ui/react';
-import { FC, useCallback, useMemo } from 'react';
+import { HStack, VStack } from '@chakra-ui/react';
+import { FC, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { debounce } from 'lodash';
 import { updateSelectedItemSearchKey } from '../Helpers/searchHelper';
 import {
   IGroupConfigurationSlice,
@@ -13,54 +12,56 @@ import AppInputGroup from 'components/newTheme/AppInputGroup/AppInputGroup';
 
 interface Props {
   selectedRightSideItem: RightFilterItemContentI | undefined;
-  setSearchKey: (value: string) => void;
-  searchKey: string;
   viewFilter: boolean;
   title?: string;
+  width: string;
 }
 
-const PanelHeader: FC<Props> = ({
-  selectedRightSideItem,
-  setSearchKey,
-  viewFilter,
-  searchKey,
-  title
-}) => {
+const PanelHeader: FC<Props> = ({ selectedRightSideItem, viewFilter, title, width = 'full' }) => {
   const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
   const groupFilter = groupConfigState.groupFilter;
   const filterType = groupFilter?.filterType!;
   const filterCode = groupFilter?.filterCode!;
+  const [searchKey, setSearchKey] = useState<string>('');
   const dispatch = useDispatch();
 
-  const sendRequest = useCallback((searchKey: string) => {
-    updateSelectedItemSearchKey(searchKey, filterType, filterCode, dispatch);
-    dispatch(
-      getFilterDataRequest({ filterType, filterCode, pageNumber: 1, viewFilter, searchKey })
-    );
-  }, []);
-
-  const debouncedSendRequest = useMemo(() => {
-    return debounce(sendRequest, 1000);
-  }, [sendRequest]);
+  const sendRequest = useCallback(
+    (searchKey: string) => {
+      updateSelectedItemSearchKey(searchKey, filterType, filterCode, dispatch);
+      dispatch(
+        getFilterDataRequest({ filterType, filterCode, pageNumber: 1, viewFilter, searchKey })
+      );
+    },
+    [filterType, filterCode]
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchKey(value);
-    debouncedSendRequest(value);
+  };
+
+  const handleSearchFieldPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && !event.defaultPrevented) {
+      event.preventDefault();
+      sendRequest(searchKey);
+    }
   };
 
   return (
-    <HStack spacing="5px" h="25px">
-      <AppInputGroup
-        placeholder={'Search ' + title + ' here'}
-        value={searchKey || ''}
-        onChange={handleInputChange}
-        fontSize="14px"
-        variant="primary"
-        inputSize="large"
-        isDisabled={!!selectedRightSideItem?.isSelectAll}
-      />
-    </HStack>
+    <VStack w={width} spacing="20px">
+      <HStack w="full">
+        <AppInputGroup
+          placeholder={'Search ' + title + ' here'}
+          value={searchKey || ''}
+          onChange={handleInputChange}
+          fontSize="14px"
+          variant="primary"
+          inputSize="large"
+          isDisabled={!!selectedRightSideItem?.isSelectAll}
+          onKeyDown={handleSearchFieldPress}
+        />
+      </HStack>
+    </VStack>
   );
 };
 

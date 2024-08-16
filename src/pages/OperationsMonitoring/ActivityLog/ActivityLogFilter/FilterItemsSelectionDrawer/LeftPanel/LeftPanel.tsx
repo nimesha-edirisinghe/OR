@@ -1,5 +1,5 @@
 import { Box, HStack, Skeleton } from '@chakra-ui/react';
-import { FC, useRef, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import CheckBoxWithLabel from './CheckBoxWithLabel';
 import { useDispatch, useSelector } from 'react-redux';
 import { KeyValueI } from 'types/responses/insightResponses';
@@ -13,7 +13,8 @@ import {
   ocean_blue_100,
   ocean_blue_200,
   ocean_blue_400,
-  ocean_blue_500
+  ocean_blue_500,
+  white
 } from 'theme/colors';
 import AppText from 'components/newTheme/AppText/AppText';
 import { getFromLocal } from 'utils/localStorage';
@@ -33,19 +34,28 @@ const LeftPanel: FC<Props> = ({ selectedRightSideItem, addOrRemoveItem }) => {
   const [onPanelHover, setOnPanelHover] = useState(false);
   const dashboardFilter = activityLogState.dashboardFilter;
   const filterType = dashboardFilter?.filterType!;
-
   const textColor = selectedRightSideItem?.isSelectAll ? neutral_100 : ocean_blue_100;
   const textHoverColor = ocean_blue_200;
   const bgHoverColor = ocean_blue_400;
+
+  const insightTitleMap: any = {
+    'Group Name': 'Group Names',
+    Activity: 'Activities',
+    'Execution Type': 'Execution Types',
+    Status: 'Status',
+    User: 'Users',
+    Date: 'Dates'
+  };
+  const insightTitle: string = getFromLocal('insightDrawerTitle') || '';
 
   const dispatch = useDispatch();
   return (
     <Box
       ref={containerRef}
       h="full"
-      w="full"
+      w="270px"
       bg={ocean_blue_500}
-      borderRadius="6px"
+      borderRadius="8px"
       overflowX="hidden"
       overflowY="hidden"
       transition=".2s ease-in"
@@ -57,7 +67,9 @@ const LeftPanel: FC<Props> = ({ selectedRightSideItem, addOrRemoveItem }) => {
         mb="10px"
         bg={ocean_blue_500}
       >
-        <AppText size="body3">List of {getFromLocal('insightDrawerTitle')}</AppText>
+        <AppText fontSize="12px" fontWeight={400} color={white}>
+          List of {insightTitleMap[insightTitle] || ''} ({filterItemListData.length})
+        </AppText>
       </HStack>
       <Skeleton
         w="full"
@@ -65,7 +77,7 @@ const LeftPanel: FC<Props> = ({ selectedRightSideItem, addOrRemoveItem }) => {
         isLoaded={!activityLogState.isLoading}
         fadeDuration={1}
         speed={1}
-        maxH={'calc(100vh - 290px)'}
+        maxH={'calc(100vh - 265px)'}
       >
         <Box
           paddingBottom={'10px'}

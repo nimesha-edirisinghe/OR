@@ -1,6 +1,6 @@
 import { VStack } from '@chakra-ui/react';
 import InsightsPageLayout from 'layouts/PageLayouts/InsightsPageLayout';
-import { FC, useCallback, useEffect } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { IUser, userSliceSelector } from 'state/user/userState';
 import {
@@ -17,12 +17,13 @@ import { useNavigate } from 'react-router-dom';
 interface Props {}
 
 const EditAlerts: FC<Props> = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const userState: IUser = useSelector(userSliceSelector);
   const alertState: IAlert = useSelector(alertSliceSelector);
   const selectedOrgKey = userState.selectedOrg && userState.selectedOrg.orgKey;
   const selectedViewAlertObj = alertState.alertLocalScope.selectedViewAlertObj;
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const [orgKey, setOrgKey] = useState<number>(selectedOrgKey);
 
   useEffect(() => {
     try {
@@ -31,8 +32,12 @@ const EditAlerts: FC<Props> = () => {
         navigate('/app/predictive-alerts');
       }
       if (selectedOrgKey) {
-        dispatch(getAlertDefinitionRequest());
-        dispatch(clearAlertErrorsMessages(null));
+        if (selectedOrgKey !== orgKey) navigate('/app/predictive-alerts');
+        else {
+          dispatch(getAlertDefinitionRequest());
+          dispatch(clearAlertErrorsMessages(null));
+          setOrgKey(selectedOrgKey);
+        }
       }
       return () => {
         abortController.abort();

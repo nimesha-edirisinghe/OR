@@ -1,8 +1,8 @@
 import { Box, Skeleton } from '@chakra-ui/react';
 import AppTable from 'components/AppTable/AppTable';
 import {
+  getReplenishmentConfigTableRowDataMapping,
   onTableSearch,
-  replenishmentConfigTableRowDataMapping,
   rplTableHeaders
 } from 'components/AppTable/TableDataMapping/ReplenishmentConfigTable';
 import { FC, useEffect } from 'react';
@@ -13,6 +13,9 @@ import { ocean_blue_600 } from 'theme/colors';
 import { scrollbarYStyles } from 'theme/styles';
 import FooterSection from './FooterSection/FooterSection';
 import { getCommonLastUpdateDateRequest } from 'state/pages/common/commonState';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface Props {}
 
@@ -21,6 +24,9 @@ const ReplenishmentMainSection: FC<Props> = () => {
   const isLeftMenuOpen = useSelector(layoutSliceSelector).leftMenuOpen;
   const rplConfigPageState = useSelector(rplConfigPageSliceSelector);
   const isLoading = rplConfigPageState.isLoading;
+
+  const accessType = useAccessType(MenuItems.REPLENISHMENT_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EXECUTE]);
 
   useEffect(() => {
     dispatch(getCommonLastUpdateDateRequest());
@@ -55,7 +61,7 @@ const ReplenishmentMainSection: FC<Props> = () => {
               variant="default"
               onTableSearch={onTableSearch}
               tableHeaders={rplTableHeaders}
-              tableRowDataMapping={replenishmentConfigTableRowDataMapping}
+              tableRowDataMapping={getReplenishmentConfigTableRowDataMapping(accessNotAllowed)}
               tableRowsDataSet={rplConfigPageState.rplConfigTableData || []}
             />
           )}

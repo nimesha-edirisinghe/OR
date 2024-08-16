@@ -14,6 +14,10 @@ import {
 } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
 import { getFilterItemCount } from 'state/pages/advancedConfiguration/groupConfiguration/stateHelpers/stH_groupConfigurations';
 import {
+  IGroupConfig,
+  groupConfigSliceSelector
+} from 'state/pages/shared/groupConfig/groupConfigState';
+import {
   IDFView,
   dfViewSliceSelector,
   downloadBulkEditForecastRequest
@@ -33,9 +37,15 @@ const DownloadTab: FC<Props> = ({ filterLabelTypes }) => {
   const [skuLocationCount, setSkuLocationCount] = useState<number>(0);
   const dfViewState: IDFView = useSelector(dfViewSliceSelector);
   const groupConfigState: IGroupConfigurationSlice = useSelector(groupConfigurationSliceSelector);
+  const sharedGroupState: IGroupConfig = useSelector(groupConfigSliceSelector);
   const groupFilter = groupConfigState.groupFilter;
   const filterTotalItemsCount = groupConfigState.groupFilter?.filterTotalItemsCount;
   const bulkEditDownloading = dfViewState.loading.bulkEditDownload;
+  const selectedSkuListLen = dfViewState.selectedSkuList.length;
+  const isAllSkuSelected = dfViewState.dfViewLocalScope.globalSkuSelected;
+  const totalSkuCount = dfViewState.skuListData?.totalCount;
+  const groupKey = sharedGroupState.selectedGroupKey!;
+  const aggregatedCount = (isAllSkuSelected ? totalSkuCount : selectedSkuListLen) || 0;
 
   useEffect(() => {
     const skuLocationCount = getFilterItemCount(groupFilter, 1, 'sku');
@@ -78,7 +88,8 @@ const DownloadTab: FC<Props> = ({ filterLabelTypes }) => {
       if (fileName) {
         dispatch(
           downloadBulkEditForecastRequest({
-            fileName: fileName
+            fileName: fileName,
+            groupKey
           })
         );
         onClose();
@@ -154,7 +165,7 @@ const DownloadTab: FC<Props> = ({ filterLabelTypes }) => {
             </AppText>
             <AppText size="body2" color="#DDDDDD">
               {`Template for current filter includes ${numberWithCommaSeparator(
-                skuLocationCount
+                aggregatedCount
               )} SKU-locations`}
             </AppText>
           </VStack>

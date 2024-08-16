@@ -60,7 +60,8 @@ export const ActivityLogSlice = createSlice({
     },
     localScope: {
       ascendingSort: true,
-      currentPageNumber: 1
+      currentPageNumber: 1,
+      searchKey: ''
     },
     activityLogListData: {
       totalCount: 0,
@@ -155,8 +156,13 @@ export const ActivityLogSlice = createSlice({
     },
     getActivityLogListRequest: (
       state,
-      action: PayloadAction<{ pageNumber?: number; ascendingSort?: boolean }>
+      action: PayloadAction<{ search?: string; pageNumber?: number; ascendingSort?: boolean }>
     ) => {
+      const search: string | undefined = action.payload.search;
+      if (search) {
+        state.dashboardFilter.filterLocalScope.rightPanelRetainDataList.activity.search = search;
+      }
+      state.isLoading = true;
       state.localScope.currentPageNumber = action.payload.pageNumber;
     },
     getActivityLogListSuccess: (state, action: { payload: ActivityLogDataI }) => {
@@ -165,8 +171,11 @@ export const ActivityLogSlice = createSlice({
         item.groupName = `${item.groupKey} - ${item.groupName}`;
         return item;
       });
+      state.isLoading = false;
     },
-    getActivityLogListFailure: (state) => {},
+    getActivityLogListFailure: (state) => {
+      state.isLoading = false;
+    },
     updateLastUpdatedDateTime: (state) => {
       state.lastUpdatedDateTime = format(new Date(), 'yyyy-MM-dd hh:mm a');
     },
@@ -204,6 +213,9 @@ export const ActivityLogSlice = createSlice({
     clearActivityLogSummary: (state) => {
       state.jobSummary = null;
       state.selectedRow = null;
+    },
+    setAlgoExecutionSearchKey: (state, action: PayloadAction<string>) => {
+      state.localScope.searchKey = action.payload;
     }
   }
 });
@@ -233,7 +245,8 @@ export const {
   getActivityLogSummaryRequest,
   getActivityLogSummarySuccess,
   getActivityLogSummaryFailure,
-  clearActivityLogSummary
+  clearActivityLogSummary,
+  setAlgoExecutionSearchKey
 } = ActivityLogSlice.actions;
 
 export default ActivityLogSlice.reducer;

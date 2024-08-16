@@ -30,7 +30,9 @@ const PromotionSummaryViewTableSection: FC<ViewSectionProps> = () => {
   const isFilterApplied = groupConfigurationState.groupConfigurationLocalScope.isFilterApplied;
 
   useEffect(() => {
-    dispatch(getPromotionSummaryDataRequest());
+    if (isFilterApplied) {
+      dispatch(getPromotionSummaryDataRequest());
+    }
   }, [isFilterApplied]);
 
   return (

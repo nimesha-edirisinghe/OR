@@ -8,6 +8,7 @@ import { TableHeader } from 'types/responses/viewResponses';
 import { useTable } from 'hooks/useTable';
 import AppSimpleGridCellsMap from './AppSimpleGridCells/AppSimpleGridCellsMap';
 import { iconName } from 'components/AppIcon/svgIcons';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 
 export type CellTextAlignmentT = 'start' | 'end';
 
@@ -30,7 +31,7 @@ interface Props {
   cellCallback?: (id: number | string, index: number, value: string | number) => void;
   textAlign?: CellTextAlignmentT;
   onEditActionHandler?: (
-    ref:any,
+    ref: any,
     id: number | string,
     index: number,
     value: number | string,
@@ -57,7 +58,7 @@ const AppSimpleGrid: FC<Props> = ({
   cellCallback = (id: number | string, index: number, value: string | number) => {},
   textAlign,
   onEditActionHandler = (
-    ref:any,
+    ref: any,
     id: number | string,
     index: number,
     value: number | string,
@@ -75,6 +76,8 @@ const AppSimpleGrid: FC<Props> = ({
   const { startResize, endResize, onMouseMove } = eventHandlers;
   const [scroll, setScroll] = useState('hidden');
   const tableRoot = useRef<any>();
+  const headerCellRef = useRef<(HTMLTableCellElement | null)[]>([]);
+  const headerTextRef = useRef<(HTMLDivElement | null)[]>([]);
 
   rows && rows.map((obj) => obj.row);
   return (
@@ -109,10 +112,18 @@ const AppSimpleGrid: FC<Props> = ({
                   minWidth: '36px',
                   backgroundColor: ocean_blue_500,
                   borderRight: `1px solid ${ocean_blue_600}`,
-                  padding: 0
+                  padding: 0,
+                  border: '0px'
                 }}
               >
-                <HStack justify="center" w="full" paddingLeft="2px">
+                <HStack
+                  justify="center"
+                  w="full"
+                  h="36px"
+                  paddingLeft="2px"
+                  borderRight={`1px solid ${ocean_blue_600}`}
+                  borderBottom={`1px solid ${ocean_blue_600}`}
+                >
                   <AppCheckbox
                     id={1}
                     isDisabled={rows?.length == 0}
@@ -124,29 +135,49 @@ const AppSimpleGrid: FC<Props> = ({
             )}
             {headerConfigs?.map((header, key) => {
               const [freezed, leftMargin, zIndex] = getColumnConfigs(key);
+              const isTextLarge =
+                (headerTextRef.current[key]?.offsetWidth || 0) >=
+                (headerCellRef.current[key]?.offsetWidth || 0);
+
               return (
                 <th
                   key={key}
+                  ref={(nodeRef) => (headerCellRef.current[key] = nodeRef)}
                   style={
                     freezed
                       ? {
                           position: 'sticky',
                           left: leftMargin as number,
                           zIndex: zIndex as number,
-                          minWidth: `${header.w + 1}px`,
+                          minWidth: `${header?.w + 1}px`,
                           padding: 0
                         }
                       : {
-                          minWidth: `${header.w + 1}px`,
+                          minWidth: `${header?.w + 1}px`,
                           padding: 0,
                           margin: 0
                         }
                   }
                 >
-                  <HStack h="36px" pos="relative" minW={`${header.w}px`} bg={ocean_blue_500}>
-                    <AppText size="h4Semibold" textIndent="10px" noOfLines={1}>
-                      {header.displayValue}
-                    </AppText>
+                  <HStack
+                    h="36px"
+                    pos="relative"
+                    minW={`${header?.w}px !important`}
+                    bg={ocean_blue_500}
+                  >
+                    <AppTooltip
+                      label={header?.displayValue}
+                      noOfLines={1}
+                      placement="top-end"
+                      zIndex={1}
+                      display={isTextLarge ? 'display' : 'none'}
+                    >
+                      <Box ref={(nodeRef) => (headerTextRef.current[key] = nodeRef)}>
+                        <AppText w="full" size="h4Semibold" textIndent="10px" noOfLines={1}>
+                          {header?.displayValue}
+                        </AppText>
+                      </Box>
+                    </AppTooltip>
                     <Box
                       w="10px"
                       h="full"
@@ -190,10 +221,18 @@ const AppSimpleGrid: FC<Props> = ({
                       maxWidth: '36px',
                       minWidth: '36px',
                       padding: '0px',
-                      height: '36px'
+                      height: '36px',
+                      border: '0px'
                     }}
                   >
-                    <HStack bg={rowColorBg} w="full" h="full" justify="center">
+                    <HStack
+                      bg={rowColorBg}
+                      w="full"
+                      h="full"
+                      justify="center"
+                      borderRight={`1px solid ${ocean_blue_600}`}
+                      borderBottom={`1px solid ${ocean_blue_600}`}
+                    >
                       <AppCheckbox
                         id={rows?.[key]?.id}
                         isDisabled={rows?.length == 0}
@@ -214,7 +253,8 @@ const AppSimpleGrid: FC<Props> = ({
                   return (
                     <Td
                       p="0px !important"
-                      minW={`${headerConfigs && headerConfigs[index]?.w + 1}px`}
+                      border="0px !important"
+                      minW={`${headerConfigs && headerConfigs[index]?.w + 1}px !important`}
                       style={
                         freezed
                           ? {
@@ -236,6 +276,8 @@ const AppSimpleGrid: FC<Props> = ({
                         bg={rowColorBg}
                         alignItems={'center'}
                         justifyContent={freezed ? 'start' : textAlign}
+                        borderRight={`1px solid ${ocean_blue_600}`}
+                        borderBottom={`1px solid ${ocean_blue_600}`}
                       >
                         <AppSimpleGridCellsMap
                           displayValue={column}
@@ -249,13 +291,17 @@ const AppSimpleGrid: FC<Props> = ({
                           tableRoot={tableRoot}
                           cellCallback={cellCallback}
                           actionIcons={
-                            headerConfigs[index]?.cellType! === 'actionIconCell'
+                            ['actionIconCell', 'operationCell'].includes(
+                              headerConfigs[index]?.cellType!
+                            )
                               ? headerConfigs[index]?.actionIcons
                               : undefined
                           }
                           index={index}
+                          cellWidth={headerConfigs[index]?.w || 300}
                           textAlign={freezed ? 'start' : textAlign}
                           onEditActionHandler={onEditActionHandler}
+                          jobGroupId={rowConfig?.row[0]}
                         />
                       </Box>
                     </Td>

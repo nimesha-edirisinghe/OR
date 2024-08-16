@@ -66,9 +66,11 @@ export interface PlanDataI {
   action: AlertReplenishmentActionTypeEnum;
 }
 
-export interface AlertReplenishmentI {
+interface AlertKeyAndTypeI {
   alertKey: number | undefined;
   alertType: string;
+}
+export interface ReplenishmentI {
   groupKey: string | number | undefined;
   anchorProdKey: number | undefined;
   anchorProdModelKey: number | undefined;
@@ -76,4 +78,11 @@ export interface AlertReplenishmentI {
   invPlanKey: number | undefined;
   riskValue: number | undefined;
   planData: PlanDataI[];
+}
+
+export interface AlertReplenishmentI extends AlertKeyAndTypeI, ReplenishmentI {}
+
+export interface GetAlertedGroupDetailsQueryI {
+  alertKey: number;
+  alertOnly: number;
 }

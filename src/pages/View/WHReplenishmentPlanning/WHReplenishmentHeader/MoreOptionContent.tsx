@@ -5,7 +5,11 @@ import { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ocean_blue_200, ocean_blue_400, ocean_blue_600 } from 'theme/colors';
 import { useDispatch } from 'react-redux';
-import { setIsLoadWhData } from 'state/pages/view/whReplenishmentView/whRplViewState';
+import {
+  setIsLoadWhData,
+  setReplEditable
+} from 'state/pages/view/whReplenishmentView/whRplViewState';
+import { WHReplTypeEnum } from 'utils/enum';
 
 export interface moreOptionItems {
   id: number;
@@ -13,15 +17,23 @@ export interface moreOptionItems {
   value: string;
   path?: string;
 }
+
 interface Props {
+  onMaxMinHandler?: () => void;
   options: moreOptionItems[];
+  isOpenPanel?: boolean;
+  type: WHReplTypeEnum;
 }
 
-const MoreOptionContent: FC<Props> = ({ options }) => {
+const MoreOptionContent: FC<Props> = ({ options, isOpenPanel, type, onMaxMinHandler }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const onClickMoreOption = (item: moreOptionItems) => {
+  const onClickMoreOption = (item: moreOptionItems, option: number) => {
+    if (option === 0) {
+      if (!isOpenPanel && type === WHReplTypeEnum.INDIVIDUAL) onMaxMinHandler && onMaxMinHandler();
+      if (type === WHReplTypeEnum.INDIVIDUAL) dispatch(setReplEditable(true));
+    }
     dispatch(setIsLoadWhData(false));
     navigate(item.path!);
   };
@@ -31,14 +43,14 @@ const MoreOptionContent: FC<Props> = ({ options }) => {
       w="277px"
       bg={ocean_blue_600}
       borderRadius="8px"
-      py="8px"
+      overflow="hidden"
       border="1px solid"
       borderColor={ocean_blue_400}
       spacing={0}
       boxShadow="0px 12px 20px 0px #001019"
       zIndex={15}
     >
-      {options.map((item) => (
+      {options.map((item, index) => (
         <HStack
           key={item.id}
           h="36px"
@@ -49,11 +61,8 @@ const MoreOptionContent: FC<Props> = ({ options }) => {
             bg: ocean_blue_400
           }}
           px="12px"
-          onClick={() => onClickMoreOption(item)}
+          onClick={() => onClickMoreOption(item, index)}
         >
-          {/* <Box>
-            <AppIcon transition="transform 0.25s ease" name={item.iconName} fill={ocean_blue_200} />
-          </Box> */}
           <AppText
             size="body3"
             fontSize="13px"

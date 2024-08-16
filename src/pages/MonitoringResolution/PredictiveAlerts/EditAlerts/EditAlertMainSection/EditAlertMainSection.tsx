@@ -38,6 +38,9 @@ const EditAlertMainSection: FC<Props> = () => {
   const enableScrolling = alertState.alertLocalScope.enableEditAlertScroll;
   const rightPanelRetainDataList =
     groupConfigurationState.groupFilter.filterLocalScope.rightPanelRetainDataList;
+  const selectedTotalSkuCount =
+    groupConfigurationState.groupFilter.filterLocalScope?.totalSelectedSkuCount ?? 0;
+  const totalSkuCount = alertState.alertDefinition?.skuLocationCount;
 
   const scrollToRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
@@ -55,7 +58,7 @@ const EditAlertMainSection: FC<Props> = () => {
   };
 
   const onClickModifySkuHandler = () => {
-    onClickModifySku('sku', 1, 'SKU location list');
+    onClickModifySku('sku', 1, 'SKU-locations');
     dispatch(updateItemSelectionDrawerOpenFrom('page'));
   };
 
@@ -73,7 +76,15 @@ const EditAlertMainSection: FC<Props> = () => {
     );
 
     dispatch(updateGroupFilter(_groupFilter));
-    dispatch(getFilterDataRequest({ filterType, filterCode, pageNumber: 1, viewFilter: false }));
+    dispatch(
+      getFilterDataRequest({
+        filterType,
+        filterCode,
+        pageNumber: 1,
+        viewFilter: false,
+        isModifyAlertPage: true
+      })
+    );
     storeInLocal('insightDrawerTitle', drawerTitle);
   };
 
@@ -98,6 +109,8 @@ const EditAlertMainSection: FC<Props> = () => {
       <FilterItemsSelectionDrawer
         okButtonName="Modify List"
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenItemSelectionDrawer}
+        totalCount={totalSkuCount}
+        isEnableSelectAll={false}
       />
       <VStack w="full" pt="20px" pb="40px">
         <VStack w="full" align="start" spacing="8px">
@@ -124,7 +137,7 @@ const EditAlertMainSection: FC<Props> = () => {
         <HStack w="full" spacing="20px" pb="40px" pt="32px">
           <VStack align="start">
             <AppText fontSize="32px" h="35px" color="#fff" fontWeight={400}>
-              {skuLocationCount}
+              {selectedTotalSkuCount}
             </AppText>
             <AppText color="#bbb" fontSize="12px" h="15px">
               SKU Locations

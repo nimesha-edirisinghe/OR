@@ -12,6 +12,7 @@ export type cellActionType = {
   iconName: iconName;
   action: ForecastConfigTableAction;
   onClick: (action: string, rowId?: string) => void;
+  isDisabled?: boolean;
 };
 export interface CellDataMappingI {
   cellType: cellType;

@@ -106,7 +106,7 @@ const TopOption: FC<TopOptionProps> = () => {
 
   const onClickMinimizeHandler = () => {
     dispatch(toggleGraphPanel());
-    dispatch(resetViewForecast());
+    // dispatch(resetViewForecast());
   };
 
   const selectedValue1 = getValueFromLabel(aggregateOption?.compareSelection!);

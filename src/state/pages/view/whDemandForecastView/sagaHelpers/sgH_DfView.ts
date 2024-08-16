@@ -31,13 +31,13 @@ const orderQtyListFormatter = (orderQtyData: RplOrderQtyDetailsI[]) => {
   return formatterOrderQtyList;
 };
 
-const stockMovementHeaderFormatter = (stockMovementData: RplStockMovementI[]): TableHeader[] => {
+const stockMovementHeaderFormatter = (stockMovementData: RplStockMovementI[],defaultWidth:number = 150): TableHeader[] => {
   const stockMovementTblHeader: TableHeader[] = [
     { displayValue: 'Order Date', key: 'order_date', w: 150 },
     ...(stockMovementData || []).map((item) => ({
       displayValue: item.date,
       key: item.date,
-      w: 150
+      w: defaultWidth
     }))
   ];
 
@@ -89,7 +89,7 @@ const stockMovementListFormatter = (stockMovementData: RplStockMovementI[]) => {
   return list;
 };
 
-export const replenishmentViewReFormatter = (data: ReplenishmentPlanDetailsResI) => {
+export const replenishmentViewReFormatter = (data: ReplenishmentPlanDetailsResI,columWidth:number) => {
   const formatterOrderQtyList = orderQtyListFormatter(data?.orderQtyDetails!);
   const formattedResponse: ReplenishmentPlanDetailsStateI = {
     orderPlan: data?.orderPlan,
@@ -99,7 +99,7 @@ export const replenishmentViewReFormatter = (data: ReplenishmentPlanDetailsResI)
       defaultList: formatterOrderQtyList
     },
     stockMovement: {
-      headers: stockMovementHeaderFormatter(data?.stockMovement),
+      headers: stockMovementHeaderFormatter(data?.stockMovement,columWidth),
       list: stockMovementListFormatter(data?.stockMovement)
     },
     anchor_prod_key: data?.anchor_prod_key,

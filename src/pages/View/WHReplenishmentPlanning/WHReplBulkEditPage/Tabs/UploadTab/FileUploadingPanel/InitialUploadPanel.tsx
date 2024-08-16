@@ -22,7 +22,8 @@ const InitialUploadPanel: FC<Props> = ({
     <VStack w="full" bg={ocean_blue_600} align="start" spacing="8px">
       <AppText size="h3Semibold">File Upload</AppText>
       <AppText size="body2">
-        This will permanently update the current forecasted values. Are you sure you want to submit?
+        This will permanently update the current replenishment schedules. Are you sure you want to
+        submit?
       </AppText>
       <HStack pt="8px" w={'full'} align={'center'}>
         <AppIcon

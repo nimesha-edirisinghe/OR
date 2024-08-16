@@ -9,20 +9,30 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setActiveSubMenuItem } from 'state/layout/layoutState';
 
-interface Props {}
+interface Props {
+  isDisabledFcSummary?: boolean;
+  isDisabledRplSummary?: boolean;
+}
 
-const QuickInsightSection: FC<Props> = () => {
+const QuickInsightSection: FC<Props> = ({
+  isDisabledFcSummary = false,
+  isDisabledRplSummary = false
+}) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const forecastSummaryHandler = () => {
-    dispatch(setActiveSubMenuItem({ subMenuItem: '/app/insights/forecast-summary' }));
-    navigate('/app/insights/forecast-summary');
+    if (!isDisabledFcSummary) {
+      dispatch(setActiveSubMenuItem({ subMenuItem: '/app/insights/forecast-summary' }));
+      navigate('/app/insights/forecast-summary');
+    }
   };
 
   const replenishmentSummaryHandler = () => {
-    dispatch(setActiveSubMenuItem({ subMenuItem: '/app/insights/replenishment-summary' }));
-    navigate('/app/insights/replenishment-summary');
+    if (!isDisabledRplSummary) {
+      dispatch(setActiveSubMenuItem({ subMenuItem: '/app/insights/replenishment-summary' }));
+      navigate('/app/insights/replenishment-summary');
+    }
   };
 
   return (
@@ -39,13 +49,13 @@ const QuickInsightSection: FC<Props> = () => {
       <HStack h="177px" w="full" spacing="12px">
         <VStack flex={1} h="full" bg={ocean_blue_500} borderRadius="8px" p="20px" spacing="12px">
           <AppText size="body2" color={neutral_200}>
-            Is availability impacting how much you sell ? Examine ways to make the same better!
+            Is availability impacting how much you sell? Examine ways to make the same better!
           </AppText>
           <Box
             w="full"
             maxH="88px"
             position="relative"
-            cursor={'pointer'}
+            cursor={isDisabledFcSummary ? 'not-allowed' : 'pointer'}
             onClick={forecastSummaryHandler}
           >
             <Img
@@ -57,6 +67,7 @@ const QuickInsightSection: FC<Props> = () => {
               top="0"
               left="0"
               borderRadius="8px"
+              opacity={isDisabledFcSummary ? 0.7 : 1}
             />
             <Box
               position="absolute"
@@ -64,6 +75,7 @@ const QuickInsightSection: FC<Props> = () => {
               left="50%"
               transform="translate(-50%, -50%)"
               zIndex="1"
+              opacity={isDisabledFcSummary ? 0.3 : 1}
             >
               <AppIcon
                 transition="transform 0.25s ease"
@@ -83,7 +95,7 @@ const QuickInsightSection: FC<Props> = () => {
             w="full"
             maxH="88px"
             position="relative"
-            cursor={'pointer'}
+            cursor={isDisabledRplSummary ? 'not-allowed' : 'pointer'}
             onClick={replenishmentSummaryHandler}
           >
             <Img
@@ -95,6 +107,7 @@ const QuickInsightSection: FC<Props> = () => {
               top="0"
               left="0"
               borderRadius="8px"
+              opacity={isDisabledRplSummary ? 0.7 : 1}
             />
             <Box
               position="absolute"
@@ -102,6 +115,7 @@ const QuickInsightSection: FC<Props> = () => {
               left="50%"
               transform="translate(-50%, -50%)"
               zIndex="1"
+              opacity={isDisabledRplSummary ? 0.3 : 1}
             >
               <AppIcon
                 transition="transform 0.25s ease"

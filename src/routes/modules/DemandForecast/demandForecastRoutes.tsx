@@ -26,11 +26,11 @@ export const storeForecastRoutes = {
       element: <DemandForecastViewPage />
     },
     {
-      path: 'aggregated-forecast-analyzer',
+      path: 'aggregated-forecast-analyser',
       element: <AggregatedForecastAnalyzerPage />
     },
     {
-      path: 'individual-forecast-analyzer',
+      path: 'individual-forecast-analyser',
       element: <IndividualForecastAnalyzerPage />
     },
     {

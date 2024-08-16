@@ -14,24 +14,32 @@ import {
 } from './Helpers/AlertConfigurationDataFormatter';
 import AppText from 'components/newTheme/AppText/AppText';
 import AppInput from 'components/newTheme/AppInput/AppInput';
-import { neutral_100, neutral_200, ocean_blue_600 } from 'theme/colors';
+import {
+  neutral_100,
+  neutral_200,
+  ocean_blue_200,
+  ocean_blue_500,
+  ocean_blue_600
+} from 'theme/colors';
 
 interface AlertConfigurationItemProps {
   alertTypeData: AlertTypesI;
+  alertRiskTagRequired?: boolean;
 }
 
 const AlertConfigurationItem: FC<AlertConfigurationItemProps> = ({ alertTypeData }) => {
+  const dispatch = useDispatch();
   const userState = useSelector(userSliceSelector);
   const responseTimeGranularity = userState.selectedOrg.responseTimeGranularity;
-  const dispatch = useDispatch();
-
   const formattedGranularity = getLabelFromFrequency(responseTimeGranularity);
-
   const formattedCaption = getCaptionFromFrequency(responseTimeGranularity);
+  const alertTypeName: string = ['Growth', 'Degrowth'].includes(alertTypeData.name)
+    ? `${alertTypeData.name} (YoY)`
+    : alertTypeData.name;
 
   const renderPrimaryAlertType = useCallback(() => {
     return (
-      <VStack align="start" spacing="16px" pb="16px">
+      <VStack align="start" spacing="16px" pb="16px" mt="16px">
         <AppText size="body2" color="rgba(250, 250, 250, 0.80)" w="78%">
           {alertTypeData.firstDescription}
         </AppText>
@@ -55,7 +63,7 @@ const AlertConfigurationItem: FC<AlertConfigurationItemProps> = ({ alertTypeData
 
   const renderSecondaryAlertType = useCallback(() => {
     return (
-      <VStack align="start" spacing="16px" pb="16px">
+      <VStack align="start" spacing="16px" pb="16px" mt="16px">
         <AppText size="body2" color={neutral_100} w="78%">
           {alertTypeData.firstDescription}
         </AppText>
@@ -125,14 +133,18 @@ const AlertConfigurationItem: FC<AlertConfigurationItemProps> = ({ alertTypeData
   };
 
   const onChangeCompareValueText = (text: string) => {
-    const isValidCompareValue = validateCompareValue(text, responseTimeGranularity);
+    if (!/^\d*$/.test(text)) {
+      return;
+    }
+    const numericValue = text.replace(/[^0-9]/g, '');
+    const isValidCompareValue = validateCompareValue(numericValue, responseTimeGranularity);
 
     if (isValidCompareValue) {
       const _al = store.getState().alert.defaultAlertTypes;
       const _alertTypes = produce(_al, (draft) => {
         draft.map((alert) => {
           if (alert.type === alertTypeData.type) {
-            alert.compareValue = text;
+            alert.compareValue = numericValue;
             alert.error = null;
           }
           return alert;
@@ -159,20 +171,11 @@ const AlertConfigurationItem: FC<AlertConfigurationItemProps> = ({ alertTypeData
   };
 
   return (
-    <Box
-      borderRadius="8px"
-      bg={ocean_blue_600}
-      w="full"
-      px="20px"
-      borderLeft={alertTypeData.enable ? '1px solid #FFA914' : '1px solid transparent'}
-    >
-      <HStack
-        justify="space-between"
-        onClick={() => onEnableToggleChange()}
-        cursor="pointer"
-        h="56px"
-      >
-        <AppText size="h4Semibold" color={neutral_200}>{`${alertTypeData.name} Alert`}</AppText>
+    <Box borderRadius="8px" bg={ocean_blue_600} w="636px" p="16px 20px 16px 20px">
+      <HStack justify="space-between" onClick={() => onEnableToggleChange()} cursor="pointer">
+        <AppText fontSize="13px" fontWeight={600} color={neutral_200} lineHeight="19.5px">
+          {alertTypeName}
+        </AppText>
         <AppToggle isChecked={alertTypeData.enable} onChange={() => {}} size="sm" />
       </HStack>
       <Collapse in={alertTypeData.enable} animateOpacity>

@@ -1,4 +1,6 @@
 import { AlertTypesI } from 'types/alertConfig';
+import { IAlert } from '../alertState';
+import { AlertReplenishmentActionTypeEnum } from 'utils/enum';
 
 export enum AlertFirstDescriptionsEnum {
   OUT_OF_STOCK_ALERT_FIRST_DESC = 'Alert if current stock is less than the forecasted demand for the specified number of days (irrespective of pending orders)',
@@ -37,7 +39,7 @@ export const defaultAlertTypeList: AlertTypesI[] = [
   },
   {
     type: 'expirationrisk',
-    name: 'Expiration Risk',
+    name: 'Expiration',
     enable: false,
     compareValue: '',
     threshold: '',
@@ -71,3 +73,32 @@ export const defaultAlertTypeList: AlertTypesI[] = [
     error: null
   }
 ];
+
+export const validateReplenishmentEditData = (state: any): boolean => {
+  let validationFlag: boolean = true;
+  const rowList = state.rplPlanDetails?.orderQtyDetails?.list;
+
+  for (const element of rowList as any) {
+    if (!validationFlag) break;
+    const row = element.row;
+    const firstDate: number = new Date(row[0]).getTime();
+    const secondDate: number = new Date(row[4]).getTime();
+    if (element.action !== AlertReplenishmentActionTypeEnum.DELETE)
+      validationFlag = secondDate > firstDate && row[1] > 0;
+  }
+  return validationFlag;
+};
+
+export const validateWhReplenishmentEditData = (state: any): boolean => {
+  let validationFlag: boolean = true;
+  const rowList = state.rplWhPlanDetails?.orderQtyDetails?.list;  
+  for (const element of rowList as any) {
+    if (!validationFlag) break;
+    const row = element.row;
+    const firstDate: number = new Date(row[0]).getTime();
+    const secondDate: number = new Date(row[4]).getTime();
+    if (element.action !== AlertReplenishmentActionTypeEnum.DELETE)
+      validationFlag = secondDate > firstDate && row[1] > 0;
+  }
+  return validationFlag;
+};

@@ -6,10 +6,8 @@ import {
 } from 'state/pages/advancedConfiguration/groupConfiguration/groupConfigurationState';
 import { ApiResponse } from 'types/api';
 import {
-  AccuracyDistributionResponseI,
   AccuracyResponseI,
   AggregatedGraphResponseI,
-  ExclusionCriteriaResponseI,
   FCAnalyzerSkuResponseI,
   IndividualGraphResponseI,
   KPIResponseI,
@@ -19,12 +17,8 @@ import {
 import { forecastAnalyzerApi } from 'api';
 import { responseValidator } from 'state/helpers/validateHelper';
 import {
-  fetchAccuracyDistributionDataRequestFailure,
-  fetchAccuracyDistributionDataRequestSuccess,
   fetchAggregatedGraphDataRequestFailure,
   fetchAggregatedGraphDataRequestSuccess,
-  fetchExclusionCriteriaRequestFailure,
-  fetchExclusionCriteriaRequestSuccess,
   fetchIndividualGraphDataRequestFailure,
   fetchIndividualGraphDataRequestSuccess,
   fetchKpiAccuracyRequestFailure,
@@ -34,38 +28,46 @@ import {
   fetchPlannedActualDataRequestFailure,
   fetchPlannedActualDataRequestSuccess,
   fetchSkuDetailsDataRequestFailure,
-  fetchSkuDetailsDataRequestSuccess
+  fetchSkuDetailsDataRequestSuccess,
+  forecastAnalyzerSliceSelector,
+  IForecastAnalyzer
 } from './forecastAnalyzerState';
 import {
   fcAnalyzerPlannedActualFormatter,
-  prepareAggregatedFcAnalyzerRequestBody,
-  prepareIndividualFcAnalyzerRequestBody
+  prepareFcAnalyzerCommonRequestBody,
+  prepareFcAnalyzerRequestBody
 } from './sagaHelpers/sgH_ForecastAnalyzer';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { FCAnalyzerType } from 'types/view/forecastAnalyzer';
-import { FCAnalyzerTypeEnum } from 'utils/enum';
+import {
+  IGroupConfig,
+  groupConfigSliceSelector
+} from 'state/pages/shared/groupConfig/groupConfigState';
 
-function* fetchKpiAccuracyRequestSaga(action: PayloadAction<{ type: FCAnalyzerType }>) {
+function* fetchKpiAccuracyRequestSaga() {
   try {
-    const fcAnalyzerType = action.payload.type;
     const dfState: IDFView = yield select(dfViewSliceSelector);
-    const groupConfigurationState: IGroupConfigurationSlice = yield select(
-      groupConfigurationSliceSelector
+    const forecastAnalyzerState: IForecastAnalyzer = yield select(forecastAnalyzerSliceSelector);
+    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
+    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
+    const searchKey = dfState.dfViewLocalScope.skuSearchKey;
+    const globalSkuSelected = dfState.dfViewLocalScope.globalSkuSelected;
+    const selectedSkuList = dfState.selectedSkuList;
+    const selectedSkuObj = dfState.selectedSku;
+    const selectedAnalyzerType = forecastAnalyzerState.fcAnalyzerLocalScope.selectedAnalyzerType;
+
+    const requestBody = prepareFcAnalyzerCommonRequestBody(
+      searchKey,
+      selectedSkuList,
+      selectedSkuObj,
+      selectedGroupKey,
+      globalSkuSelected,
+      selectedAnalyzerType
     );
-    let requestBody = null;
-    if (fcAnalyzerType === FCAnalyzerTypeEnum.AGGREGATED) {
-      requestBody = prepareAggregatedFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    } else {
-      requestBody = prepareIndividualFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    }
 
     const response: ApiResponse<AccuracyResponseI> = yield call(() =>
       forecastAnalyzerApi.fetchKpiAccuracyRequest(requestBody)
     );
-
-    if (!responseValidator(response, true)) {
-      return;
-    }
 
     if (response) {
       yield put(fetchKpiAccuracyRequestSuccess(response.data));
@@ -73,31 +75,20 @@ function* fetchKpiAccuracyRequestSaga(action: PayloadAction<{ type: FCAnalyzerTy
       yield put(fetchKpiAccuracyRequestFailure());
     }
   } catch (error) {
-    console.error('error in request ', error);
+    console.error('error in get accuracy request ', error);
   }
 }
-function* fetchIndividualGraphDataRequestSaga(action: PayloadAction<{ type: FCAnalyzerType }>) {
+function* fetchIndividualGraphDataRequestSaga() {
   try {
-    const fcAnalyzerType = action.payload.type;
     const dfState: IDFView = yield select(dfViewSliceSelector);
-    const groupConfigurationState: IGroupConfigurationSlice = yield select(
-      groupConfigurationSliceSelector
-    );
-    let requestBody = null;
+    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
+    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
 
-    if (fcAnalyzerType === FCAnalyzerTypeEnum.AGGREGATED) {
-      requestBody = prepareAggregatedFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    } else {
-      requestBody = prepareIndividualFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    }
+    const requestBody = prepareFcAnalyzerRequestBody(dfState, selectedGroupKey);
 
     const response: ApiResponse<IndividualGraphResponseI[]> = yield call(() =>
       forecastAnalyzerApi.fetchIndividualGraphDataRequest(requestBody)
     );
-
-    if (!responseValidator(response, true)) {
-      return;
-    }
 
     if (response) {
       yield put(fetchIndividualGraphDataRequestSuccess(response.data));
@@ -108,28 +99,30 @@ function* fetchIndividualGraphDataRequestSaga(action: PayloadAction<{ type: FCAn
     console.error('error in request ', error);
   }
 }
-function* fetchAggregatedGraphDataRequestSaga(action: PayloadAction<{ type: FCAnalyzerType }>) {
+function* fetchAggregatedGraphDataRequestSaga() {
   try {
-    const fcAnalyzerType = action.payload.type;
     const dfState: IDFView = yield select(dfViewSliceSelector);
-    const groupConfigurationState: IGroupConfigurationSlice = yield select(
-      groupConfigurationSliceSelector
-    );
-    let requestBody = null;
+    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
+    const forecastAnalyzerState: IForecastAnalyzer = yield select(forecastAnalyzerSliceSelector);
+    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
+    const searchKey = dfState.dfViewLocalScope.skuSearchKey;
+    const globalSkuSelected = dfState.dfViewLocalScope.globalSkuSelected;
+    const selectedSkuList = dfState.selectedSkuList;
+    const selectedSkuObj = dfState.selectedSku;
+    const selectedAnalyzerType = forecastAnalyzerState.fcAnalyzerLocalScope.selectedAnalyzerType;
 
-    if (fcAnalyzerType === FCAnalyzerTypeEnum.AGGREGATED) {
-      requestBody = prepareAggregatedFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    } else {
-      requestBody = prepareIndividualFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    }
+    const requestBody = prepareFcAnalyzerCommonRequestBody(
+      searchKey,
+      selectedSkuList,
+      selectedSkuObj,
+      selectedGroupKey,
+      globalSkuSelected,
+      selectedAnalyzerType
+    );
 
     const response: ApiResponse<AggregatedGraphResponseI[]> = yield call(() =>
       forecastAnalyzerApi.fetchAggregatedGraphDataRequest(requestBody)
     );
-
-    if (!responseValidator(response, true)) {
-      return;
-    }
 
     if (response) {
       yield put(fetchAggregatedGraphDataRequestSuccess(response.data));
@@ -140,60 +133,17 @@ function* fetchAggregatedGraphDataRequestSaga(action: PayloadAction<{ type: FCAn
     console.error('error in request ', error);
   }
 }
-function* fetchExclusionCriteriaRequestSaga(action: PayloadAction<{ type: FCAnalyzerType }>) {
+
+function* fetchPlannedActualDataRequestSaga() {
   try {
-    const fcAnalyzerType = action.payload.type;
     const dfState: IDFView = yield select(dfViewSliceSelector);
-    const groupConfigurationState: IGroupConfigurationSlice = yield select(
-      groupConfigurationSliceSelector
-    );
-    let requestBody = null;
 
-    if (fcAnalyzerType === FCAnalyzerTypeEnum.AGGREGATED) {
-      requestBody = prepareAggregatedFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    } else {
-      requestBody = prepareIndividualFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    }
-
-    const response: ApiResponse<ExclusionCriteriaResponseI[]> = yield call(() =>
-      forecastAnalyzerApi.fetchExclusionCriteriaRequest(requestBody)
-    );
-
-    if (!responseValidator(response, true)) {
-      return;
-    }
-
-    if (response) {
-      yield put(fetchExclusionCriteriaRequestSuccess(response.data));
-    } else {
-      yield put(fetchExclusionCriteriaRequestFailure());
-    }
-  } catch (error) {
-    console.error('error in request ', error);
-  }
-}
-function* fetchPlannedActualDataRequestSaga(action: PayloadAction<{ type: FCAnalyzerType }>) {
-  try {
-    const fcAnalyzerType = action.payload.type;
-    const dfState: IDFView = yield select(dfViewSliceSelector);
-    const groupConfigurationState: IGroupConfigurationSlice = yield select(
-      groupConfigurationSliceSelector
-    );
-    let requestBody = null;
-
-    if (fcAnalyzerType === FCAnalyzerTypeEnum.AGGREGATED) {
-      requestBody = prepareAggregatedFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    } else {
-      requestBody = prepareIndividualFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    }
-
+    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
+    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
+    const requestBody = prepareFcAnalyzerRequestBody(dfState, selectedGroupKey);
     const response: ApiResponse<PlannedActualResponseI[]> = yield call(() =>
       forecastAnalyzerApi.fetchPlannedActualDataRequest(requestBody)
     );
-
-    if (!responseValidator(response, true)) {
-      return;
-    }
 
     if (response) {
       const formattedResponse: PlannedActualObjI = fcAnalyzerPlannedActualFormatter(response.data);
@@ -205,28 +155,16 @@ function* fetchPlannedActualDataRequestSaga(action: PayloadAction<{ type: FCAnal
     console.error('error in request ', error);
   }
 }
-function* fetchKpiDataRequestSaga(action: PayloadAction<{ type: FCAnalyzerType }>) {
+
+function* fetchKpiDataRequestSaga() {
   try {
-    const fcAnalyzerType = action.payload.type;
     const dfState: IDFView = yield select(dfViewSliceSelector);
-    const groupConfigurationState: IGroupConfigurationSlice = yield select(
-      groupConfigurationSliceSelector
-    );
-    let requestBody = null;
-
-    if (fcAnalyzerType === FCAnalyzerTypeEnum.AGGREGATED) {
-      requestBody = prepareAggregatedFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    } else {
-      requestBody = prepareIndividualFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    }
-
+    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
+    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
+    const requestBody = prepareFcAnalyzerRequestBody(dfState, selectedGroupKey);
     const response: ApiResponse<KPIResponseI> = yield call(() =>
       forecastAnalyzerApi.fetchKpiDataRequest(requestBody)
     );
-
-    if (!responseValidator(response, true)) {
-      return;
-    }
 
     if (response) {
       yield put(fetchKpiDataRequestSuccess(response.data));
@@ -237,68 +175,41 @@ function* fetchKpiDataRequestSaga(action: PayloadAction<{ type: FCAnalyzerType }
     console.error('error in request ', error);
   }
 }
+
 function* fetchSkuDetailsDataRequestSaga(action: PayloadAction<{ type: FCAnalyzerType }>) {
   try {
     const fcAnalyzerType = action.payload.type;
     const dfState: IDFView = yield select(dfViewSliceSelector);
-    const groupConfigurationState: IGroupConfigurationSlice = yield select(
-      groupConfigurationSliceSelector
+
+    const sharedGroupState: IGroupConfig = yield select(groupConfigSliceSelector);
+    const forecastAnalyzerState: IForecastAnalyzer = yield select(forecastAnalyzerSliceSelector);
+    const selectedGroupKey = sharedGroupState.selectedGroupKey!;
+    const searchKey = dfState.dfViewLocalScope.skuSearchKey;
+    const globalSkuSelected = dfState.dfViewLocalScope.globalSkuSelected;
+    const selectedSkuList = dfState.selectedSkuList;
+
+    const selectedSkuObj = dfState.selectedSku;
+    const selectedAnalyzerType = forecastAnalyzerState.fcAnalyzerLocalScope.selectedAnalyzerType;
+
+    const requestBody = prepareFcAnalyzerCommonRequestBody(
+      searchKey,
+      selectedSkuList,
+      selectedSkuObj,
+      selectedGroupKey,
+      globalSkuSelected,
+      selectedAnalyzerType
     );
-    let requestBody = null;
-
-    if (fcAnalyzerType === FCAnalyzerTypeEnum.AGGREGATED) {
-      requestBody = prepareAggregatedFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    } else {
-      requestBody = prepareIndividualFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    }
-
+    const queryParam = {
+      type: fcAnalyzerType
+    };
     const response: ApiResponse<FCAnalyzerSkuResponseI> = yield call(() =>
-      forecastAnalyzerApi.fetchSkuDetailsDataRequest(requestBody)
+      forecastAnalyzerApi.fetchSkuDetailsDataRequest(requestBody, queryParam)
     );
-
-    if (!responseValidator(response, true)) {
-      return;
-    }
 
     if (response) {
       yield put(fetchSkuDetailsDataRequestSuccess(response.data));
     } else {
       yield put(fetchSkuDetailsDataRequestFailure());
-    }
-  } catch (error) {
-    console.error('error in request ', error);
-  }
-}
-
-function* fetchAccuracyDistributionDataRequestSaga(
-  action: PayloadAction<{ type: FCAnalyzerType }>
-) {
-  try {
-    const fcAnalyzerType = action.payload.type;
-    const dfState: IDFView = yield select(dfViewSliceSelector);
-    const groupConfigurationState: IGroupConfigurationSlice = yield select(
-      groupConfigurationSliceSelector
-    );
-    let requestBody = null;
-
-    if (fcAnalyzerType === FCAnalyzerTypeEnum.AGGREGATED) {
-      requestBody = prepareAggregatedFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    } else {
-      requestBody = prepareIndividualFcAnalyzerRequestBody(dfState, groupConfigurationState);
-    }
-
-    const response: ApiResponse<AccuracyDistributionResponseI> = yield call(() =>
-      forecastAnalyzerApi.fetchAccuracyDistributionDataRequest(requestBody)
-    );
-
-    if (!responseValidator(response, true)) {
-      return;
-    }
-
-    if (response) {
-      yield put(fetchAccuracyDistributionDataRequestSuccess(response.data));
-    } else {
-      yield put(fetchAccuracyDistributionDataRequestFailure());
     }
   } catch (error) {
     console.error('error in request ', error);
@@ -316,19 +227,11 @@ function* forecastAnalyzerSaga() {
     fetchAggregatedGraphDataRequestSaga
   );
   yield takeLatest(
-    'forecastAnalyzer/fetchExclusionCriteriaRequest',
-    fetchExclusionCriteriaRequestSaga
-  );
-  yield takeLatest(
     'forecastAnalyzer/fetchPlannedActualDataRequest',
     fetchPlannedActualDataRequestSaga
   );
   yield takeLatest('forecastAnalyzer/fetchKpiDataRequest', fetchKpiDataRequestSaga);
   yield takeLatest('forecastAnalyzer/fetchSkuDetailsDataRequest', fetchSkuDetailsDataRequestSaga);
-  yield takeLatest(
-    'forecastAnalyzer/fetchAccuracyDistributionDataRequest',
-    fetchAccuracyDistributionDataRequestSaga
-  );
 }
 
 export default forecastAnalyzerSaga;

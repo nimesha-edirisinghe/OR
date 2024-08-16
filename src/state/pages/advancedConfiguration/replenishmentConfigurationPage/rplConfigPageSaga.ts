@@ -86,6 +86,7 @@ function* saveRplPlanningPeriodRequest() {
     );
 
     if (!responseValidator(response, true)) {
+      yield put(saveRplPlanningPeriodFailure());
       return;
     }
 
@@ -130,6 +131,7 @@ function* executePlanningRunNowRequest() {
       );
 
       if (!responseValidator(response, true)) {
+        yield put(executePlanningRunNowFailure());
         return;
       }
 

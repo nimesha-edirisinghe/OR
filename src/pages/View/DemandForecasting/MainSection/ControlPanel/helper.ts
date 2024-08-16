@@ -17,7 +17,7 @@ export const historyOptions: Option[] = [
   },
   {
     label: '3',
-    value: '2 Year Back'
+    value: '2 Years Back'
   }
 ];
 
@@ -25,7 +25,7 @@ export const generateOptions = (list: DFPredictorListI[]): GroupOption[] => {
   return list?.reduce<GroupOption[]>((acc, item) => {
     let groupName = '';
     if (item.processLevel === 'anchor-prod') {
-      groupName = 'Sku';
+      groupName = 'SKU';
     } else if (item.processLevel === 'anchor') {
       groupName = 'Anchor';
     }

@@ -19,17 +19,20 @@ import {
   fcConfigPageSliceSelector,
   getTableDataRequest,
   saveAnchorPredictorsRequest,
-  saveSKUPredictorsRequest
+  saveSKUPredictorsRequest,
+  setFcConfigCurrentPage
 } from 'state/pages/advancedConfiguration/forecastConfigurationPage/pageState';
-import TabHeader from './TabHeader';
 import AnchorTab from './AnchorTab';
 import SkuTab from './SkuTab';
-import { ocean_blue_350, blue_500, ocean_blue_600, neutral_100 } from 'theme/colors';
-import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
+import { blue_500, ocean_blue_600, neutral_100, yellow_500 } from 'theme/colors';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppTab from 'components/newTheme/AppTab/AppTab';
 import { isNumber } from 'lodash';
 import { showWarningToast } from 'state/toast/toastState';
+import AppPopup from 'components/newTheme/AppPopup/AppPopup';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface Props {
   isOpen: boolean;
@@ -59,6 +62,9 @@ const InfluencingFactorDrawer: FC<Props> = ({ isOpen }) => {
   const tabList: TabType[] = ['anchor', 'sku'];
   const selectedTabIndex: number = tabList.indexOf(activeTab);
 
+  const accessType = useAccessType(MenuItems.FORECASTING_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
+
   const onTabChange = (index: number) => {
     setActiveTab(tabList[index]);
   };
@@ -81,14 +87,14 @@ const InfluencingFactorDrawer: FC<Props> = ({ isOpen }) => {
       (obj) =>
         (obj.config_type === 'Percentage change' &&
           isNumber(obj.predictor_value) &&
-          obj.predictor_value < 1) ||
+          obj.predictor_value < -100) ||
         obj.predictor_value > 100
     );
   };
 
   const onSaveHandler = () => {
     if (percentageValidation()) {
-      showWarningToast('the percentage has to be between 1 - 100');
+      showWarningToast('The percentage value should be between -100% to +100%');
       onClosePrompt();
       return;
     }
@@ -96,50 +102,42 @@ const InfluencingFactorDrawer: FC<Props> = ({ isOpen }) => {
     dispatch(saveAnchorPredictorsRequest());
     dispatch(saveSKUPredictorsRequest());
     dispatch(getTableDataRequest({ groupName: '', pageNo: 1 }));
+    dispatch(setFcConfigCurrentPage(1));
     onClosePrompt();
     onDrawerClose();
   };
 
   const saveConfirmationPrompt = useCallback(() => {
     return (
-      <AppUserInputPrompt
+      <AppPopup
         isOpen={isOpenPrompt}
         onClose={onClosePrompt}
         leftBtnName="NO"
         rightBtnName="YES"
         title="Save Changes"
-        onConfirmHandler={onSaveHandler}
-        onCloseHandler={onClosePrompt}
-      >
-        <AppText fontSize="12px" fontWeight={400} mt={2} width="68%">
-          The changes made in Influencing Factors - Set Future Values will be applied to all the
-          Anchors in the group.
-        </AppText>
-        <AppText fontSize="12px" fontWeight={400}>
-          Are you sure you want to continue?
-        </AppText>
-      </AppUserInputPrompt>
+        infoMessage={`The changes made in Influencing Factors - Set Future Values will be applied to all the Anchors in the group.`}
+        onConfirmHandler={onClosePrompt}
+        onCloseHandler={onSaveHandler}
+        confirmationMessage="Are you sure you want to continue?"
+        icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
+      />
     );
   }, [isOpenPrompt]);
 
   const cancelConfirmationPrompt = useCallback(() => {
     return (
-      <AppUserInputPrompt
+      <AppPopup
         isOpen={isOpenCancelPrompt}
         onClose={onCloseCancelPrompt}
         leftBtnName="NO"
         rightBtnName="YES"
         title="Cancel Changes"
-        onConfirmHandler={onCancelHandler}
-        onCloseHandler={onCloseCancelPrompt}
-      >
-        <AppText fontSize="12px" fontWeight={400} mt={2} width="68%">
-          The changes you have made in Influencing Factors - Set Future Values will be discarded.
-        </AppText>
-        <AppText fontSize="12px" fontWeight={400}>
-          Are you sure you want to continue?
-        </AppText>
-      </AppUserInputPrompt>
+        infoMessage={`The changes you have made in Influencing Factors - Set Future Values will be discarded.`}
+        onConfirmHandler={onCloseCancelPrompt}
+        onCloseHandler={onCancelHandler}
+        confirmationMessage="Are you sure you want to continue?"
+        icon={<AppIcon name="warningPrompt" fill={yellow_500} width="54px" height="54px" />}
+      />
     );
   }, [isOpenCancelPrompt]);
 
@@ -187,10 +185,7 @@ const InfluencingFactorDrawer: FC<Props> = ({ isOpen }) => {
           </HStack>
 
           <DrawerBody p={0} overflow="hidden">
-            <Box
-             
-              mt="20px"
-            >
+            <Box mt="20px">
               <AppTab
                 tabs={[
                   { label: 'Anchor', content: <AnchorTab /> },
@@ -216,6 +211,7 @@ const InfluencingFactorDrawer: FC<Props> = ({ isOpen }) => {
                   fontSize="13px"
                   fontWeight="400"
                   color={blue_500}
+                  isDisabled={accessNotAllowed}
                 >
                   Cancel
                 </AppButton>
@@ -229,6 +225,7 @@ const InfluencingFactorDrawer: FC<Props> = ({ isOpen }) => {
                   fontSize="13px"
                   fontWeight="400"
                   color={neutral_100}
+                  isDisabled={accessNotAllowed}
                 >
                   Save
                 </AppButton>

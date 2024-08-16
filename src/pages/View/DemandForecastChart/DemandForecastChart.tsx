@@ -66,14 +66,14 @@ const DemandForecastChart: FC<DemandForecastChartProps> = ({
   const aggregateOption = dfViewState.aggregateOption;
   const predictorList = dfViewState.predictorList;
   const [compareGraphName, setCompareGraphName] = useState<string | null>(null);
-  const interval = reportData.length > 12 ? Math.floor(reportData.length / 12) : 0;
+  const interval = reportData.length > 9 ? Math.floor(reportData.length / 9) : 0;
 
   const chartProps = [
     {
       actualKey: 'skuActual',
       projectedKey: 'skuProjected',
       mergePoint: 'isSKUMergePoint',
-      displayName: 'SKU Forecast'
+      displayName: 'Sales'
     },
     {
       actualKey: 'compareActual',
@@ -98,12 +98,17 @@ const DemandForecastChart: FC<DemandForecastChartProps> = ({
           </AppText>
 
           {chartProps.map((chartProp: any, key: number) => {
+            const shouldDisplayActualProjected = !['1 Year Back', '2 Years Back'].includes(
+              chartProp.displayName
+            );
             return (
               <Fragment key={key}>
                 {pointPayload[chartProp.actualKey] !== null && (
                   <HStack justify="space-between">
                     <AppText color={ocean_blue_100} size="caption">
-                      {chartProp.displayName} Actual
+                      {shouldDisplayActualProjected
+                        ? `${chartProp.displayName} Actual`
+                        : chartProp.displayName}
                     </AppText>
                     <AppText color={ocean_blue_100} size="caption">
                       {pointPayload[chartProp.actualKey]}
@@ -114,7 +119,9 @@ const DemandForecastChart: FC<DemandForecastChartProps> = ({
                   !pointPayload[chartProp.mergePoint] && (
                     <HStack justify="space-between">
                       <AppText color={ocean_blue_100} size="caption">
-                        {chartProp.displayName} Projected
+                        {shouldDisplayActualProjected
+                          ? `${chartProp.displayName} Projected`
+                          : chartProp.displayName}
                       </AppText>
                       <AppText color={ocean_blue_100} size="caption">
                         {pointPayload[chartProp.projectedKey]}
@@ -153,7 +160,7 @@ const DemandForecastChart: FC<DemandForecastChartProps> = ({
                 bg="linear-gradient(180deg, #F8705E 0%, #FFA914 100%)"
               ></Box>
               <AppText color={yellow_400} size="body2">
-                SKU Forecast
+                Sales
               </AppText>
             </>
           )}
@@ -255,7 +262,6 @@ const DemandForecastChart: FC<DemandForecastChartProps> = ({
               <stop offset="95%" stopColor="#47C6FF" stopOpacity={0} />
             </linearGradient>
           </defs>
-
           <XAxis
             dataKey="date"
             height={80}

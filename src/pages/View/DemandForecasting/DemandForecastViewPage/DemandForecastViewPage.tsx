@@ -46,10 +46,9 @@ const DemandForecastViewPage: FC<Props> = () => {
   const skuListData = dfViewState.skuListData;
 
   const shouldReloadData = dfViewState.dfViewLocalScope.shouldReloadData;
-
   const [skuMaximized, setSkuMaximized] = useState<boolean>(false);
-  const [initialOrgKey, setInitialOrgKey] = useState<number>(selectedOrgKey);
   const [newOrgKey, setNewOrgKey] = useState<number>();
+  const [initialOrgKey, setInitialOrgKey] = useState<number>(selectedOrgKey);
 
   useEffect(() => {
     setNewOrgKey(selectedOrgKey);
@@ -74,10 +73,9 @@ const DemandForecastViewPage: FC<Props> = () => {
 
   useEffect(() => {
     if (shouldReloadData) {
-      if (!skuMaximized) {
-        dispatch(getDemandForecastSkuListRequest({ searchKey }));
-      } else {
+      if (skuMaximized) {
         dispatch(getDemandForecastDataRequest({ searchKey }));
+      } else {
       }
     }
   }, [skuMaximized, shouldReloadData]);
@@ -93,7 +91,7 @@ const DemandForecastViewPage: FC<Props> = () => {
             labelTypes: ['location', 'product', 'anchor', 'predictor', 'store', 'sku']
           })
         );
-        dispatch(skuSearchAction(''));
+        if (shouldReloadData) dispatch(skuSearchAction(''));
       }
       return () => {
         abortController.abort();
@@ -123,6 +121,7 @@ const DemandForecastViewPage: FC<Props> = () => {
       <FilterDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenFilterDrawer}
         filterHierarchy={viewForecastFilterHierarchy}
+        showWarning
       />
       <FilterItemsSelectionDrawer
         isOpen={!!groupConfigurationState.groupFilter?.filterLocalScope.isOpenItemSelectionDrawer}

@@ -52,8 +52,8 @@ const semanticTokens = {
         },
         _disable: {
           bg: {
-            _light: neutral_600,
-            _dark: neutral_600
+            _light: ocean_blue_600,
+            _dark: ocean_blue_600
           },
           color: {}
         }
@@ -83,8 +83,8 @@ const semanticTokens = {
         },
         _disable: {
           bg: {
-            _light: neutral_600,
-            _dark: neutral_600
+            _light: ocean_blue_600,
+            _dark: ocean_blue_600
           }
         }
       },
@@ -102,8 +102,8 @@ const semanticTokens = {
           _dark: ocean_blue_400
         },
         _disable: {
-          _light: neutral_600,
-          _dark: neutral_600
+          _light: ocean_blue_600,
+          _dark: ocean_blue_600
         }
       },
       danger: {
@@ -133,8 +133,8 @@ const semanticTokens = {
         },
         _disable: {
           bg: {
-            _light: neutral_600,
-            _dark: neutral_600
+            _light: ocean_blue_600,
+            _dark: ocean_blue_600
           },
           color: {}
         }

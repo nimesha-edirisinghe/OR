@@ -18,6 +18,7 @@ import {
   getReplenishmentConfigDataRequest,
   rplConfigPageSliceSelector,
   saveRplPlanningPeriodRequest,
+  setRplConfigCurrentPage,
   setSelectedPlanningPeriod
 } from 'state/pages/advancedConfiguration/replenishmentConfigurationPage/rplConfigPageState';
 import ConfigTypeSelection, { ConfigType, ResponseTimeGranularity } from './ConfigTypeSelection';
@@ -26,6 +27,9 @@ import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import { AppIcon } from 'components/AppIcon/AppIcon';
 import AppButton from 'components/newTheme/AppButton/AppButton';
 import AppPopup from 'components/newTheme/AppPopup/AppPopup';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 interface PlanningConfigDrawerProps {
   isOpen: boolean;
 }
@@ -54,6 +58,7 @@ const PlanningConfigDrawer: FC<PlanningConfigDrawerProps> = ({ isOpen }) => {
   const onSaveHandler = () => {
     dispatch(saveRplPlanningPeriodRequest());
     dispatch(getReplenishmentConfigDataRequest({ pageNo: 1 }));
+    dispatch(setRplConfigCurrentPage(1));
     onPromptClose();
     onDrawerClose();
   };
@@ -66,6 +71,9 @@ const PlanningConfigDrawer: FC<PlanningConfigDrawerProps> = ({ isOpen }) => {
     onDrawerClose();
     onCancelPromptClose();
   };
+
+  const accessType = useAccessType(MenuItems.REPLENISHMENT_SETUP_AND_SCHEDULING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const planningConfirmationPrompt = useCallback(() => {
     return (
@@ -181,6 +189,7 @@ const PlanningConfigDrawer: FC<PlanningConfigDrawerProps> = ({ isOpen }) => {
                       selectedConfigObj?.responseTimeGranularity as ResponseTimeGranularity
                     }
                     onConfigTypeChange={onConfigTypeChange}
+                    isDisabled={accessNotAllowed}
                   />
                 </HStack>
               </VStack>
@@ -195,10 +204,17 @@ const PlanningConfigDrawer: FC<PlanningConfigDrawerProps> = ({ isOpen }) => {
                   onClick={onCancelPromptToggle}
                   size="medium"
                   px="25px"
+                  isDisabled={accessNotAllowed}
                 >
                   Cancel
                 </AppButton>
-                <AppButton variant="primary" size="medium" onClick={onPromptToggle} px="25px">
+                <AppButton
+                  variant="primary"
+                  size="medium"
+                  onClick={onPromptToggle}
+                  px="25px"
+                  isDisabled={accessNotAllowed}
+                >
                   Save
                 </AppButton>
               </HStack>

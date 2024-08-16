@@ -27,7 +27,7 @@ import { SUCCESS_MESSAGES } from 'constants/messages';
 import { resetActivityLogFilter } from './helper';
 
 import AppButton from 'components/newTheme/AppButton/AppButton';
-import { blue_500, ocean_blue_600, ocean_blue_350 } from 'theme/colors';
+import { blue_500, ocean_blue_600, ocean_blue_350, neutral_100 } from 'theme/colors';
 import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
 import AppIconButton from 'components/newTheme/AppIconButton/AppIconButton';
 import { AppIcon } from 'components/AppIcon/AppIcon';
@@ -108,31 +108,32 @@ const FilterDrawer: FC<Props> = ({ isOpen }) => {
           userSelect="none"
         >
           <VStack w="full" spacing="20px">
-              <HStack justify="space-between" w="full">
-                <HStack spacing="12px">
-                  <AppIconButton
-                    aria-label="back"
-                    variant="iconPrimary"
-                    size="iconLarge"
-                    justifyContent="center"
-                    alignItems="center"
-                    icon={<AppIcon name="singleLeftArrow" w="24px" h="24px" fill={blue_500} />}
-                    onClick={onDrawerClose}
-                  />
-                  <AppText size="h4Semibold">Filters</AppText>
-                </HStack>
+            <HStack justify="space-between" w="full">
+              <HStack spacing="12px">
                 <AppIconButton
-                  aria-label="close"
+                  aria-label="back"
                   variant="iconPrimary"
                   size="iconLarge"
                   justifyContent="center"
                   alignItems="center"
-                  icon={<AppIcon name="cross" stroke={blue_500} w="24px" h="24px" />}
+                  icon={<AppIcon name="singleLeftArrow" w="24px" h="24px" fill={blue_500} />}
                   onClick={onDrawerClose}
                 />
+                <AppText fontSize="13px" fontWeight={600} color={neutral_100}>
+                  Filters
+                </AppText>
               </HStack>
-            </VStack>
-          <Divider color="#595959" h="1px" mt="8px" />
+              <AppIconButton
+                aria-label="close"
+                variant="iconPrimary"
+                size="iconLarge"
+                justifyContent="center"
+                alignItems="center"
+                icon={<AppIcon name="cross" stroke={blue_500} w="24px" h="24px" />}
+                onClick={onDrawerClose}
+              />
+            </HStack>
+          </VStack>
           <DrawerBody p={0} overflow="hidden">
             <Box
               maxH="71vh"
@@ -155,33 +156,28 @@ const FilterDrawer: FC<Props> = ({ isOpen }) => {
             </Box>
           </DrawerBody>
 
-          <DrawerFooter p={0}>
-            <Flex direction="column" w="full" pb="15px">
-              <Divider color="#595959" h="1px" mt="8px" mb="20px" />
-              <HStack w="full" justify="end">
-                <AppButton
-                  variant="secondary"
-                  size="medium"
-                  onClick={onResetFilter}
-                >
-                  Clear
-                </AppButton>
-                <AppButton
-                  variant="secondary"
-                  size="medium"
-                  onClick={onToggleCancelPrompt}
-                >
-                  Cancel
-                </AppButton>
-                <AppButton
-                  variant="primary"
-                  onClick={onSaveHandler}
-                  size="medium"
-                >
-                  Select
-                </AppButton>
-              </HStack>
-            </Flex>
+          <DrawerFooter w="full" p="0px">
+            <HStack justify="end" spacing="8px">
+              <AppButton
+                variant="secondary"
+                w="105px"
+                h="36px"
+                p="10px 14px 10px 14px"
+                onClick={onResetFilter}
+              >
+                Clear
+              </AppButton>
+              <AppButton
+                variant="primary"
+                w="105px"
+                h="36px"
+                p="10px 14px 10px 14px"
+                onClick={onSaveHandler}
+                size="medium"
+              >
+                Apply
+              </AppButton>
+            </HStack>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

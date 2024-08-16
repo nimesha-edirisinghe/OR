@@ -1,4 +1,4 @@
-import { FC, useCallback } from 'react';
+import { FC, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -27,7 +27,8 @@ import {
   getAlertConfigsRequest,
   getAlertsRequest,
   IAlert,
-  toggleReplenishmentPanel
+  toggleReplenishmentPanel,
+  updateSuccessStatus
 } from 'state/pages/monitoringAndResolution/Alert/alertState';
 import ControlPanel from './ReplenishmentControlPanel/ControlPanel';
 import ReplenishmentInfoTable from './ReplenishmentPanel/ReplenishmentInfoTable';
@@ -37,16 +38,19 @@ import AppButton from 'components/AppButton/AppButton';
 import AppUserInputPrompt from 'components/AppUserInputPrompt/AppUserInputPrompt';
 import { AlertReplenishmentI, PlanDataI } from 'types/requests/alertConfigRequest';
 import { AlertReplenishmentActionTypeEnum } from 'utils/enum';
+import { scrollbarYStyles } from 'theme/styles';
 
 interface Props {}
 
 const ViewAndEditReplenishment: FC<Props> = ({}) => {
-  const alertState: IAlert = useSelector(alertSliceSelector);
   const dispatch = useDispatch();
+  const alertState: IAlert = useSelector(alertSliceSelector);
   const isReplenishmentModalOpen = alertState.isReplenishmentModalOpen;
   const alertType = alertState.AlertType;
   const orderQtyDetailsList = alertState.rplPlanDetails?.orderQtyDetails;
   const stockMovementList = alertState.rplPlanDetails?.stockMovement?.list!;
+  const isSuccessfullyEdited = alertState.isSuccessfullyEdited;
+  const isEditable: boolean = alertState.isReplenishmentEditable;
 
   const {
     isOpen: isOpenSavePrompt,
@@ -67,7 +71,7 @@ const ViewAndEditReplenishment: FC<Props> = ({}) => {
         case AlertReplenishmentActionTypeEnum.CREATE:
           planData.push({
             amendedOrderDate: element.row[0],
-            amendedDeliveryDate: element.row[3],
+            amendedDeliveryDate: element.row[4],
             amendedQuantity: element.row[1],
             action: AlertReplenishmentActionTypeEnum.CREATE
           });
@@ -80,10 +84,10 @@ const ViewAndEditReplenishment: FC<Props> = ({}) => {
 
           planData.push({
             amendedOrderDate: element.row[0],
-            amendedDeliveryDate: element.row[3],
+            amendedDeliveryDate: element.row[4],
             amendedQuantity: element.row[1],
             orderDate: matchedDetails.row[0],
-            deliveryDate: matchedDetails.row[3],
+            deliveryDate: matchedDetails.row[4],
             quantity: matchedDetails.row[1],
             action: AlertReplenishmentActionTypeEnum.EDIT
           });
@@ -92,7 +96,7 @@ const ViewAndEditReplenishment: FC<Props> = ({}) => {
           if (!element.fresh) {
             planData.push({
               orderDate: element.row[0],
-              deliveryDate: element.row[3],
+              deliveryDate: element.row[4],
               quantity: element.row[1],
               action: AlertReplenishmentActionTypeEnum.DELETE
             });
@@ -102,7 +106,7 @@ const ViewAndEditReplenishment: FC<Props> = ({}) => {
           if (!element.fresh) {
             planData.push({
               orderDate: element.row[0],
-              deliveryDate: element.row[3],
+              deliveryDate: element.row[4],
               quantity: element.row[1],
               action: AlertReplenishmentActionTypeEnum.UNCHANGED
             });
@@ -122,10 +126,18 @@ const ViewAndEditReplenishment: FC<Props> = ({}) => {
       planData
     };
     dispatch(alertReplenishmentRequest(payload));
-    dispatch(getAlertConfigsRequest({ initRequest: true }));
-    dispatch(getAlertsRequest({ alertOnly: 1 }));
-    onCloseSavePrompt();
   };
+
+  useEffect(() => {
+    if (isSuccessfullyEdited) {
+      setTimeout(() => {
+        onCloseSavePrompt();
+        dispatch(getAlertConfigsRequest({}));
+        dispatch(getAlertsRequest({ alertOnly: 1 }));
+      }, 1);
+    }
+    dispatch(updateSuccessStatus(false));
+  }, [isSuccessfullyEdited]);
 
   const saveConfirmationPrompt = useCallback(() => {
     return (
@@ -171,6 +183,7 @@ const ViewAndEditReplenishment: FC<Props> = ({}) => {
     dispatch(toggleReplenishmentPanel());
     onToggleCancelPrompt();
   };
+
   return (
     <Modal onClose={() => {}} size={'full'} isOpen={isReplenishmentModalOpen}>
       {cancelConfirmationPrompt()}
@@ -187,18 +200,22 @@ const ViewAndEditReplenishment: FC<Props> = ({}) => {
               spacing={'12px'}
               borderBottomRadius="8px"
               borderTopRadius="8px"
+              pb={'90px'}
             >
               {alertState.selectedSku && <ControlPanel />}
               {alertState.selectedSku && (
-                <Skeleton isLoaded={alertState.loading.planDetails} w="full">
-                  <Box h={'calc(100vh - 110px)'} minW="full">
+                <Skeleton isLoaded={alertState.loading.planDetails} w="full" h={'full'}>
+                  <Box h="full" w="full">
                     <VStack
                       w="full"
-                      spacing="10px"
+                      gap="10px"
                       bg={ocean_blue_600}
                       p="16px"
                       pt={'0px'}
                       h={'full'}
+                      overflowX={'hidden'}
+                      overflowY={'scroll'}
+                      __css={scrollbarYStyles}
                     >
                       <HStack w="full" h={'26px'} justify={'start'}>
                         {alertType.alertTypeDisplayName?.map((item) => (
@@ -222,64 +239,68 @@ const ViewAndEditReplenishment: FC<Props> = ({}) => {
                           </HStack>
                         ))}
                       </HStack>
-
-                      <VStack w={'full'} h={'full'}>
-                        <Box h="55px" w="full">
-                          <ParameterPanel />
-                        </Box>
-                        <VStack w={'full'} h={'full'} spacing={'11px'}>
-                          {(orderQtyDetailsList?.list?.length || 0) > 0 ? (
-                            <ReplenishmentOrderTable />
-                          ) : (
-                            <Center w={'full'} h={'110px'} bg={ocean_blue_500} borderRadius="8px">
-                              <AppText size="body2" color={neutral_500} fontStyle="italic">
-                                No proposed orders for the current planning period.
-                              </AppText>
-                            </Center>
-                          )}
-                          {stockMovementList?.length > 0 ? (
-                            <ReplenishmentInfoTable />
-                          ) : (
-                            <Center w={'full'} h={'300px'} bg={ocean_blue_500} borderRadius="8px">
-                              <AppText size="body2" color={neutral_500} fontStyle="italic">
-                                No proposed orders for the current planning period.
-                              </AppText>
-                            </Center>
-                          )}
-                          {(orderQtyDetailsList?.list?.length || 0) > 0 &&
-                            alertState.isReplenishmentEditable && (
-                              <HStack w="full" justify="end" spacing="8px">
-                                <AppButton
-                                  variant="secondary"
-                                  size="medium"
-                                  w="105px"
-                                  h="36px"
-                                  p="10px 14px 10px 14px"
-                                  color={blue_500}
-                                  fontSize="13px"
-                                  fontWeight="400"
-                                  onClick={onToggleCancelPrompt}
-                                >
-                                  Cancel
-                                </AppButton>
-                                <AppButton
-                                  variant="primary"
-                                  size="medium"
-                                  w="123px"
-                                  h="36px"
-                                  p="10px 14px 10px 14px"
-                                  color={neutral_100}
-                                  fontSize="13px"
-                                  fontWeight="400"
-                                  isDisabled={!alertState.isReplenishmentValidated}
-                                  onClick={onToggleSavePrompt}
-                                >
-                                  Save Changes
-                                </AppButton>
-                              </HStack>
-                            )}
-                        </VStack>
-                      </VStack>
+                      <Box h="55px" w="full">
+                        <ParameterPanel />
+                      </Box>
+                      <Box w="full" h="calc(100vh - 300px)">
+                        {(orderQtyDetailsList?.list?.length || 0) > 0 ||
+                        (stockMovementList?.length > 0 && isEditable) ? (
+                          <ReplenishmentOrderTable />
+                        ) : (
+                          <Center
+                            w={'full'}
+                            h="calc(100vh - 500px)"
+                            bg={ocean_blue_500}
+                            borderRadius="8px"
+                          >
+                            <AppText size="body2" color={neutral_500} fontStyle="italic">
+                              No proposed orders for the current planning period.
+                            </AppText>
+                          </Center>
+                        )}
+                      </Box>
+                      <Box h="full" w="full" borderRadius="8px">
+                        {stockMovementList?.length > 0 ? (
+                          <ReplenishmentInfoTable />
+                        ) : (
+                          <Center w={'full'} h={'300px'} bg={ocean_blue_500} borderRadius="8px">
+                            <AppText size="body2" color={neutral_500} fontStyle="italic">
+                              No proposed orders for the current planning period.
+                            </AppText>
+                          </Center>
+                        )}
+                        {stockMovementList?.length > 0 && alertState.isReplenishmentEditable && (
+                          <HStack w="full" justify="end" spacing="8px">
+                            <AppButton
+                              variant="secondary"
+                              size="medium"
+                              w="105px"
+                              h="36px"
+                              p="10px 14px 10px 14px"
+                              color={blue_500}
+                              fontSize="13px"
+                              fontWeight="400"
+                              onClick={onToggleCancelPrompt}
+                            >
+                              Cancel
+                            </AppButton>
+                            <AppButton
+                              variant="primary"
+                              size="medium"
+                              w="123px"
+                              h="36px"
+                              p="10px 14px 10px 14px"
+                              color={neutral_100}
+                              fontSize="13px"
+                              fontWeight="400"
+                              isDisabled={!alertState.isReplenishmentValidated}
+                              onClick={onToggleSavePrompt}
+                            >
+                              Save Changes
+                            </AppButton>
+                          </HStack>
+                        )}
+                      </Box>
                     </VStack>
                   </Box>
                 </Skeleton>

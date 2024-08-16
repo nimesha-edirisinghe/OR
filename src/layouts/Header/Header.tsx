@@ -20,6 +20,7 @@ interface Props {
 const Header: FC<Props> = ({ isModuleHeader = false }) => {
   const userState: IUser = useSelector(userSliceSelector);
   const menuState = useSelector(layoutSliceSelector);
+  const refreshToggle = menuState.refreshToggle;
 
   const [pageTitle, setPageTitle] = useState('');
   const location = useLocation();
@@ -27,7 +28,7 @@ const Header: FC<Props> = ({ isModuleHeader = false }) => {
   useEffect(() => {
     const _pageTitle = getPageTitle(menuState.leftMenu, location.pathname);
     setPageTitle(_pageTitle);
-  }, [location]);
+  }, [location, refreshToggle]);
 
   return (
     <Flex

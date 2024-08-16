@@ -30,6 +30,7 @@ import { GroupDefResponseI } from 'types/responses/groupConfigResponse';
 export interface IGroupConfigurationSlice {
   isLoading: boolean;
   isSkuIsLoading: boolean;
+  isGroupListLoading: boolean;
   storeGroup: StoreGroupListResponse | null;
   warehouseGroupe: StoreGroupListResponse | null;
   groupLabels: GroupLabelI[] | null;
@@ -45,6 +46,10 @@ export interface IGroupConfigurationSlice {
     filterSelectAllCheckboxDisabled: boolean;
     filterItemListData: KeyValueI[] | [];
   };
+  GroupTypes: GroupTypes | null;
+  activeStoreTab: number;
+  pageLoaded: number;
+  isMorePageRequested: boolean;
 }
 
 export const GroupConfigurationSlice = createSlice({
@@ -52,6 +57,7 @@ export const GroupConfigurationSlice = createSlice({
   initialState: {
     isLoading: false,
     isSkuIsLoading: false,
+    isGroupListLoading: false,
     storeGroup: null,
     warehouseGroupe: null,
     warehouseGroup: null,
@@ -70,7 +76,8 @@ export const GroupConfigurationSlice = createSlice({
         viewFilterActiveStep: 0,
         rightPanelRetainDataList: [],
         beforeEditFilterOptionsLevel1: [],
-        beforeEditFilterOptionsLevel2: []
+        beforeEditFilterOptionsLevel2: [],
+        totalSelectedSkuCount: 0
       },
       filterSelectAllCheckboxDisabled: false,
       filterItemListData: []
@@ -86,22 +93,35 @@ export const GroupConfigurationSlice = createSlice({
       storeGroupViewDrawer: false,
       isWarehouseGroup: false,
       currantPageNumber: 1,
-      isFilterApplied: false
-    }
+      isFilterApplied: false,
+      isEditEnabled: false
+    },
+    GroupTypes: null,
+    activeStoreTab: 0,
+    pageLoaded: 1,
+    isMorePageRequested: false
   } as IGroupConfigurationSlice,
   reducers: {
     getGroupListRequest: (
       state,
       action: PayloadAction<{ pageNumber?: number; groupType: GroupTypes; searchKey?: string }>
-    ) => {},
+    ) => {
+      state.isGroupListLoading = true;
+    },
     getStoreGroupListSuccess: (state, action: PayloadAction<StoreGroupListResponse>) => {
+      const isMorePageRequested = state.isMorePageRequested;
+      const latestGroupList = action.payload.list.map((group) => ({
+        ...group,
+        currentEnabledStatus: group.previousEnabledStatus
+      }));
+      const previousGroupList = isMorePageRequested ? state.storeGroup?.list || [] : [];
+
       state.storeGroup = {
         ...action.payload,
-        list: action.payload.list.map((group) => ({
-          ...group,
-          currentEnabledStatus: group.previousEnabledStatus
-        }))
+        list: [...previousGroupList, ...latestGroupList]
       };
+      if (isMorePageRequested) state.pageLoaded = state.pageLoaded + 1;
+      state.isGroupListLoading = false;
     },
     getWarehouseGroupListSuccess: (state, action: PayloadAction<StoreGroupListResponse>) => {
       state.warehouseGroupe = {
@@ -131,6 +151,7 @@ export const GroupConfigurationSlice = createSlice({
     },
     deleteGroupRequest: (state, action: PayloadAction<{ groupKey: number; groupType: string }>) => {
       state.isLoading = true;
+      state.isGroupListLoading = true;
     },
     deleteGroupSuccess: (state) => {
       state.isLoading = false;
@@ -146,7 +167,9 @@ export const GroupConfigurationSlice = createSlice({
         groupName: string;
         groupType: GroupTypes;
       }>
-    ) => {},
+    ) => {
+      state.isGroupListLoading = true;
+    },
     cancelEditMode: (
       state,
       action: PayloadAction<{
@@ -193,8 +216,7 @@ export const GroupConfigurationSlice = createSlice({
         }
       }
     },
-    openGroupConfigDrawer: (state) => {
-      state.groupConfigurationLocalScope.storeGroupCreationDrawer = true;
+    resetGroupDetail: (state) => {
       state.groupDetails = {
         frequency: null,
         horizon: 0,
@@ -247,8 +269,12 @@ export const GroupConfigurationSlice = createSlice({
           break;
       }
     },
-    setSelectedStore: (state, action: PayloadAction<StoreGroupI>) => {
-      state.selectedGroup = action.payload;
+    setSelectedStore: (
+      state,
+      action: { payload: { storeGroup: StoreGroupI; groupType: GroupTypes } }
+    ) => {
+      state.selectedGroup = action.payload.storeGroup;
+      state.GroupTypes = action.payload.groupType;
     },
     getFilterDataRequest: (
       state,
@@ -261,6 +287,8 @@ export const GroupConfigurationSlice = createSlice({
           searchKey?: string;
           whFlag?: 0 | 1 | 2;
           initialRequest?: boolean;
+          isAlertPage?: boolean;
+          isModifyAlertPage?: boolean;
         };
       }
     ) => {
@@ -296,6 +324,7 @@ export const GroupConfigurationSlice = createSlice({
           mutableTotalCount
         );
       }
+
       state.groupFilter.filterLocalScope.viewOutOfCount = mutableTotalCount;
       state.isLoading = false;
       state.isSkuIsLoading = false;
@@ -304,7 +333,10 @@ export const GroupConfigurationSlice = createSlice({
       state.isLoading = false;
       state.isSkuIsLoading = false;
     },
-    getFilterCountRequest: (state, action: PayloadAction<{ whFlag: 0 | 1 | 2 }>) => {},
+    getFilterCountRequest: (
+      state,
+      action: PayloadAction<{ whFlag: 0 | 1 | 2; isAlertPage?: boolean }>
+    ) => {},
     getFilterCountSuccess: (state, action: { payload: FilterCountApiResponseI[] }) => {
       state.groupFilter.filterTotalItemsCount = action.payload;
     },
@@ -348,12 +380,17 @@ export const GroupConfigurationSlice = createSlice({
       }
     },
     groupDefinitionRequestFailure: (state) => {},
-    alertDefinitionFilterDataRequestSuccess: (state, action: PayloadAction<KeyValueI[]>) => {
+    alertDefinitionFilterDataRequestSuccess: (
+      state,
+      action: PayloadAction<FilterDataApiResponseI>
+    ) => {
+      const { list, totalCount } = action.payload;
       state.groupFilter.filterLocalScope.rightPanelRetainDataList = [];
+      state.groupFilter.filterLocalScope.totalSelectedSkuCount = totalCount;
       const skuLocationRItem = {
         code: 1,
         isSelectAll: false,
-        selectedItems: action.payload.map((obj) => {
+        selectedItems: list.map((obj) => {
           obj.value = `${obj.key} - ${obj.value}`;
           return obj;
         }),
@@ -376,6 +413,36 @@ export const GroupConfigurationSlice = createSlice({
     },
     updateItemSelectionDrawerOpenFrom: (state, action: PayloadAction<FilterLoadType>) => {
       state.groupFilter.filterLocalScope.itemSelectionDrawerOpenFrom = action.payload;
+    },
+    toggleEditDrawer: (state) => {
+      state.groupConfigurationLocalScope.isEditEnabled =
+        !state.groupConfigurationLocalScope.isEditEnabled;
+    },
+    setActiveStoreTab: (state, action: PayloadAction<number>) => {
+      state.activeStoreTab = action.payload;
+    },
+    setPageLoaded: (state, action: PayloadAction<number>) => {
+      state.pageLoaded = action.payload;
+    },
+    setMorePageRequested: (state, action: PayloadAction<boolean>) => {
+      state.isMorePageRequested = action.payload;
+    },
+    resetStoreGroup: (state) => {
+      state.storeGroup = null;
+      state.pageLoaded = 1;
+      state.isMorePageRequested = false;
+    },
+    setRightPanelRetainPreviousDataList: (state) => {
+      state.groupFilter.filterLocalScope.beforeEditFilterOptionsLevel1 =
+        state.groupFilter.filterLocalScope.rightPanelRetainDataList;
+    },
+    updateRightRetainDataListAndCount: (
+      state,
+      action: { payload: { list: RightFilterItemContentI[]; count: number } }
+    ) => {
+      const { list, count } = action.payload;
+      state.groupFilter.filterLocalScope.rightPanelRetainDataList = list;
+      state.groupFilter.filterLocalScope.totalSelectedSkuCount = count;
     }
   }
 });
@@ -395,7 +462,7 @@ export const {
   getLabelsFailure,
   getLabelsSuccess,
   selectPredictor,
-  openGroupConfigDrawer,
+  resetGroupDetail,
   closeGroupConfigDrawer,
   updateGroupFilter,
   createGroupRequest,
@@ -422,7 +489,14 @@ export const {
   updateRightPanelRetainDataList,
   toggleFilterAppliedIndicatorIndicator,
   updateFilterApply,
-  updateItemSelectionDrawerOpenFrom
+  updateItemSelectionDrawerOpenFrom,
+  toggleEditDrawer,
+  setActiveStoreTab,
+  setPageLoaded,
+  resetStoreGroup,
+  setMorePageRequested,
+  setRightPanelRetainPreviousDataList,
+  updateRightRetainDataListAndCount
 } = GroupConfigurationSlice.actions;
 
 export default GroupConfigurationSlice.reducer;

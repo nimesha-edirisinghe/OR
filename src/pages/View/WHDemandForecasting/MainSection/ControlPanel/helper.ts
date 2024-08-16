@@ -10,17 +10,6 @@ interface GroupOption {
   options: { label: string; value: string }[];
 }
 
-export const historyOptions: Option[] = [
-  {
-    label: '2',
-    value: '1 Year Back'
-  },
-  {
-    label: '3',
-    value: '2 Year Back'
-  }
-];
-
 export const generateOptions = (list: DFPredictorListI[]): GroupOption[] => {
   return list?.reduce<GroupOption[]>((acc, item) => {
     let groupName = '';

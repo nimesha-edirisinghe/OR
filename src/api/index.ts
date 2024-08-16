@@ -18,6 +18,8 @@ import * as orderParameterApi from './endpoints/replenishmentRecommendation/orde
 import * as commonApi from './endpoints/common/common';
 import * as dashboardApi from './endpoints/dashboard/dashboard';
 import * as forecastAnalyzerApi from './endpoints/view/forecastAnalyzer';
+import * as homeApi from './endpoints/home/home';
+import * as systemConfigurationApi from './endpoints/systemConfigurations/systemConfigurations';
 
 export {
   userApi,
@@ -39,5 +41,7 @@ export {
   promotionSummaryApi,
   commonApi,
   dashboardApi,
-  forecastAnalyzerApi
+  forecastAnalyzerApi,
+  homeApi,
+  systemConfigurationApi
 };

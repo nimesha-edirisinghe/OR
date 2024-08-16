@@ -84,7 +84,9 @@ import {
   ClockIcon,
   CircleIcon,
   MinusIcon,
-  TrashIcon
+  TrashIcon,
+  Ellipsis,
+  BetaTag
 } from './svgIcons';
 
 interface AppIconProps extends IconProps {
@@ -263,6 +265,10 @@ export const AppIcon = ({ name, ...rest }: AppIconProps) => {
       return <MinusIcon {...rest} />;
     case 'trash':
       return <TrashIcon {...rest} />;
+    case 'ellipsis':
+      return <Ellipsis {...rest} />;
+    case 'betaTag':
+      return <BetaTag {...rest} />;
     default:
       return <></>;
   }

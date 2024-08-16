@@ -1,11 +1,15 @@
-import { Box, HStack, VStack } from '@chakra-ui/react';
-import { AppIcon } from 'components/AppIcon/AppIcon';
+import { HStack, VStack } from '@chakra-ui/react';
 import { iconName } from 'components/AppIcon/svgIcons';
 import AppText from 'components/newTheme/AppText/AppText';
 import { FC } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { setIsLoadData } from 'state/pages/view/replenishmentView/rplViewPageState';
+
+import {
+  rplViewSliceSelector,
+  setIsLoadData,
+  setReplEditable
+} from 'state/pages/view/replenishmentView/rplViewPageState';
 import { ocean_blue_200, ocean_blue_400, ocean_blue_600 } from 'theme/colors';
 
 export interface moreOptionItems {
@@ -16,12 +20,19 @@ export interface moreOptionItems {
 }
 interface Props {
   options: moreOptionItems[];
+  callBack?: (data: any) => void;
 }
 
-const MoreOptionContent: FC<Props> = ({options}) => {
+const MoreOptionContent: FC<Props> = ({ options, callBack = (data: any) => {} }) => {
+  const prlView = useSelector(rplViewSliceSelector);
   const dispatch = useDispatch();
-
   const onClickMoreOption = (item: moreOptionItems) => {
+    if (item.value === 'Edit this Repl. Schedule') {
+      if (!prlView.isReplEditable) {
+        callBack(true);
+        dispatch(setReplEditable(true));
+      }
+    }
     dispatch(setIsLoadData(false));
     navigate(item.path!);
   };
@@ -32,7 +43,7 @@ const MoreOptionContent: FC<Props> = ({options}) => {
       w="277px"
       bg={ocean_blue_600}
       borderRadius="8px"
-      py="8px"
+      overflow="hidden"
       border="1px solid"
       borderColor={ocean_blue_400}
       spacing={0}

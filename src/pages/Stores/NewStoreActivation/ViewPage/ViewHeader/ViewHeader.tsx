@@ -24,6 +24,9 @@ import {
 import AppButton from 'components/newTheme/AppButton/AppButton';
 import { useNavigate } from 'react-router-dom';
 import { STORE_ACTIVATION_PAGE_SIZE } from 'utils/constants';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import { AccessPermissionEnum, MenuItems } from 'utils/enum';
 
 interface HeaderProps {}
 
@@ -36,6 +39,9 @@ const ViewHeader: FC<HeaderProps> = () => {
   const selectionState = viewState.selection;
   const totalSelected = selectionState.selectedCount || 0;
   const lastUpdateDataTime = viewState.data.lastUpdated!;
+
+  const accessType = useAccessType(MenuItems.NEW_STORE_ACTIVATION);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const refreshHandler = () => {
     dispatch(resetSelectionData());
@@ -119,7 +125,13 @@ const ViewHeader: FC<HeaderProps> = () => {
             size="iconMedium"
             bg={ocean_blue_600}
           />
-          <AppButton variant="secondary" size="medium" onClick={onConfigureClick} px="14px">
+          <AppButton
+            variant="secondary"
+            size="medium"
+            onClick={onConfigureClick}
+            px="14px"
+            isDisabled={accessNotAllowed}
+          >
             <AppText size="body2" color={blue_500}>
               Configure
             </AppText>

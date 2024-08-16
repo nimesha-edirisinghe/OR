@@ -16,8 +16,10 @@ const KPISection: FC<Props> = ({ kpiData }) => {
   const dataLength = kpiData?.dataLength;
   const frequencyLabel = kpiData?.frequency;
 
-  const formattedAvgSales = avgSales ? numberWithCommaSeparator(avgSales) : '';
-  const formattedMedianSales = medianSales ? numberWithCommaSeparator(medianSales) : '';
+  const formattedAvgSales =
+    avgSales !== null && avgSales !== undefined ? numberWithCommaSeparator(avgSales) : '';
+  const formattedMedianSales =
+    medianSales !== null && medianSales !== undefined ? numberWithCommaSeparator(medianSales) : '';
   const isAlerted = dataLength ? dataLength <= 10 : false;
 
   return (

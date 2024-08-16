@@ -38,6 +38,11 @@ import AppRadio from 'components/newTheme/AppRadio/AppRadio';
 import AppDateRangeCalendar from 'components/AppDateCalendar/Calender/AppDateRangeCalendar';
 import { orderFrequencyT } from 'pages/View/ReplenishmentPlanning/ReplenishmentHeader/ReplenishmentHeader';
 import { whReplBulkMoreOptionItemList } from 'utils/constants';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
+import { AccessPermissionEnum, MenuItems, WHReplTypeEnum } from 'utils/enum';
+import useAccessType from 'hooks/useMenuAccessType';
+import { hasAccessPermission } from 'utils/permissions';
+import useTooltip from 'hooks/useTooltip';
 
 interface WHReplenishmentHeaderProps {}
 
@@ -54,7 +59,6 @@ const WHReplenishmentHeader: FC<WHReplenishmentHeaderProps> = ({}) => {
   const rplWhViewState: IRPLWhView = useSelector(rplWHViewSliceSelector);
   const isDownloading = rplWhViewState.loading.download;
   const totalSkuCount = rplWhViewState.rplWhSkuDataList?.totalCount;
-  const isSkuListLoading = rplWhViewState.loading.data;
   const startDate = rplWhViewState.rplWhViewLocalScope.startDate;
   const endDate = rplWhViewState.rplWhViewLocalScope.endDate;
   const searchKey = rplWhViewState.rplWhViewLocalScope.rplWhSkuSearchKey;
@@ -62,6 +66,11 @@ const WHReplenishmentHeader: FC<WHReplenishmentHeaderProps> = ({}) => {
   const [orderFrequency, setOrderFrequency] = useState<orderFrequencyT>('default');
   const selectedSKUCount = rplWhViewState.rplWhSelectedSkuList.length;
   const isSelectAll = rplWhViewState.rplWhViewLocalScope.globalRplWhSkuSelected;
+  const selectedSkuCount = isSelectAll ? totalSkuCount : selectedSKUCount;
+  const [isResolveTooltipOpen, handleResolveMouseEnter, handleResolveMouseLeave] = useTooltip();
+
+  const accessType = useAccessType(MenuItems.WH_ORDERING);
+  const accessNotAllowed = !hasAccessPermission(accessType, [AccessPermissionEnum.EDIT]);
 
   const moreOptionPopoverStyles: CSSProperties = {
     maxWidth: '277px',
@@ -171,7 +180,7 @@ const WHReplenishmentHeader: FC<WHReplenishmentHeaderProps> = ({}) => {
         onClose={onClose}
         leftBtnName="Cancel"
         rightBtnName="Download"
-        title={`Download ${totalSkuCount} Replenishment Plans`}
+        title={`Download ${selectedSkuCount} Replenishment Plans`}
         onConfirmHandler={onDownloadHandler}
         onCloseHandler={onClose}
         children={renderBody()}
@@ -207,73 +216,100 @@ const WHReplenishmentHeader: FC<WHReplenishmentHeaderProps> = ({}) => {
           )}
         </HStack>
         <HStack>
-          <AppIconButton
-            aria-label="download"
-            icon={
-              <AppIcon
-                transition="transform 0.25s ease"
-                name="download"
-                width="11.67px"
-                height="14.17px"
-                fill={blue_500}
+          <AppTooltip label="Download" placement="bottom-start">
+            <Box>
+              <AppIconButton
+                aria-label="download"
+                icon={
+                  <AppIcon
+                    transition="transform 0.25s ease"
+                    name="download"
+                    width="11.67px"
+                    height="14.17px"
+                    fill={blue_500}
+                  />
+                }
+                variant="secondary"
+                size="iconMedium"
+                onClick={onClickDownload}
+                bg={ocean_blue_600}
+                isLoading={isDownloading}
+                isDisabled={!isSelectAll && selectedSKUCount == 0}
               />
-            }
-            variant="secondary"
-            size="iconMedium"
-            onClick={onClickDownload}
-            bg={ocean_blue_600}
-            isLoading={isDownloading}
-            isDisabled={!isSelectAll && selectedSKUCount == 0}
-          />
-          <AppIconButton
-            aria-label="gridView"
-            icon={<AppIcon transition="transform 0.25s ease" name="gridView" fill={blue_500} />}
-            variant="secondary"
-            size="iconMedium"
-            onClick={onClickGridView}
-            bg={ocean_blue_600}
-            isLoading={isSkuListLoading}
-            isDisabled={!isSelectAll && selectedSKUCount == 0}
-          />
-          <AppIconButton
-            aria-label="refresh"
-            icon={
-              <AppIcon
-                transition="transform 0.25s ease"
-                name="refresh"
-                width="14px"
-                height="14px"
-                fill={blue_500}
+            </Box>
+          </AppTooltip>
+          <AppTooltip label="Grid View" placement="bottom-start">
+            <Box>
+              <AppIconButton
+                aria-label="gridView"
+                icon={<AppIcon transition="transform 0.25s ease" name="gridView" fill={blue_500} />}
+                variant="secondary"
+                size="iconMedium"
+                onClick={onClickGridView}
+                bg={ocean_blue_600}
+                isDisabled={!isSelectAll && selectedSKUCount == 0}
               />
-            }
-            variant="secondary"
-            size="iconMedium"
-            onClick={onRefreshHandler}
-            bg={ocean_blue_600}
-          />
-
-          <Box>
-            <AppPopover
-              isOpen={isOpenMoreOption}
-              onClose={onCloseMoreOption}
-              contentStyles={moreOptionPopoverStyles}
-              trigger="click"
-              children={
-                <AppIconButton
-                  aria-label="moreOption"
-                  icon={
-                    <AppIcon transition="transform 0.25s ease" name="moreOption" fill={blue_500} />
-                  }
-                  variant="secondary"
-                  size="iconMedium"
-                  onClick={onToggleMoreOption}
-                  bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
-                  isDisabled={!isSelectAll && selectedSKUCount == 0}
-                />
-              }
-              content={<MoreOptionContent options={whReplBulkMoreOptionItemList} />}
-            />
-          </Box>
+            </Box>
+          </AppTooltip>
+          <AppTooltip label="Refresh" placement="bottom-start">
+            <Box>
+              <AppIconButton
+                aria-label="refresh"
+                icon={
+                  <AppIcon
+                    transition="transform 0.25s ease"
+                    name="refresh"
+                    width="14px"
+                    height="14px"
+                    fill={blue_500}
+                  />
+                }
+                variant="secondary"
+                size="iconMedium"
+                onClick={onRefreshHandler}
+                bg={ocean_blue_600}
+              />
+            </Box>
+          </AppTooltip>
+          <AppTooltip
+            label="More Option"
+            placement="bottom-start"
+            isOpen={isResolveTooltipOpen}
+            onClose={handleResolveMouseLeave}
+            display={isOpenMoreOption ? 'none' : 'block'}
+          >
+            <Box onMouseEnter={handleResolveMouseEnter} onMouseLeave={handleResolveMouseLeave}>
+              <AppPopover
+                isOpen={isOpenMoreOption}
+                onClose={onCloseMoreOption}
+                contentStyles={moreOptionPopoverStyles}
+                trigger="click"
+                children={
+                  <AppIconButton
+                    aria-label="moreOption"
+                    icon={
+                      <AppIcon
+                        transition="transform 0.25s ease"
+                        name="moreOption"
+                        fill={blue_500}
+                      />
+                    }
+                    variant="secondary"
+                    size="iconMedium"
+                    onClick={onToggleMoreOption}
+                    bg={isOpenMoreOption ? ocean_blue_400 : ocean_blue_600}
+                    isDisabled={(!isSelectAll && selectedSKUCount == 0) || accessNotAllowed}
+                  />
+                }
+                content={
+                  <MoreOptionContent
+                    options={whReplBulkMoreOptionItemList}
+                    type={WHReplTypeEnum.BULK}
+                  />
+                }
+              />
+            </Box>
+          </AppTooltip>
         </HStack>
       </HStack>
     </>

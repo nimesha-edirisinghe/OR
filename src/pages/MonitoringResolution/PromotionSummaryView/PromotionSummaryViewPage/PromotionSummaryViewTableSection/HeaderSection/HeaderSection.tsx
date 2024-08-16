@@ -24,6 +24,7 @@ import { AppIcon } from 'components/AppIcon/AppIcon';
 import { produce } from 'immer';
 import { GroupLabelTypes } from 'types/requests/groupConfigRequests';
 import { timeStampToDateString } from 'utils/utility';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 
 interface HeaderSectionProps {
   filterLabelTypes?: GroupLabelTypes;
@@ -90,22 +91,26 @@ const HeaderSection: FC<HeaderSectionProps> = ({ filterLabelTypes }) => {
           height="36px"
           onKeyDown={handleSearchFieldPress}
         />
-        <AppIconButton
-          aria-label="filter"
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name="filter"
-              width="14px"
-              height="14px"
-              fill={blue_500}
+        <AppTooltip label={'Filter'} noOfLines={1} placement="bottom-start">
+          <Box>
+            <AppIconButton
+              aria-label="filter"
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name="filter"
+                  width="14px"
+                  height="14px"
+                  fill={blue_500}
+                />
+              }
+              variant="secondary"
+              size="iconMedium"
+              onClick={onFilterClick}
+              bg={ocean_blue_600}
             />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={onFilterClick}
-          bg={ocean_blue_600}
-        />
+          </Box>
+        </AppTooltip>
       </HStack>
       <HStack w="auto">
         <AppText size="body3" color={ocean_blue_100} transition="all 0.2s ease">

@@ -34,14 +34,26 @@ const FCAnalyzerHeader: FC<FCAnalyzerHeaderProps> = () => {
 
   const aggregatedCount = isAllSkuSelected ? totalSkuCount : selectedSkuListLen || 0;
 
+  const getAggregatedPageTitle = () => {
+    const countStr = aggregatedCount ? aggregatedCount.toLocaleString('en-US') : '';
+    const forecastStr = aggregatedCount! > 1 ? 'Forecasts' : 'Forecast';
+    return `Collective Summary of ${countStr} ${forecastStr}`;
+  };
+
+  const getAlertPageTitle = () => {
+    return `${alertState.selectedSku?.skuNameCode} | ${alertState.selectedSku?.store}`;
+  };
+
+  const getDefaultPageTitle = () => {
+    return `${dfViewState.selectedSku?.sku} | ${dfViewState.selectedSku?.store}`;
+  };
+
   const fcAnalyzerPageTitle =
     selectedAnalyzerType === FCAnalyzerTypeEnum.AGGREGATED
-      ? `Collective Summary of ${
-          aggregatedCount && aggregatedCount.toLocaleString('en-US')
-        } Forecasts`
+      ? getAggregatedPageTitle()
       : originPage === 'alert'
-      ? `${alertState.selectedSku?.skuNameCode} | ${alertState.selectedSku?.store}`
-      : `${dfViewState.selectedSku?.sku} | ${dfViewState.selectedSku?.store}`;
+      ? getAlertPageTitle()
+      : getDefaultPageTitle();
 
   const backHandler = () => {
     if (originPage === 'alert') {

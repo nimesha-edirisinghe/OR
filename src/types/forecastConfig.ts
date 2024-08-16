@@ -73,6 +73,13 @@ export interface ConfigurationI {
   ensemble_algorithms: EnsembleAlgoT[];
 }
 
+export interface AdvancesConfigI {
+  cross_validation: boolean;
+  outlier_detection: boolean;
+  model_selection_criteria: ModelSelectionCriteria;
+  exemption_periods: ExemptionPeriodI[];
+}
+
 export interface TrainingConfigI {
   predictors: TrainingConfigPredictorsI[];
   algorithmSettings: {
@@ -80,12 +87,7 @@ export interface TrainingConfigI {
       default: boolean;
       configuration: ConfigurationI;
     };
-    advanced_configurations: {
-      cross_validation: boolean;
-      outlier_detection: boolean;
-      model_selection_criteria: ModelSelectionCriteria;
-      exemption_periods: ExemptionPeriodI[];
-    };
+    advanced_configurations: AdvancesConfigI;
     holidays_country: string;
     start_date: string | null;
     penalized_error: {

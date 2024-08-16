@@ -15,6 +15,7 @@ interface AppSchedulingProps {
   onChangeDay: (value: number) => void;
   onDeleteHandler: () => void;
   setEsEnabledHandler: (isChecked: boolean) => void;
+  isDisabled?: boolean;
 }
 
 const AppScheduling: FC<AppSchedulingProps> = ({
@@ -22,7 +23,8 @@ const AppScheduling: FC<AppSchedulingProps> = ({
   onChangeFrequency,
   onChangeDay,
   onDeleteHandler,
-  setEsEnabledHandler
+  setEsEnabledHandler,
+  isDisabled = false
 }) => {
   const jobScheduleState = useSelector(jobScheduleSliceSelector);
   const schedulingEndDate = jobScheduleState.jobSchedulingData?.endDate;
@@ -35,25 +37,27 @@ const AppScheduling: FC<AppSchedulingProps> = ({
   const formattedEndDate = timeStampToDateString(schedulingEndDate as number, 'yyyy-MM-dd');
   return (
     <VStack spacing="28px">
-      <StartOn status={!!isActive} />
+      <StartOn status={!!isActive} isDisabled={isDisabled} />
       <RepeatEvery
         onChangeOption={repeatEveryOnChange}
         onChangeFrequency={onChangeFrequency}
         frequency={frequency}
-        scheduleType={scheduleType}
+        scheduleType={scheduleType!}
         status={!!isActive}
+        isDisabled={isDisabled}
       />
-      {scheduleType !== 'DAILY' && (
+      {scheduleType !== 'Days' && scheduleType !== '' && (
         <RepeatOn
-          selectedRepeatEveryOption={scheduleType}
+          selectedRepeatEveryOption={scheduleType!}
           onChangeDay={onChangeDay}
           selectedDay={schedulingDay}
           status={!!isActive}
+          isDisabled={isDisabled}
         />
       )}
-      <EndOn selectedDate={formattedEndDate} status={!!isActive} />
+      <EndOn selectedDate={formattedEndDate} status={!!isActive} isDisabled={isDisabled} />
 
-      {scheduleBatchId !== null && (
+      {scheduleBatchId !== null && !isDisabled && (
         <>
           <ActionSection
             onDeleteHandler={onDeleteHandler}

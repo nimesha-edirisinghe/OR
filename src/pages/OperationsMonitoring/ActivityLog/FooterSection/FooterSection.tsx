@@ -38,15 +38,7 @@ const FooterSection: FC<FooterSectionProps> = () => {
     debouncedSendRequest(newPage);
   };
   return (
-    <HStack
-      h="25px"
-      w={'full'}
-      px="5px"
-      py="5px"
-      bottom="2px"
-      justifyContent="space-between"
-      mt="7px"
-    >
+    <HStack w={'full'} justifyContent="space-between">
       <PaginationSummary
         currentPage={currentPageNumber}
         totalItems={activityLogTableData?.totalCount || 0}

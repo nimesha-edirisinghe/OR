@@ -9,8 +9,6 @@ import FCAnalyzerHeader from '../FCAnalyzerHeader/FCAnalyzerHeader';
 import {
   IForecastAnalyzer,
   clearPercentage,
-  fetchAccuracyDistributionDataRequest,
-  fetchExclusionCriteriaRequest,
   fetchIndividualGraphDataRequest,
   fetchKpiAccuracyRequest,
   fetchKpiDataRequest,
@@ -35,7 +33,7 @@ const IndividualForecastAnalyzerPage: FC<Props> = () => {
   const kpiAccuracyData = fcAnalyzerState.kpiAccuracyData;
   const originPage = fcAnalyzerState.fcAnalyzerLocalScope.originPage;
 
-  const readyToShowPage = progressPercentage.length === 7;
+  const readyToShowPage = progressPercentage.length === 5;
   const [showPage, setShowPage] = useState(false);
 
   useEffect(() => {
@@ -54,13 +52,11 @@ const IndividualForecastAnalyzerPage: FC<Props> = () => {
     try {
       const abortController = new AbortController();
       dispatch(clearPercentage());
-      dispatch(fetchKpiAccuracyRequest({ type: FCAnalyzerTypeEnum.INDIVIDUAL }));
-      dispatch(fetchIndividualGraphDataRequest({ type: FCAnalyzerTypeEnum.INDIVIDUAL }));
-      dispatch(fetchExclusionCriteriaRequest({ type: FCAnalyzerTypeEnum.INDIVIDUAL }));
-      dispatch(fetchPlannedActualDataRequest({ type: FCAnalyzerTypeEnum.INDIVIDUAL }));
-      dispatch(fetchKpiDataRequest({ type: FCAnalyzerTypeEnum.INDIVIDUAL }));
+      dispatch(fetchKpiAccuracyRequest());
+      dispatch(fetchIndividualGraphDataRequest());
+      dispatch(fetchPlannedActualDataRequest());
+      dispatch(fetchKpiDataRequest());
       dispatch(fetchSkuDetailsDataRequest({ type: FCAnalyzerTypeEnum.INDIVIDUAL }));
-      dispatch(fetchAccuracyDistributionDataRequest({ type: FCAnalyzerTypeEnum.INDIVIDUAL }));
       return () => {
         abortController.abort();
       };
@@ -94,7 +90,7 @@ const IndividualForecastAnalyzerPage: FC<Props> = () => {
             <MainSection />
           </>
         ) : (
-          <InprogressSection progress={progressPercentage} dataLength={7} />
+          <InprogressSection progress={progressPercentage} dataLength={5} />
         )}
       </VStack>
     );

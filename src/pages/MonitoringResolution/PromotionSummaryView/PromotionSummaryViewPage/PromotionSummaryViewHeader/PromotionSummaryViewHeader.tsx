@@ -16,6 +16,7 @@ import {
   setPromotionSummarySearchKey
 } from 'state/pages/monitoringAndResolution/promotionSummaryView/promotionSummaryViewState';
 import { blue_500, ocean_blue_100, ocean_blue_600 } from 'theme/colors';
+import AppTooltip from 'components/AppTooltip/AppTooltip';
 
 interface PromotionSummaryViewHeaderProps {}
 
@@ -87,7 +88,7 @@ const PromotionSummaryViewHeader: FC<PromotionSummaryViewHeaderProps> = () => {
   return (
     <>
       {downloadConfirmationPrompt()}
-      <HStack h="full" w="full" justify="flex-end" spacing="20px">
+      <HStack h="full" w="full" justify="flex-end" spacing="12px">
         <HStack w="auto">
           <AppText size="body3" color={ocean_blue_100} transition="all 0.2s ease">
             Last Update:
@@ -96,22 +97,28 @@ const PromotionSummaryViewHeader: FC<PromotionSummaryViewHeaderProps> = () => {
             {lastUpdateDataTime}
           </AppText>
         </HStack>
-        <AppIconButton
-          aria-label="refresh"
-          icon={
-            <AppIcon
-              transition="transform 0.25s ease"
-              name="refresh"
-              width="14px"
-              height="14px"
-              fill={blue_500}
+        <AppTooltip label={'Refresh'} noOfLines={1} placement="bottom-start">
+          <Box>
+            <AppIconButton
+              aria-label="refresh"
+              icon={
+                <AppIcon
+                  transition="transform 0.25s ease"
+                  name="refresh"
+                  width="14px"
+                  height="14px"
+                  fill={blue_500}
+                />
+              }
+              variant="secondary"
+              size="iconMedium"
+              onClick={refreshHandler}
+              bg={ocean_blue_600}
             />
-          }
-          variant="secondary"
-          size="iconMedium"
-          onClick={refreshHandler}
-          bg={ocean_blue_600}
-        />
+          </Box>
+        </AppTooltip>
+        <AppTooltip label={'Download'} noOfLines={1} placement="bottom-start">
+          <Box>
         <AppIconButton
           aria-label="download"
           isDisabled={totalSkuCount === 0}
@@ -130,6 +137,8 @@ const PromotionSummaryViewHeader: FC<PromotionSummaryViewHeaderProps> = () => {
           bg={ocean_blue_600}
           isLoading={isDownloading}
         />
+        </Box>
+        </AppTooltip>
       </HStack>
     </>
   );

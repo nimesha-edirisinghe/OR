@@ -66,7 +66,6 @@ function* getJobSchedulesRequest(action: PayloadAction<'fc' | 'repl'>) {
     const response: GeneralResponse = yield call(() =>
       jobScheduleApi.getJobSchedulesRequest(queryParams)
     );
-
     if (response) {
       const formattedForecastConfig: ApiResponse<JobScheduleConfigurationI> = yield response;
       yield put(getJobSchedulesSuccess(formattedForecastConfig));

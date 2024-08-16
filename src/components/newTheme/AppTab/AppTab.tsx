@@ -26,7 +26,6 @@ const AppTab: React.FC<TabsProps> = ({
   const [indicatorStyle, setIndicatorStyle] = useState({});
 
   const tabListRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (tabListRef.current) {
       const tabList = tabListRef.current;
@@ -86,7 +85,7 @@ const AppTab: React.FC<TabsProps> = ({
       </TabList>
       <TabPanels>
         {tabs.map((tab, index) => (
-          <TabPanel key={index} hidden={index !== selectedTab} px={0}>
+          <TabPanel key={index} hidden={index !== selectedTab} px={0} pb={0}>
             {tab.content}
           </TabPanel>
         ))}

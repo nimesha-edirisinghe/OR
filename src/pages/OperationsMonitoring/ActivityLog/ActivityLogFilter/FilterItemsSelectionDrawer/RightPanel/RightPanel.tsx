@@ -3,7 +3,7 @@ import { FC, useState } from 'react';
 import SelectedItem from './SelectedItem';
 import { KeyValueI } from 'types/responses/insightResponses';
 import { RightFilterItemContentI } from 'types/requests/insightRequest';
-import { ocean_blue_350, ocean_blue_500 } from 'theme/colors';
+import { ocean_blue_350, ocean_blue_500, white } from 'theme/colors';
 import AppText from 'components/AppText/AppText';
 import { scrollbarYStyles } from 'theme/styles';
 
@@ -15,7 +15,7 @@ interface Props {
 const RightPanel: FC<Props> = ({ selectedRightSideItem, addOrRemoveItem }) => {
   const [onPanelHover, setOnPanelHover] = useState(false);
   return (
-    <Box h="full" w="full" bg={ocean_blue_500} borderRadius="6px" overflowY="hidden">
+    <Box h="full" w="270px" bg={ocean_blue_500} borderRadius="8px" overflowY="hidden">
       <HStack
         borderBottom="1px solid var(--yellow-500, #FFA914);"
         py="8px"
@@ -23,14 +23,14 @@ const RightPanel: FC<Props> = ({ selectedRightSideItem, addOrRemoveItem }) => {
         pb="8px"
         mb="10px"
       >
-        <AppText size="body3">
+        <AppText fontSize="12px" fontWeight={400} color={white}>
           Selected ({selectedRightSideItem && selectedRightSideItem.selectedItems.length})
         </AppText>
       </HStack>
       <Box
         w="full"
         height="full"
-        maxH={'calc(100vh - 290px)'}
+        maxH={'calc(100vh - 265px)'}
         overflowY={onPanelHover ? 'auto' : 'hidden'}
         onMouseEnter={() => setOnPanelHover(true)}
         onMouseLeave={() => setOnPanelHover(false)}
